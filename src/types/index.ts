@@ -134,6 +134,7 @@ export interface RepositoryConfig {
   targetDirectory: string; // relative subfolder in repo
   autoCreatePrOnDone: boolean;
   autoWriteToLocalOnDone: boolean;
+  allowOverwrite?: boolean;
   lastPrUrl?: string;
   lastCommitHash?: string;
   lastDeliveredPath?: string;

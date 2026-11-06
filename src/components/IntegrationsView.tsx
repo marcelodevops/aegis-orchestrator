@@ -60,6 +60,17 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   // Destination Repository Test state
   const [isTestingRepo, setIsTestingRepo] = useState(false);
   const [repoTestResult, setRepoTestResult] = useState<any | null>(null);
+  const [savedSection, setSavedSection] = useState<string | null>(null);
+
+  // Sync state if parent props change
+  React.useEffect(() => {
+    if (integrationConfig) {
+      setConfig((prev) => ({
+        ...integrationConfig,
+        repository: integrationConfig.repository || prev.repository,
+      }));
+    }
+  }, [integrationConfig]);
 
   // Jira Test state
   const [isTestingJira, setIsTestingJira] = useState(false);
@@ -84,7 +95,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
     setIsTestingRepo(true);
     setRepoTestResult(null);
     try {
-      const sampleTask = tasks[0] || {
+      const sampleTask = tasks.find((t) => t.status === 'done' || t.status === 'review') || tasks[0] || {
         key: 'AEG-104',
         title: 'Implement AI-Driven Workload Balancing',
         description: 'Service contract for workload balancing',
@@ -99,6 +110,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
           action,
           repoConfig: config.repository,
           task: sampleTask,
+          allowOverwrite: config.repository.allowOverwrite ?? false,
         }),
       });
 
@@ -223,8 +235,10 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   };
 
   // Save changes helper
-  const handleSaveConfig = () => {
+  const handleSaveConfig = (sectionName: string = 'general') => {
     onUpdateIntegrationConfig(config);
+    setSavedSection(sectionName);
+    setTimeout(() => setSavedSection(null), 2500);
   };
 
   // Add new custom provider
@@ -442,7 +456,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   </div>
                 </div>
 
-                <div className="pt-1">
+                <div className="pt-1 space-y-1.5">
                   <label className="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
                     <input
                       type="checkbox"
@@ -452,6 +466,18 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                     />
                     <span>Automatically write verified code to local directory when task passes Quality Gate</span>
                   </label>
+
+                  {config.repository.localWriteMode === 'direct_write' && (
+                    <label className="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={config.repository.allowOverwrite ?? false}
+                        onChange={(e) => setConfig({ ...config, repository: { ...config.repository, allowOverwrite: e.target.checked } })}
+                        className="rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-500/20"
+                      />
+                      <span>Allow overwriting pre-existing files on disk (safe in-place update)</span>
+                    </label>
+                  )}
                 </div>
               </div>
             ) : (
@@ -538,10 +564,11 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
             {/* Save & Action Buttons */}
             <div className="pt-2 flex flex-wrap gap-2 justify-between items-center">
               <button
-                onClick={handleSaveConfig}
-                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg"
+                onClick={() => handleSaveConfig('repo')}
+                className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors"
               >
-                Save Repository Settings
+                {savedSection === 'repo' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : null}
+                <span>{savedSection === 'repo' ? 'Settings Saved!' : 'Save Repository Settings'}</span>
               </button>
 
               <div className="flex items-center space-x-2">
@@ -723,10 +750,11 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
             <div className="pt-2 flex flex-wrap gap-2 justify-between items-center">
               <button
-                onClick={handleSaveConfig}
-                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg"
+                onClick={() => handleSaveConfig('jira')}
+                className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors"
               >
-                Save Jira Settings
+                {savedSection === 'jira' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : null}
+                <span>{savedSection === 'jira' ? 'Jira Config Saved!' : 'Save Jira Settings'}</span>
               </button>
 
               <div className="flex items-center space-x-2">
@@ -870,10 +898,11 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
             <div className="pt-2 flex justify-between items-center">
               <button
-                onClick={handleSaveConfig}
-                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg"
+                onClick={() => handleSaveConfig('slack')}
+                className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors"
               >
-                Save Slack Config
+                {savedSection === 'slack' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : null}
+                <span>{savedSection === 'slack' ? 'Slack Config Saved!' : 'Save Slack Config'}</span>
               </button>
 
               <button

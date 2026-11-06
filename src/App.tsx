@@ -103,6 +103,8 @@ export default function App() {
           if (data.agents && data.agents.length > 0) setAgents(data.agents);
           if (data.epics && data.epics.length > 0) setEpics(data.epics);
           if (data.communications && data.communications.length > 0) setCommunications(data.communications);
+          if (data.orchestratorConfig) setOrchestratorConfig(data.orchestratorConfig);
+          if (data.integrationConfig) setIntegrationConfig(data.integrationConfig);
           if (typeof data.daemonRunning === 'boolean') setIsRunningAuto(data.daemonRunning);
           if (typeof data.cycleCount === 'number') setCycleCount(data.cycleCount);
         }

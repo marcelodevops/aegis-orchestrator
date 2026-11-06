@@ -44,6 +44,22 @@ export const OrchestratorStudio: React.FC<OrchestratorStudioProps> = ({
     },
   ]);
   const [isTerminalSending, setIsTerminalSending] = useState(false);
+  const [isRunningTrial, setIsRunningTrial] = useState(false);
+  const [trialResult, setTrialResult] = useState<any | null>(null);
+
+  const handleRunWorkerTrial = async () => {
+    setIsRunningTrial(true);
+    setTrialResult(null);
+    try {
+      const res = await fetch('/api/orchestrate/worker/trial', { method: 'POST' });
+      const data = await res.json();
+      setTrialResult(data);
+    } catch (err: any) {
+      console.error('Worker trial error:', err);
+    } finally {
+      setIsRunningTrial(false);
+    }
+  };
 
   const handleSave = () => {
     onUpdateConfig(formData);
@@ -129,14 +145,96 @@ export const OrchestratorStudio: React.FC<OrchestratorStudioProps> = ({
             </p>
           </div>
 
-          <button
-            onClick={handleSave}
-            className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow-md transition-all active:scale-95"
-          >
-            {savedSuccess ? <Check className="w-4 h-4 text-emerald-300" /> : <Sparkles className="w-4 h-4" />}
-            <span>{savedSuccess ? 'Configuration Saved!' : 'Save Directives'}</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleRunWorkerTrial}
+              disabled={isRunningTrial}
+              className="flex items-center space-x-2 px-3.5 py-2 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-xs font-bold rounded-lg shadow-md transition-all active:scale-95 disabled:opacity-50"
+              title="Execute bounded change trial: diff inspection, deliberate defect catch, and verified correction"
+            >
+              {isRunningTrial ? (
+                <>
+                  <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Running Trial...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-3.5 h-3.5 text-cyan-300" />
+                  <span>Run Coding Worker Trial</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleSave}
+              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow-md transition-all active:scale-95"
+            >
+              {savedSuccess ? <Check className="w-4 h-4 text-emerald-300" /> : <Sparkles className="w-4 h-4" />}
+              <span>{savedSuccess ? 'Configuration Saved!' : 'Save Directives'}</span>
+            </button>
+          </div>
         </div>
+
+        {/* Worker Trial Audit Results Panel */}
+        {trialResult && (
+          <div className="mt-4 pt-4 border-t border-slate-800 space-y-3 animate-fadeIn">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-100 flex items-center space-x-2">
+                <Shield className="w-4 h-4 text-emerald-400" />
+                <span>Autonomous Worker Trial Audit Record ({trialResult.trialTaskKey})</span>
+              </span>
+              <button
+                onClick={() => setTrialResult(null)}
+                className="text-xs text-slate-400 hover:text-slate-200"
+              >
+                ✕ Dismiss
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs">
+              <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">1. Isolated Dispatch</span>
+                <span className="text-indigo-300 font-mono mt-1 block">{trialResult.step1_dispatch.taskKey} ({trialResult.step1_dispatch.agent})</span>
+                <span className="text-[10px] text-emerald-400 font-bold">✓ Dispatched in workspace</span>
+              </div>
+              <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">2. Deliberate Defect Catch</span>
+                <span className="text-amber-400 font-mono mt-1 block">cycle_inversion</span>
+                <span className="text-[10px] text-rose-400 font-bold">✘ Independent check caught defect</span>
+              </div>
+              <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">3. Fail-Closed Gate</span>
+                <span className="text-rose-300 font-mono mt-1 block">HTTP {trialResult.step4_blockedTransitionAttempt.status}</span>
+                <span className="text-[10px] text-amber-300 font-bold">✓ Refused unverified Done</span>
+              </div>
+              <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">4. Verified Acceptance</span>
+                <span className="text-emerald-300 font-mono mt-1 block">{trialResult.step8_acceptedResult.status.toUpperCase()}</span>
+                <span className="text-[10px] text-emerald-400 font-bold">✓ {trialResult.step7_independentVerification.checksPassed}/3 checks passed</span>
+              </div>
+            </div>
+
+            {/* Diffs Side-by-Side Review */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+              <div>
+                <span className="text-[10px] font-bold text-amber-400 block mb-1">
+                  Initial Diff (with Deliberate Defect):
+                </span>
+                <pre className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-[10px] font-mono text-amber-200/90 whitespace-pre-wrap max-h-36 overflow-y-auto">
+                  {trialResult.step2_initialDiff}
+                </pre>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-emerald-400 block mb-1">
+                  Corrected Diff (after Defect Feedback Loop):
+                </span>
+                <pre className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-[10px] font-mono text-emerald-200/90 whitespace-pre-wrap max-h-36 overflow-y-auto">
+                  {trialResult.step6_correctedDiff}
+                </pre>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

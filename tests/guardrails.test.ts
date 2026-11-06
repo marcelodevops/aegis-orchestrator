@@ -130,7 +130,86 @@ async function executeSuite() {
     assert.strictEqual(verification.passed, false, 'Must fail when dependency is in_progress');
   });
 
-  // --- 3. ACTUAL DELIVERY HANDLER TESTS (LIVE DISPATCH & TEMP DIRS) ---
+  await runTest('Server-owned lifecycle blocks unverified transitions at every entry stage', () => {
+    // 1. Block transition to in_progress if dependencies are incomplete
+    const taskBlockedByDeps = {
+      id: 'task-stage-block-1',
+      key: 'AEG-BLOCK-1',
+      title: 'Blocked In Progress',
+      status: 'todo' as const,
+      dependencies: ['task-unmet-upstream'],
+      subtasks: [],
+      deliverables: [],
+    };
+    coordinator.getState().tasks.push(taskBlockedByDeps as any);
+
+    const resInProg = coordinator.transitionTaskStatus('task-stage-block-1', 'in_progress');
+    assert.strictEqual(resInProg.success, false, 'Must reject transition to in_progress when dependencies unmet');
+    assert.ok(resInProg.error?.includes('Blocked by unfinished upstream dependencies'));
+
+    // 2. Block transition to review if no real code artifact in workspace
+    const taskMissingArtifact = {
+      id: 'task-stage-block-2',
+      key: 'AEG-NO-ARTIFACT',
+      title: 'Missing Artifact',
+      status: 'in_progress' as const,
+      dependencies: [],
+      subtasks: [],
+      deliverables: [],
+    };
+    coordinator.getState().tasks.push(taskMissingArtifact as any);
+
+    const resReview = coordinator.transitionTaskStatus('task-stage-block-2', 'review');
+    assert.strictEqual(resReview.success, false, 'Must reject transition to review without real code artifact');
+    assert.ok(resReview.error?.includes('No physical code artifact produced by worker'));
+
+    // 3. Block transition to done if criteria or quality gates fail
+    const resDone = coordinator.transitionTaskStatus('task-stage-block-2', 'done');
+    assert.strictEqual(resDone.success, false, 'Must reject transition to done when quality gates fail');
+  });
+
+  // --- 3. REAL CODING WORKER ASSIGNMENT & END-TO-END TRIAL TESTS ---
+  await runTest('Real coding worker implements non-generic logic + spec tests + unified diff in isolated workspace', async () => {
+    const newAssignment = {
+      id: 'task-106-test',
+      key: 'AEG-106',
+      title: 'Construct Interactive DAG Dependency Diagram',
+      status: 'in_progress' as const,
+      dependencies: ['task-101'],
+      subtasks: [
+        { id: 'st-16', title: 'Topological sort and node level assignment', completed: false },
+        { id: 'st-17', title: 'Cycle detection and deadlock prevention', completed: false },
+        { id: 'st-18', title: 'Critical path analysis and bottleneck latency', completed: false },
+      ],
+      deliverables: [],
+    };
+    const agent = { id: 'agent-fe', name: 'Lyra UI', role: 'Frontend Architect' };
+
+    const workerRes = await coordinator.executeWorkerStep(newAssignment as any, agent as any);
+    assert.strictEqual(workerRes.subtasksCompleted.length, 3, 'Must complete all 3 criteria with passing assertions');
+    assert.ok(workerRes.diff.includes('--- a/'), 'Must generate unified diff header');
+    assert.ok(workerRes.diff.includes('function topologicalSort'), 'Must include topologicalSort in diff');
+    assert.ok(workerRes.diff.includes('function detectCycles'), 'Must include detectCycles in diff');
+    assert.ok(workerRes.diff.includes('function computeCriticalPath'), 'Must include computeCriticalPath in diff');
+    assert.ok(fs.existsSync(path.resolve(process.cwd(), 'workspace/AEG-106/implementation.js')), 'Must exist in isolated workspace');
+  });
+
+  await runTest('End-to-End Trial: Worker takes bounded change, catches deliberate defect, rejects Done, corrects on feedback, and accepts only corrected result', async () => {
+    const trial = await coordinator.runWorkerTrial();
+
+    assert.strictEqual(trial.success, true, 'Trial must succeed');
+    assert.strictEqual(trial.step1_dispatch.status, 'in_progress', 'Step 1 must dispatch to in_progress');
+    assert.ok(trial.step2_initialDiff.includes('DELIBERATE DEFECT ACTIVE'), 'Step 2 must produce initial diff with deliberate defect');
+    assert.strictEqual(trial.step3_defectCheck.defectDetected, true, 'Step 3 must detect deliberate defect');
+    assert.strictEqual(trial.step4_blockedTransitionAttempt.blocked, true, 'Step 4 must block Done transition with HTTP 422');
+    assert.strictEqual(trial.step4_blockedTransitionAttempt.status, 422, 'Step 4 must return HTTP 422');
+    assert.ok(trial.step5_correctionDispatch.defectFeedback.includes('Fix: Clean acyclic DAG'), 'Step 5 must feed defect back to worker');
+    assert.ok(trial.step6_correctedDiff.includes('recStack'), 'Step 6 must produce corrected diff with DFS cycle detection');
+    assert.strictEqual(trial.step7_independentVerification.passed, true, 'Step 7 independent checks must pass 100%');
+    assert.strictEqual(trial.step8_acceptedResult.status, 'done', 'Step 8 must accept task into Done');
+  });
+
+  // --- 4. ACTUAL DELIVERY HANDLER TESTS (LIVE DISPATCH & TEMP DIRS) ---
   await runTest('Actual delivery handler rejects Git branch delivery fail-closed (HTTP 403, blocked: true)', async () => {
     const res = await handleRepositoryDispatch({
       action: 'deliver',

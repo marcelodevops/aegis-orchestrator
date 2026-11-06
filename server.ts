@@ -365,6 +365,16 @@ app.post('/api/orchestrate/agent-step', async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint: End-to-End Coding Worker Trial (bounded assignment, diff inspection, deliberate defect catch, correction, acceptance)
+app.post('/api/orchestrate/worker/trial', async (_req: Request, res: Response) => {
+  try {
+    const trialResult = await coordinator.runWorkerTrial();
+    res.json(trialResult);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Worker trial failed' });
+  }
+});
+
 // Endpoint: Automated status reporting for stakeholders
 app.post('/api/orchestrate/generate-report', async (req: Request, res: Response) => {
   try {

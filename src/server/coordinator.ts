@@ -3,6 +3,7 @@ import path from 'path';
 import crypto from 'crypto';
 import vm from 'vm';
 import assert from 'assert';
+import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { 
   Task, 
@@ -22,6 +23,7 @@ import {
   DEFAULT_COMMUNICATIONS 
 } from '../data/defaultData';
 import { codingWorker, WorkerExecutionOptions } from './codingWorker.js';
+import { storage } from './storage/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,6 +68,9 @@ class CoordinatorEngine {
 
   constructor() {
     this.ensureDirectories();
+    try {
+      storage.seedIfEmpty(DEFAULT_TASKS, DEFAULT_AGENTS, DEFAULT_EPICS);
+    } catch {}
     this.state = this.loadStateFromDisk();
   }
 
@@ -212,10 +217,15 @@ class CoordinatorEngine {
 
     // Guard 2: Cannot move to review without real code artifact produced by worker in workspace
     if (targetStatus === 'review') {
+      const safeKey = task.key.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const workspaceImpl = path.resolve(process.cwd(), 'workspace', safeKey, 'implementation.js');
+      const workspaceCjs = path.resolve(process.cwd(), 'workspace', safeKey, 'implementation.cjs');
       const taskArtifactDir = path.resolve(ARTIFACTS_DIR, task.key);
       const codeFilePath = path.resolve(taskArtifactDir, 'implementation.js');
       const legacyPath = path.resolve(ARTIFACTS_DIR, `${task.key}_deliverable.md`);
-      const hasArtifact = (fs.existsSync(codeFilePath) && fs.statSync(codeFilePath).size > 0) ||
+      const hasArtifact = (fs.existsSync(workspaceImpl) && fs.statSync(workspaceImpl).size > 0) ||
+                          (fs.existsSync(workspaceCjs) && fs.statSync(workspaceCjs).size > 0) ||
+                          (fs.existsSync(codeFilePath) && fs.statSync(codeFilePath).size > 0) ||
                           (fs.existsSync(legacyPath) && fs.statSync(legacyPath).size > 0);
       if (!hasArtifact) {
         return {
@@ -294,23 +304,34 @@ class CoordinatorEngine {
     });
 
     // Check 3: Physical Disk Code Artifact Verification
-    // Artifact must exist on disk inside .aegis_artifacts/<taskKey>/
+    // Artifact must exist on disk inside workspace/<taskKey>/ or .aegis_artifacts/<taskKey>/
+    const safeKey = task.key.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const workspaceImpl = path.resolve(process.cwd(), 'workspace', safeKey, 'implementation.js');
+    const workspaceCjs = path.resolve(process.cwd(), 'workspace', safeKey, 'implementation.cjs');
     const taskArtifactDir = path.resolve(ARTIFACTS_DIR, task.key);
     const codeFilePath = path.resolve(taskArtifactDir, 'implementation.js');
     const legacyPath = path.resolve(ARTIFACTS_DIR, `${task.key}_deliverable.md`);
-    const hasCodeArtifact = fs.existsSync(codeFilePath) && fs.statSync(codeFilePath).size > 0;
-    const hasLegacyArtifact = fs.existsSync(legacyPath) && fs.statSync(legacyPath).size > 0;
-    const verifiedPath = hasCodeArtifact ? codeFilePath : hasLegacyArtifact ? legacyPath : null;
+
+    let verifiedPath: string | null = null;
+    if (fs.existsSync(workspaceImpl) && fs.statSync(workspaceImpl).size > 0) {
+      verifiedPath = workspaceImpl;
+    } else if (fs.existsSync(workspaceCjs) && fs.statSync(workspaceCjs).size > 0) {
+      verifiedPath = workspaceCjs;
+    } else if (fs.existsSync(codeFilePath) && fs.statSync(codeFilePath).size > 0) {
+      verifiedPath = codeFilePath;
+    } else if (fs.existsSync(legacyPath) && fs.statSync(legacyPath).size > 0) {
+      verifiedPath = legacyPath;
+    }
 
     checks.push({
       rule: 'Inspected Physical Code Artifact on Disk',
       passed: verifiedPath !== null,
       detail: verifiedPath !== null
         ? `Physical artifact verified on disk at ${path.relative(process.cwd(), verifiedPath)} (${fs.statSync(verifiedPath).size} bytes)`
-        : `No physical code artifact found on disk in .aegis_artifacts/${task.key}/`,
+        : `No physical code artifact found on disk in workspace/${safeKey}/ or .aegis_artifacts/${task.key}/`,
     });
 
-    // Check 4: Real Syntax & AST Compiler Verification
+    // Check 4: Real Syntax & AST Compiler Verification via Isolated Subprocess
     let syntaxPassed = false;
     let syntaxDetail = 'No code artifact available for syntax compilation';
     let codeContent = '';
@@ -318,22 +339,21 @@ class CoordinatorEngine {
     if (verifiedPath) {
       try {
         codeContent = fs.readFileSync(verifiedPath, 'utf-8');
-        // If markdown, extract code block or validate raw JS
-        let jsToCompile = codeContent;
-        if (codeContent.includes('```')) {
-          const match = codeContent.match(/```(?:typescript|javascript|js|ts)?\n([\s\S]*?)```/);
-          if (match && match[1]) {
-            jsToCompile = match[1];
-          }
-        }
+        const checkRes = spawnSync('node', ['--check', verifiedPath], {
+          timeout: 10000,
+          env: { PATH: process.env.PATH, HOME: process.env.HOME, NODE_ENV: 'test' },
+        });
 
-        // Run real Node.js AST parser / VM script compiler
-        new vm.Script(jsToCompile);
-        syntaxPassed = true;
-        syntaxDetail = `Compiler AST verified: 0 syntax errors detected across ${jsToCompile.split('\n').length} lines`;
+        if (checkRes.status === 0) {
+          syntaxPassed = true;
+          syntaxDetail = `Compiler AST verified: 0 syntax errors detected across ${codeContent.split('\n').length} lines`;
+        } else {
+          syntaxPassed = false;
+          syntaxDetail = `Syntax compilation error: ${(checkRes.stderr || checkRes.stdout || '').toString().slice(0, 300)}`;
+        }
       } catch (compileErr: any) {
         syntaxPassed = false;
-        syntaxDetail = `Syntax compilation error: ${compileErr.message}`;
+        syntaxDetail = `Syntax check error: ${compileErr.message}`;
       }
     }
 
@@ -343,8 +363,23 @@ class CoordinatorEngine {
       detail: syntaxDetail,
     });
 
-    // Check 5: Automated Unit Test Suite & Cryptographic Integrity Check
-    const testFilePath = path.resolve(taskArtifactDir, 'spec.test.js');
+    // Check 5: Automated Unit Test Suite via Isolated Subprocess
+    const wsCjs = path.resolve(process.cwd(), 'workspace', safeKey, 'spec.test.cjs');
+    const wsJs = path.resolve(process.cwd(), 'workspace', safeKey, 'spec.test.js');
+    const artCjs = path.resolve(taskArtifactDir, 'spec.test.cjs');
+    const artJs = path.resolve(taskArtifactDir, 'spec.test.js');
+
+    let testFilePath: string | null = null;
+    if (fs.existsSync(wsCjs)) {
+      testFilePath = wsCjs;
+    } else if (fs.existsSync(wsJs)) {
+      testFilePath = wsJs;
+    } else if (fs.existsSync(artCjs)) {
+      testFilePath = artCjs;
+    } else if (fs.existsSync(artJs)) {
+      testFilePath = artJs;
+    }
+
     let testPassed = false;
     let testDetail = 'Automated unit test suite not found on disk';
     let computedSha256 = '';
@@ -353,40 +388,30 @@ class CoordinatorEngine {
       computedSha256 = crypto.createHash('sha256').update(codeContent).digest('hex');
     }
 
-    if (fs.existsSync(testFilePath)) {
+    if (testFilePath && fs.existsSync(testFilePath)) {
       try {
-        const testCode = fs.readFileSync(testFilePath, 'utf-8');
-        // Execute test suite in isolated VM context with assert
-        const sandbox = {
-          assert,
-          require: (mod: string) => {
-            if (mod === 'assert' || mod === 'node:assert') return assert;
-            if (mod === 'crypto' || mod === 'node:crypto') return crypto;
-            return {};
-          },
-          module: { exports: {} },
-          exports: {},
-          console: { log: () => {}, warn: () => {}, error: () => {} },
-        };
+        const testRes = spawnSync('node', [testFilePath], {
+          cwd: path.dirname(testFilePath),
+          timeout: 10000,
+          env: { PATH: process.env.PATH, HOME: process.env.HOME, NODE_ENV: 'test' },
+        });
 
-        const context = vm.createContext(sandbox);
-        // Load implementation first if available
-        if (hasCodeArtifact) {
-          const implCode = fs.readFileSync(codeFilePath, 'utf-8');
-          new vm.Script(implCode).runInContext(context);
+        if (testRes.status === 0) {
+          testPassed = true;
+          testDetail = `Automated unit assertions passed (SHA-256: ${computedSha256.slice(0, 16)}...)`;
+        } else {
+          testPassed = false;
+          const outStr = (testRes.stderr || testRes.stdout || '').toString();
+          testDetail = `Unit assertion failure (exit ${testRes.status}): ${outStr.slice(0, 300) || 'Test process exited non-zero'}`;
         }
-        // Run test suite
-        new vm.Script(testCode).runInContext(context);
-        testPassed = true;
-        testDetail = `Automated unit assertions passed (SHA-256: ${computedSha256.slice(0, 16)}...)`;
       } catch (testErr: any) {
         testPassed = false;
-        testDetail = `Unit assertion failure: ${testErr.message}`;
+        testDetail = `Test runner execution error: ${testErr.message}`;
       }
-    } else if (hasLegacyArtifact) {
-      // For legacy artifacts, check that SHA-256 is present
-      testPassed = syntaxPassed;
-      testDetail = `Cryptographic integrity signature verified (SHA-256: ${computedSha256.slice(0, 16)}...)`;
+    } else {
+      // Fail closed: tests must exist and pass
+      testPassed = false;
+      testDetail = `Quality Gate blocked: Required test suite (spec.test.js) missing for ${task.key}`;
     }
 
     checks.push({
@@ -517,11 +542,19 @@ class CoordinatorEngine {
 
     const initialDiff = defectWorkerRes.diff;
 
-    // Step 3: Run independent review check on defect code
+    // Update task subtasks with real results from defect worker execution
+    task.subtasks = (task.subtasks || []).map((s) => ({
+      ...s,
+      completed: defectWorkerRes.subtasksCompleted.includes(s.id),
+    }));
+
+    // Step 3: Run independent review check on defect code - real verifier call
+    const defectVerification = this.verifyTaskQualityGates(task);
+    const failingCheck = defectVerification.checks.find((c) => !c.passed);
     const defectCheck = {
-      defectDetected: true,
-      failingRule: 'Cycle Detection on Clean Acyclic Graphs',
-      details: 'Cycle detection inverted: falsely flagged clean linear DAG as cyclical; criterion st-17 failed',
+      defectDetected: !defectVerification.passed,
+      failingRule: failingCheck?.rule || 'Automated Test Suite & Cryptographic Hash',
+      details: failingCheck?.detail || 'Test assertions failed in candidate workspace',
     };
 
     // Step 4: Test that blocked work CANNOT advance to done through transition endpoint
@@ -533,7 +566,7 @@ class CoordinatorEngine {
     };
 
     // Step 5: Feed deliberate defect back to the worker for correction
-    const defectFeedback = 'Fix: Clean acyclic DAG must return hasCycle: false and not flag false cycles';
+    const defectFeedback = 'Fix: Clean acyclic DAG must return hasCycle: false and not flag false cycles. ' + defectCheck.details;
     const correctedWorkerRes = await codingWorker.executeAssignment(task, agent, {
       defectMode: false,
       defectFeedback,
@@ -558,6 +591,7 @@ class CoordinatorEngine {
     // Step 8: Accept the corrected result
     const acceptRes = this.transitionTaskStatus(task.id, 'done');
     if (!acceptRes.success) {
+      console.log('ACCEPT FAILED CHECKS:', JSON.stringify(acceptRes.verification?.checks, null, 2));
       throw new Error(`Trial acceptance failed after correction: ${acceptRes.error}`);
     }
 

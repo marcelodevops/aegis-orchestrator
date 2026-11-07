@@ -92,8 +92,24 @@ export default function App() {
     }
   });
 
+  const [authToken, setAuthToken] = useState<string>('');
+
+  const getAuthHeaders = () => ({
+    'Content-Type': 'application/json',
+    ...(authToken ? { 'X-Aegis-Auth-Token': authToken } : {}),
+  });
+
   // Server-authoritative state synchronization (survives browser close)
   useEffect(() => {
+    // 1. Fetch auth session token
+    fetch('/api/auth/session')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.token) setAuthToken(data.token);
+      })
+      .catch((e) => console.warn('Auth session init error:', e));
+
+    // 2. Fetch server state
     const fetchServerState = async () => {
       try {
         const res = await fetch('/api/orchestrate/state');
@@ -123,7 +139,7 @@ export default function App() {
     try {
       await fetch('/api/orchestrate/state', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(partialState),
       });
     } catch (e) {
@@ -154,7 +170,7 @@ export default function App() {
     try {
       const response = await fetch('/api/orchestrate/agent-step', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           task: targetTask,
           agent: activeAgent,
@@ -259,7 +275,7 @@ export default function App() {
       if (orchestratorConfig.autoJiraSync) {
         fetch('/api/integrations/jira/sync', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ task: updatedTask, projectKey: integrationConfig.jira.projectKey }),
         }).catch(() => {});
       }
@@ -276,7 +292,10 @@ export default function App() {
   const handleRunServerCycle = async () => {
     setIsProcessingStep(true);
     try {
-      const res = await fetch('/api/orchestrate/engine/step', { method: 'POST' });
+      const res = await fetch('/api/orchestrate/engine/step', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
       const data = await res.json();
       if (data.state) {
         setTasks(data.state.tasks);
@@ -302,7 +321,7 @@ export default function App() {
     try {
       const res = await fetch(`/api/orchestrate/tasks/${taskId}/transition`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ status: newStatus }),
       });
 
@@ -411,7 +430,7 @@ export default function App() {
     try {
       const res = await fetch('/api/integrations/slack/dispatch', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           webhookUrl: integrationConfig.slack.webhookUrl,
           channel,
@@ -419,6 +438,10 @@ export default function App() {
         }),
       });
       const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast('Slack Blocked', data.error || 'Slack not configured', 'alert');
+        return false;
+      }
       showToast('Slack Dispatched', `Broadcast posted to ${channel}`, 'success');
       return data.success;
     } catch {
@@ -457,7 +480,10 @@ export default function App() {
           setIsRunningAuto(next);
           try {
             const ep = next ? '/api/orchestrate/engine/start' : '/api/orchestrate/engine/stop';
-            await fetch(ep, { method: 'POST' });
+            await fetch(ep, {
+              method: 'POST',
+              headers: getAuthHeaders(),
+            });
             showToast(
               next ? 'Server Background Coordinator ACTIVE' : 'Server Coordinator PAUSED',
               next ? 'Autonomous background daemon active. Will continue executing even if browser is closed.' : 'Server coordinator paused.',

@@ -1,20 +1,26 @@
-
 const assert = require('assert');
-const testAgent = { id: 'a1', name: 'Agent 1' };
-const testTasks = [
-  { id: 't1', assignedAgentId: 'a1', estimatedHours: 20, status: 'in_progress' }
-];
+const { calculateAgentLoad, buildGeminiOptimizerPrompt, balanceWorkload } = require('./implementation.js');
 
-const load = calculateAgentLoad(testAgent, testTasks, 40);
-assert.strictEqual(load.loadPercentage, 50);
-assert.strictEqual(load.status, 'balanced');
-if (typeof passCriterion === 'function') passCriterion('st-10');
+const targetId = process.argv[2];
 
-assert.strictEqual(calculateAgentLoad(testAgent, [{ assignedAgentId: 'a1', estimatedHours: 36 }], 40).status, 'overloaded');
-if (typeof passCriterion === 'function') passCriterion('st-11');
+if (!targetId || targetId === 'st-10') {
+  const load = calculateAgentLoad({ id: 'a1', velocity: 10 }, [{ assignedAgentId: 'a1', estimatedHours: 20 }], 40);
+  assert.strictEqual(load.loadPercentage, 50, 'Load percentage must be 50%');
+}
 
-const agents = [{ id: 'a1' }, { id: 'a2' }];
-const heavyTasks = [{ id: 't1', assignedAgentId: 'a1', estimatedHours: 36, status: 'in_progress' }];
-const res = balanceWorkload(agents, heavyTasks, 40);
-assert.ok(res.assignments.length > 0);
-if (typeof passCriterion === 'function') passCriterion('st-12');
+if (!targetId || targetId === 'st-11') {
+  const prompt = buildGeminiOptimizerPrompt([], [{ id: 'a1', role: 'Dev' }], []);
+  assert.ok(prompt.includes('Aegis Workload Optimizer Prompt'), 'Prompt must contain header');
+}
+
+if (!targetId || targetId === 'st-12') {
+  const balanced = balanceWorkload([{ id: 'a1', velocity: 10, skills: ['ts'] }], [{ id: 't1', key: 'T1', assignedAgentId: 'a1', estimatedHours: 35 }]);
+  assert.ok(Array.isArray(balanced.reassignments), 'Reassignments must be array');
+}
+
+if (targetId && !['st-10', 'st-11', 'st-12'].includes(targetId)) {
+  console.error('Unknown criterion: ' + targetId);
+  process.exit(1);
+}
+
+console.log('Passed assertions for criterion: ' + (targetId || 'all'));

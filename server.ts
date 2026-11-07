@@ -36,6 +36,18 @@ if (geminiApiKey) {
 import { coordinator } from './src/server/coordinator.js';
 import { balanceWorkload, calculateAgentLoad, buildGeminiOptimizerPrompt } from './src/services/workloadBalancer.js';
 import { handleRepositoryDispatch } from './src/server/deliveryHandler.js';
+import { requireAuthToken, getOrGenerateAuthToken } from './src/server/security/auth.js';
+import { redactSensitiveConfig } from './src/server/security/secrets.js';
+import { validateOutboundUrl } from './src/server/security/networkPolicy.js';
+import { storage } from './src/server/storage/db.js';
+
+// Auth Token session endpoint for client bootstrap
+app.get('/api/auth/session', (_req: Request, res: Response) => {
+  res.json({ token: getOrGenerateAuthToken() });
+});
+
+// Protect all mutating API endpoints with authentication token
+app.use('/api', requireAuthToken);
 
 async function callGeminiWithTimeout<T>(promise: Promise<T>, timeoutMs = 7000): Promise<T> {
   return Promise.race([
@@ -54,14 +66,14 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
-// Endpoint: Server-authoritative state management
+// Endpoint: Server-authoritative state management (redacts sensitive tokens from client response)
 app.get('/api/orchestrate/state', (_req: Request, res: Response) => {
-  res.json(coordinator.getState());
+  res.json(redactSensitiveConfig(coordinator.getState()));
 });
 
 app.post('/api/orchestrate/state', (req: Request, res: Response) => {
   const result = coordinator.updateState(req.body);
-  res.json(result);
+  res.json(redactSensitiveConfig(result));
 });
 
 // Endpoint: Centralized Task Status Transition with Quality Gate Enforcement
@@ -313,30 +325,26 @@ app.post('/api/orchestrate/agent-step', async (req: Request, res: Response) => {
       const isDone = task.status === 'review';
       const nextStatus = isDone ? 'done' : task.status === 'in_progress' ? 'review' : 'in_progress';
 
-      // Enforce centralized quality gate and dependency verification before advancing to 'done'
-      if (nextStatus === 'done') {
-        const taskForVerification = {
-          ...task,
-          subtasks: (task.subtasks || []).map((s: any) => ({
-            ...s,
-            completed: s.completed || (workerResult.subtasksCompleted && workerResult.subtasksCompleted.includes(s.id)),
-          })),
-          deliverables: [...(task.deliverables || []), workerResult.deliverableContent],
-        };
+      // Update task in coordinator state with deliverables and verified subtasks
+      const currentState = coordinator.getState();
+      const existingTask = currentState.tasks.find((t) => t.id === task.id || t.key === task.key);
+      if (existingTask) {
+        existingTask.deliverables = [...(existingTask.deliverables || []), workerResult.deliverableContent];
+        existingTask.subtasks = (existingTask.subtasks || []).map((s) => ({
+          ...s,
+          completed: s.completed || (workerResult.subtasksCompleted && workerResult.subtasksCompleted.includes(s.id)),
+        }));
+      }
 
-        const verification = coordinator.verifyTaskQualityGates(taskForVerification);
-        if (!verification.passed) {
-          const failedRules = verification.checks
-            .filter((c: any) => !c.passed)
-            .map((c: any) => `${c.rule}: ${c.detail}`)
-            .join('; ');
-          return res.status(400).json({
-            success: false,
-            blocked: true,
-            error: `Quality gates failed for ${task.key}. Cannot mark Done: ${failedRules}`,
-            verification,
-          });
-        }
+      // Enforce centralized quality gate and dependency verification via transitionTaskStatus
+      const transitionRes = coordinator.transitionTaskStatus(task.id, nextStatus as any);
+      if (!transitionRes.success) {
+        return res.status(400).json({
+          success: false,
+          blocked: true,
+          error: transitionRes.error || `Quality gates failed for ${task.key}. Cannot transition to ${nextStatus}`,
+          verification: transitionRes.verification,
+        });
       }
 
       return res.json({
@@ -345,10 +353,11 @@ app.post('/api/orchestrate/agent-step', async (req: Request, res: Response) => {
         reasoning: `Inspected workspace and executed verified test suite for ${task.key} (${workerResult.fileSize} bytes, SHA-256: ${workerResult.sha256.slice(0, 10)}...).`,
         actionTaken: workerResult.actionTaken,
         deliverableOutput: workerResult.deliverableContent,
-        nextStatus,
+        nextStatus: transitionRes.task?.status || nextStatus,
         subtasksCompleted: workerResult.subtasksCompleted,
+        task: transitionRes.task,
         communicationMessage: {
-          content: `Delivered verified code for ${task.key} (${task.title}). Moving status to ${nextStatus.toUpperCase()}. SHA-256: ${workerResult.sha256.slice(0, 12)}...`,
+          content: `Delivered verified code for ${task.key} (${task.title}). Moving status to ${(transitionRes.task?.status || nextStatus).toUpperCase()}. SHA-256: ${workerResult.sha256.slice(0, 12)}...`,
           messageType: nextStatus === 'done' ? 'deliverable' : 'status_update',
         },
       });
@@ -444,30 +453,34 @@ Generate a rigorous, professional stakeholder report in pure JSON (no markdown t
       }
     }
 
-    // Heuristic report fallback
+    // Truthful report derived strictly from actual tasks and real audit events
+    const velocity = completedTasks.reduce((sum: number, t: any) => sum + (t.estimatedHours || 0), 0);
+    const blockedTasks = tasks.filter((t: any) => t.status === 'blocked');
+    const highlights = completedTasks.length > 0
+      ? completedTasks.map((t: any) => `Completed ${t.key}: ${t.title} (${t.spentHours || 0}h logged)`)
+      : ['No tasks marked Done in current sprint yet.'];
+
+    const risksAndBlockers = blockedTasks.length > 0
+      ? blockedTasks.map((t: any) => `Blocked [${t.key}]: ${t.title} - ${t.lastAgentComment || 'Awaiting dependency resolution'}`)
+      : ['Zero blocked tasks currently recorded across the sprint backlog.'];
+
+    const nextMilestones = inProgressTasks.concat(reviewTasks).length > 0
+      ? inProgressTasks.concat(reviewTasks).map((t: any) => `Active Milestone [${t.key}]: ${t.title} (${t.status.toUpperCase()})`)
+      : ['Backlog grooming and initial sprint dispatch in progress.'];
+
     const fallbackReport = {
-      executiveSummary: `Sprint ${sprintNumber} is tracking steadily at ${completionRate}% completion across ${tasks.length} orchestrated work items. The agent cluster is prioritizing critical path architectural deliverables and API contracts.`,
+      executiveSummary: `Sprint ${sprintNumber} has ${completedTasks.length} of ${tasks.length} tasks completed (${completionRate}%). Active work comprises ${inProgressTasks.length} in development and ${reviewTasks.length} under review.`,
       metrics: {
-        velocity: completedTasks.length * 5,
+        velocity,
         completionRate,
-        blockerCount: tasks.filter((t: any) => t.priority === 'critical' && t.status !== 'done').length > 2 ? 2 : 0,
-        sprintHealth: completionRate > 50 ? 'Green' : completionRate > 25 ? 'Amber' : 'Green',
+        blockerCount: blockedTasks.length,
+        sprintHealth: blockedTasks.length === 0 ? 'Green' : blockedTasks.length <= 2 ? 'Amber' : 'Red',
       },
-      highlights: [
-        `Completed ${completedTasks.length} core user stories including foundational architecture`,
-        `${reviewTasks.length} task(s) currently undergoing automated QA verification and security checks`,
-        `Autonomous role alignment matched specialists with zero idle latency`,
-      ],
-      risksAndBlockers: [
-        'High-priority database migration items require dependency clearance from schema validation',
-        'Capacity headroom is balanced across backend and frontend specialist agents',
-      ],
-      nextMilestones: [
-        'Complete end-to-end integration and smoke test suite',
-        'Deploy release candidate to staging environment with real-time health telemetry',
-      ],
-      slackDigest: `🚀 *Aegis Orchestrator - Sprint ${sprintNumber} Executive Brief*\n• *Progress:* ${completionRate}% (${completedTasks.length}/${tasks.length} tasks completed)\n• *Active Work:* ${inProgressTasks.length} in development, ${reviewTasks.length} in QA\n• *Health:* 🟢 On Track`,
-      jiraDigest: `h3. Aegis Sprint ${sprintNumber} Automated Sync\n* *Status:* ${completionRate}% completed\n* *Verified Tasks:* ${completedTasks.map((t: any) => t.key).join(', ') || 'AEG-101'}\n* *Orchestrator Verdict:* Sprint objectives on schedule.`,
+      highlights,
+      risksAndBlockers,
+      nextMilestones,
+      slackDigest: `🚀 *Aegis Sprint ${sprintNumber} Update*\n• Progress: ${completionRate}% (${completedTasks.length}/${tasks.length} tasks)\n• Velocity: ${velocity}h completed\n• Blockers: ${blockedTasks.length}`,
+      jiraDigest: `h3. Aegis Sprint ${sprintNumber} Engineering Report\n* Completed: ${completedTasks.map((t: any) => t.key).join(', ') || 'None'}\n* Blockers: ${blockedTasks.map((t: any) => t.key).join(', ') || 'None'}`,
     };
 
     return res.json(fallbackReport);
@@ -577,23 +590,12 @@ app.post('/api/integrations/jira/sync', async (req: Request, res: Response) => {
       }
     }
 
-    // Diagnostic response when credentials are not yet entered
-    const defaultHost = (hostUrl || 'https://acme-enterprise.atlassian.net').replace(/\/+$/, '');
-    const defaultKey = task?.key || `${projectKey}-101`;
-    return res.json({
-      success: true,
-      realJiraCall: false,
+    // Explicit fail-closed response when credentials are not configured
+    return res.status(400).json({
+      success: false,
+      status: 'not_configured',
       action: action || 'sync_task',
-      jiraIssueId: defaultKey,
-      issueUrl: `${defaultHost}/browse/${defaultKey}`,
-      syncedAt: new Date().toISOString(),
-      mappedStatus: task?.status === 'done' ? 'Closed' : task?.status === 'review' ? 'In Review' : 'In Progress',
-      notice: 'Live Jira Cloud connector is ready. Enter your real Atlassian User Email and API Token above to create and transition live Jira tickets.',
-      fields: {
-        summary: task?.title || 'Autonomous Task',
-        assignee: task?.assignedAgentId || 'Aegis Bot',
-        priority: task?.priority || 'Medium',
-      },
+      error: 'Jira integration is not configured. Enter your verified Atlassian User Email and API Token in settings before synchronizing tickets.',
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Jira sync failed' });
@@ -652,37 +654,48 @@ app.post('/api/integrations/slack/dispatch', async (req: Request, res: Response)
       ],
     };
 
-    let realDispatchSuccess = false;
-    let realHttpStatus = null;
-    let responseBody = null;
-
-    if (webhookUrl && webhookUrl.startsWith('https://hooks.slack.com/')) {
-      try {
-        const slackResponse = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(blockKitPayload),
-          signal: AbortSignal.timeout(6000),
-        });
-        realDispatchSuccess = slackResponse.ok;
-        realHttpStatus = slackResponse.status;
-        responseBody = await slackResponse.text();
-      } catch (err: any) {
-        console.warn('Real Slack webhook dispatch error:', err.message);
-        responseBody = err.message;
-      }
+    if (!webhookUrl || !webhookUrl.startsWith('https://hooks.slack.com/')) {
+      return res.status(400).json({
+        success: false,
+        status: 'not_configured',
+        error: 'Slack is not configured. Configure a valid Slack Incoming Webhook URL (https://hooks.slack.com/...) in integration settings before dispatching telemetry.',
+      });
     }
 
-    res.json({
-      success: true,
-      dispatchedViaRealWebhook: realDispatchSuccess,
-      httpStatus: realHttpStatus,
-      responseBody,
-      channel,
-      payload: blockKitPayload,
-      timestamp: new Date().toISOString(),
-      messageId: `msg-${Date.now()}`,
-    });
+    try {
+      const slackResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(blockKitPayload),
+        signal: AbortSignal.timeout(6000),
+      });
+
+      const responseBody = await slackResponse.text();
+
+      if (!slackResponse.ok) {
+        return res.status(slackResponse.status || 400).json({
+          success: false,
+          httpStatus: slackResponse.status,
+          error: `Slack webhook rejected: ${responseBody || 'Non-200 response'}`,
+        });
+      }
+
+      return res.json({
+        success: true,
+        dispatchedViaRealWebhook: true,
+        httpStatus: slackResponse.status,
+        responseBody,
+        channel,
+        payload: blockKitPayload,
+        timestamp: new Date().toISOString(),
+        messageId: `msg-${Date.now()}`,
+      });
+    } catch (err: any) {
+      return res.status(502).json({
+        success: false,
+        error: `Slack network error: ${err.message}`,
+      });
+    }
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Slack dispatch failed' });
   }
@@ -880,6 +893,15 @@ app.post('/api/custom-providers/execute', async (req: Request, res: Response) =>
     const { endpointUrl, headers = {}, prompt, providerType = 'llm' } = req.body;
     if (!endpointUrl) return res.status(400).json({ error: 'endpointUrl is required' });
 
+    // Enforce SSRF protection policy
+    const urlValidation = await validateOutboundUrl(endpointUrl);
+    if (!urlValidation.allowed) {
+      return res.status(400).json({
+        error: `SSRF Policy Violation: ${urlValidation.reason}`,
+        code: 'SSRF_POLICY_VIOLATION',
+      });
+    }
+
     const startTime = Date.now();
     let bodyData: any = { prompt };
 
@@ -892,7 +914,7 @@ app.post('/api/custom-providers/execute', async (req: Request, res: Response) =>
       };
     }
 
-    const response = await fetch(endpointUrl, {
+    const response = await fetch(urlValidation.sanitizedUrl || endpointUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -930,9 +952,18 @@ app.post('/api/custom-providers/ping', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'endpointUrl is required' });
     }
 
+    // Enforce SSRF protection policy
+    const urlValidation = await validateOutboundUrl(endpointUrl);
+    if (!urlValidation.allowed) {
+      return res.status(400).json({
+        error: `SSRF Policy Violation: ${urlValidation.reason}`,
+        code: 'SSRF_POLICY_VIOLATION',
+      });
+    }
+
     const startTime = Date.now();
     try {
-      const response = await fetch(endpointUrl, {
+      const response = await fetch(urlValidation.sanitizedUrl || endpointUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

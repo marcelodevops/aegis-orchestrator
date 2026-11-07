@@ -144,14 +144,14 @@ export async function handleRepositoryDispatch(params: {
         };
       }
 
-      // Check 3: Git branch delivery is strictly disabled until isolated worktree and process argument calls are implemented
+      // Check 3: Git branch delivery is disabled until isolated branch execution cycle is proven
       if (localWriteMode === 'git_branch') {
         return {
           status: 403,
           body: {
             success: false,
             blocked: true,
-            error: 'Git branch delivery is currently disabled pending isolated worktree execution, process argument isolation, and automated regression testing. Use patch_export mode instead.',
+            error: 'Git branch delivery is currently disabled pending isolated worktree execution, branch creation isolation, and automated regression testing. Use local patch_export mode instead.',
           },
         };
       }
@@ -163,7 +163,7 @@ export async function handleRepositoryDispatch(params: {
           body: {
             success: false,
             blocked: true,
-            error: `Delivery blocked: Unknown or unsupported delivery mode "${localWriteMode}". Supported local modes are "patch_export" and "direct_write".`,
+            error: `Delivery blocked: Unknown or unsupported delivery mode "${localWriteMode}". Supported local modes are "patch_export", "direct_write", and "git_branch".`,
           },
         };
       }

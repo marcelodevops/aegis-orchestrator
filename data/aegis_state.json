@@ -38,10 +38,10 @@
         "// State schema contract verified\nexport type TaskLifecycle = \"backlog\" | \"todo\" | \"in_progress\" | \"review\" | \"done\";",
         "Handoff protocol v1.2 published to inter-agent memory bus."
       ],
-      "lastAgentComment": "Nexus-7: Architecture schema finalized and locked into global type registry.",
+      "lastAgentComment": "Quality Gate REJECTED \"Done\" transition: Inspected Physical Code Artifact on Disk: No physical code artifact found on disk in .aegis_artifacts/AEG-101/; Real Compiler AST Syntax Verification: No code artifact available for syntax compilation; Automated Test Suite & Cryptographic Hash: Automated unit test suite not found on disk",
       "jiraSynced": true,
       "slackNotified": true,
-      "lastUpdated": "2 hours ago"
+      "lastUpdated": "Just now"
     },
     {
       "id": "task-102",
@@ -49,7 +49,7 @@
       "title": "Build Interactive Kanban Board with Live Agent Execution Tags",
       "description": "Construct high-performance five-column Kanban layout featuring column filters, real-time agent presence pulses, and one-click transitions.",
       "epicId": "epic-kanban",
-      "status": "done",
+      "status": "review",
       "priority": "high",
       "assignedAgentId": "agent-fe",
       "estimatedHours": 12,
@@ -84,7 +84,7 @@
         "KanbanBoard.tsx responsive component with dynamic drop targets and drag feedback.",
         "# Deliverable for AEG-102: Build Interactive Kanban Board with Live Agent Execution Tags\n**Assigned Specialist:** Lyra UI (Senior Frontend & UX Specialist)\n**Execution Date:** 2026-10-23T04:22:44.569Z\n**Sprint:** Active Sprint 1\n\n## Technical Implementation Summary\nThe specialist has inspected the workspace contracts and executed the specifications for:\nConstruct high-performance five-column Kanban layout featuring column filters, real-time agent presence pulses, and one-click transitions.\n\n### Verified Acceptance Criteria:\n- [x] Implement five status columns with count indicators (Passed static check)\n- [x] Add active working pulse effect for assigned agents (Passed static check)\n- [x] Connect task detail modal with live deliverable viewer (Passed static check)\n\n### Architectural Artifact:\n```typescript\n// Auto-generated production component/contract for AEG-102\nexport interface AEG_102_Contract {\n  taskId: 'AEG-102';\n  status: 'verified';\n  executedBy: 'agent-fe';\n  timestamp: 1792729364569;\n  signature: 'QUVHLTEwMi1hZ2VudC1mZQ==';\n}\n```\n"
       ],
-      "lastAgentComment": "Quality Gate Verified: Passed all inspection criteria.",
+      "lastAgentComment": "Quality Gate REJECTED \"Done\" transition: Real Compiler AST Syntax Verification: Syntax compilation error: Unexpected token 'export'; Automated Test Suite & Cryptographic Hash: Cryptographic integrity signature verified (SHA-256: 68bd6958a3c10aac...)",
       "jiraSynced": true,
       "slackNotified": true,
       "lastUpdated": "Just now"
@@ -95,7 +95,7 @@
       "title": "Deploy Bi-Directional Jira & Slack Webhook Dispatcher",
       "description": "Create enterprise webhook endpoints enabling instant issue synchronization with Atlassian Jira and structured Block Kit summaries on Slack.",
       "epicId": "epic-integrations",
-      "status": "done",
+      "status": "review",
       "priority": "critical",
       "assignedAgentId": "agent-be",
       "estimatedHours": 10,
@@ -131,7 +131,7 @@
         "POST /api/integrations/slack/dispatch supports interactive fallback preview.",
         "# Deliverable for AEG-103: Deploy Bi-Directional Jira & Slack Webhook Dispatcher\n**Assigned Specialist:** Kaelen Dev (Backend & Integrations Engineer)\n**Execution Date:** 2026-10-23T04:22:51.568Z\n**Sprint:** Active Sprint 1\n\n## Technical Implementation Summary\nThe specialist has inspected the workspace contracts and executed the specifications for:\nCreate enterprise webhook endpoints enabling instant issue synchronization with Atlassian Jira and structured Block Kit summaries on Slack.\n\n### Verified Acceptance Criteria:\n- [x] Build /api/integrations/jira/sync endpoint (Passed static check)\n- [x] Implement Slack Block Kit payload compiler (Passed static check)\n- [x] Add real-time webhook delivery simulator with latency probe (Passed static check)\n\n### Architectural Artifact:\n```typescript\n// Auto-generated production component/contract for AEG-103\nexport interface AEG_103_Contract {\n  taskId: 'AEG-103';\n  status: 'verified';\n  executedBy: 'agent-be';\n  timestamp: 1792729371568;\n  signature: 'QUVHLTEwMy1hZ2VudC1iZQ==';\n}\n```\n"
       ],
-      "lastAgentComment": "Quality Gate Verified: Passed all inspection criteria.",
+      "lastAgentComment": "Quality Gate REJECTED \"Done\" transition: Inspected Physical Code Artifact on Disk: No physical code artifact found on disk in .aegis_artifacts/AEG-103/; Real Compiler AST Syntax Verification: No code artifact available for syntax compilation; Automated Test Suite & Cryptographic Hash: Automated unit test suite not found on disk",
       "jiraSynced": true,
       "slackNotified": true,
       "lastUpdated": "Just now"
@@ -169,7 +169,7 @@
       "title": "Automated Stakeholder Executive Status Reporting Engine",
       "description": "Automate C-suite sprint status reports with KPI summaries, risk mitigation plans, Gantt milestone tracking, and Markdown/PDF exports.",
       "epicId": "epic-analytics",
-      "status": "done",
+      "status": "review",
       "priority": "medium",
       "assignedAgentId": "agent-qa",
       "estimatedHours": 6,
@@ -204,7 +204,7 @@
       "deliverables": [
         "Report Generator Module v1.0 with 1-click Markdown export and Slack Digest generator."
       ],
-      "lastAgentComment": "Quality Gate Verified: Passed all inspection criteria.",
+      "lastAgentComment": "Quality Gate REJECTED \"Done\" transition: Inspected Physical Code Artifact on Disk: No physical code artifact found on disk in .aegis_artifacts/AEG-105/; Real Compiler AST Syntax Verification: No code artifact available for syntax compilation; Automated Test Suite & Cryptographic Hash: Automated unit test suite not found on disk",
       "jiraSynced": true,
       "slackNotified": true,
       "lastUpdated": "Just now"
@@ -247,9 +247,9 @@
         "Visualization"
       ],
       "deliverables": [
-        "### Implementation Artifact: `AEG-106`\n**Specialist:** Lyra UI (Senior Frontend & UX Specialist)\n**Workspace Location:** `workspace/AEG-106/implementation.js` (3170 bytes)\n**SHA-256 Digest:** `c3e9cc8a4caf7b02d325a2cc463eebc41aee95b43cb81b23bc034134751e602d`\n**Defect Status:** ✓ 0 Defects (Verified Clean)\n\n#### Verified Criteria (3/3):\n- [x] Compute node positions and dependency bezier curves (st-16)\n- [x] Color-code nodes by status and critical path highlighting (st-17)\n- [x] Add interactive zoom, pan, and node inspector tooltip (st-18)\n\n#### Unified Diff:\n```diff\n--- a/workspace/AEG-106/implementation.js\n+++ b/workspace/AEG-106/implementation.js\n@@ -1,113 +1,138 @@\n- * WARNING: DELIBERATE DEFECT ACTIVE (Cycle detection inverted)\n-  // --- DELIBERATE DEFECT INJECTED ---\n-  // Inversion defect: falsely reports that ANY valid acyclic graph has a cycle!\n-    hasCycle: true,\n-    cycleNodes: nodes.map(n => n.id),\n-    error: 'Deliberate defect: False positive cycle detected in clean acyclic DAG'\n /**\n  * DAG Dependency & Cycle Detection Engine\n  * Task: AEG-106 (Construct Interactive DAG Dependency Diagram & Visual Progress Chart)\n+ * VERIFIED PRODUCTION IMPLEMENTATION\n  */\n \n function topologicalSort(nodes) {\n   if (!Array.isArray(nodes) || nodes.length === 0) return [];\n   \n   const inDegree = new Map();\n   const adjList = new Map();\n   \n   nodes.forEach(n => {\n     inDegree.set(n.id, 0);\n     adjList.set(n.id, []);\n   });\n   \n   nodes.forEach(n => {\n     (n.dependencies || []).forEach(depId => {\n       if (adjList.has(depId)) {\n         adjList.get(depId).push(n.id);\n         inDegree.set(n.id, (inDegree.get(n.id) || 0) + 1);\n       }\n     });\n   });\n   \n   const queue = [];\n   inDegree.forEach((deg, id) => {\n     if (deg === 0) queue.push(id);\n   });\n   \n   const order = [];\n   while (queue.length > 0) {\n     const u = queue.shift();\n     order.push(u);\n     \n     (adjList.get(u) || []).forEach(v => {\n       inDegree.set(v, inDegree.get(v) - 1);\n       if (inDegree.get(v) === 0) {\n         queue.push(v);\n       }\n     });\n   }\n   \n   return order;\n }\n \n function detectCycles(nodes) {\n   if (!Array.isArray(nodes) || nodes.length === 0) return { hasCycle: false };\n \n+  const visited = new Set();\n+  const recStack = new Set();\n+  const adj = new Map();\n \n+  nodes.forEach(n => adj.set(n.id, n.dependencies || []));\n \n+  function dfs(u) {\n+    visited.add(u);\n+    recStack.add(u);\n \n+    const neighbors = adj.get(u) || [];\n+    for (const v of neighbors) {\n+      if (!visited.has(v)) {\n+        if (dfs(v)) return true;\n+      } else if (recStack.has(v)) {\n+        return true;\n       }\n     }\n \n+    recStack.delete(u);\n+    return false;\n   }\n \n   for (const n of nodes) {\n+    if (!visited.has(n.id)) {\n+      if (dfs(n.id)) {\n+        return { hasCycle: true, cycleNode: n.id };\n       }\n     }\n   }\n \n+  return { hasCycle: false };\n }\n \n function computeCriticalPath(nodes) {\n   if (!Array.isArray(nodes) || nodes.length === 0) return { totalHours: 0, criticalChain: [] };\n   \n   const nodeMap = new Map(nodes.map(n => [n.id, n]));\n   const memo = new Map();\n   \n   function getLongestPath(id) {\n     if (memo.has(id)) return memo.get(id);\n     const node = nodeMap.get(id);\n     const nodeWeight = (node && node.estimatedHours) || 1;\n     \n     let maxChildHours = 0;\n     let bestChildChain = [];\n     \n     const dependencies = (node && node.dependencies) || [];\n     for (const depId of dependencies) {\n       if (nodeMap.has(depId)) {\n         const res = getLongestPath(depId);\n         if (res.hours > maxChildHours) {\n           maxChildHours = res.hours;\n           bestChildChain = res.chain;\n         }\n       }\n     }\n     \n     const result = {\n       hours: nodeWeight + maxChildHours,\n       chain: [...bestChildChain, id]\n     };\n     memo.set(id, result);\n     return result;\n   }\n   \n   let longestChain = [];\n   let maxTotalHours = 0;\n   \n   for (const n of nodes) {\n     const res = getLongestPath(n.id);\n     if (res.hours > maxTotalHours) {\n       maxTotalHours = res.hours;\n       longestChain = res.chain;\n     }\n   }\n   \n   return {\n     totalHours: maxTotalHours,\n     criticalChain: longestChain\n   };\n }\n \n if (typeof module !== 'undefined' && module.exports) {\n   module.exports = { topologicalSort, detectCycles, computeCriticalPath };\n }\n \n```\n\n#### Test Execution Evidence:\n```\n✔ Criterion verified: st-16\n✔ Criterion verified: st-17\n✔ Criterion verified: st-18\n```\n"
+        "/**\n * DAG Topological Sort & Cycle Detection Module\n * Author: Aegis Autonomous Worker (AEG-106)\n \n */\n\nfunction detectCycles(nodes, edges) {\n  // DFS cycle detection using visited & recStack tracking\n  const visited = new Set();\n  const recStack = new Set();\n  const adj = new Map();\n  for (const n of nodes) adj.set(n, []);\n  for (const [u, v] of edges) {\n    if (!adj.has(u)) adj.set(u, []);\n    adj.get(u).push(v);\n  }\n\n  const dfs = (node) => {\n    visited.add(node);\n    recStack.add(node);\n    for (const neighbor of adj.get(node) || []) {\n      if (!visited.has(neighbor)) {\n        if (dfs(neighbor)) return true;\n      } else if (recStack.has(neighbor)) {\n        return true;\n      }\n    }\n    recStack.delete(node);\n    return false;\n  };\n\n  for (const node of nodes) {\n    if (!visited.has(node)) {\n      if (dfs(node)) return true;\n    }\n  }\n  return false;\n}\n\nfunction topologicalSort(nodes, edges) {\n  if (detectCycles(nodes, edges)) {\n    throw new Error(\"Cycle detected in DAG, topological sort impossible\");\n  }\n  const inDegree = new Map();\n  const adj = new Map();\n  for (const n of nodes) {\n    inDegree.set(n, 0);\n    adj.set(n, []);\n  }\n  for (const [u, v] of edges) {\n    inDegree.set(v, (inDegree.get(v) || 0) + 1);\n    adj.get(u).push(v);\n  }\n  const queue = [];\n  for (const [n, deg] of inDegree) {\n    if (deg === 0) queue.push(n);\n  }\n  const order = [];\n  while (queue.length > 0) {\n    const u = queue.shift();\n    order.push(u);\n    for (const v of adj.get(u) || []) {\n      inDegree.set(v, inDegree.get(v) - 1);\n      if (inDegree.get(v) === 0) queue.push(v);\n    }\n  }\n  return order;\n}\n\nfunction computeCriticalPath(nodes, edges, weights = {}) {\n  const order = topologicalSort(nodes, edges);\n  const dist = new Map();\n  for (const n of nodes) dist.set(n, weights[n] || 1);\n  for (const u of order) {\n    const uDist = dist.get(u);\n    for (const [from, to] of edges) {\n      if (from === u) {\n        const nextDist = uDist + (weights[to] || 1);\n        if (nextDist > (dist.get(to) || 0)) {\n          dist.set(to, nextDist);\n        }\n      }\n    }\n  }\n  let maxPath = 0;\n  for (const d of dist.values()) {\n    if (d > maxPath) maxPath = d;\n  }\n  return { order, maxLatency: maxPath };\n}\n\nmodule.exports = { detectCycles, topologicalSort, computeCriticalPath };\n"
       ],
-      "lastAgentComment": "Lyra UI: Queued up for frontend development.",
+      "lastAgentComment": "Quality Gate REJECTED \"Done\" transition: Prerequisite Dependencies Cleared: Blocked by dependencies: AEG-101 (Status is REVIEW)",
       "jiraSynced": false,
       "slackNotified": false,
       "lastUpdated": "Just now"
@@ -290,6 +290,234 @@
       "jiraSynced": false,
       "slackNotified": false,
       "lastUpdated": "1 day ago"
+    },
+    {
+      "id": "task-unmet-upstream",
+      "key": "AEG-UPSTREAM",
+      "title": "Upstream task",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "assignedAgentId": "agent-devops"
+    },
+    {
+      "id": "task-stage-block-1",
+      "key": "AEG-BLOCK-1",
+      "title": "Blocked In Progress",
+      "status": "todo",
+      "dependencies": [
+        "task-unmet-upstream"
+      ],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-stage-block-2",
+      "key": "AEG-NO-ARTIFACT",
+      "title": "Missing Artifact",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-unmet-upstream",
+      "key": "AEG-UPSTREAM",
+      "title": "Upstream task",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "assignedAgentId": "agent-devops"
+    },
+    {
+      "id": "task-stage-block-1",
+      "key": "AEG-BLOCK-1",
+      "title": "Blocked In Progress",
+      "status": "todo",
+      "dependencies": [
+        "task-unmet-upstream"
+      ],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-stage-block-2",
+      "key": "AEG-NO-ARTIFACT",
+      "title": "Missing Artifact",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-unmet-upstream",
+      "key": "AEG-UPSTREAM",
+      "title": "Upstream task",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "assignedAgentId": "agent-devops"
+    },
+    {
+      "id": "task-stage-block-1",
+      "key": "AEG-BLOCK-1",
+      "title": "Blocked In Progress",
+      "status": "todo",
+      "dependencies": [
+        "task-unmet-upstream"
+      ],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-stage-block-2",
+      "key": "AEG-NO-ARTIFACT",
+      "title": "Missing Artifact",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-unmet-upstream",
+      "key": "AEG-UPSTREAM",
+      "title": "Upstream task",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "assignedAgentId": "agent-devops"
+    },
+    {
+      "id": "task-stage-block-1",
+      "key": "AEG-BLOCK-1",
+      "title": "Blocked In Progress",
+      "status": "todo",
+      "dependencies": [
+        "task-unmet-upstream"
+      ],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-stage-block-2",
+      "key": "AEG-NO-ARTIFACT",
+      "title": "Missing Artifact",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-unmet-upstream",
+      "key": "AEG-UPSTREAM",
+      "title": "Upstream task",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": []
+    },
+    {
+      "id": "task-stage-block-1",
+      "key": "AEG-BLOCK-1",
+      "title": "Blocked In Progress",
+      "status": "todo",
+      "dependencies": [
+        "task-unmet-upstream"
+      ],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-stage-block-2",
+      "key": "AEG-NO-ARTIFACT",
+      "title": "Missing Artifact",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-unmet-upstream",
+      "key": "AEG-UPSTREAM",
+      "title": "Upstream task",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": []
+    },
+    {
+      "id": "task-stage-block-1",
+      "key": "AEG-BLOCK-1",
+      "title": "Blocked In Progress",
+      "status": "todo",
+      "dependencies": [
+        "task-unmet-upstream"
+      ],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-stage-block-2",
+      "key": "AEG-NO-ARTIFACT",
+      "title": "Missing Artifact",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-unmet-upstream",
+      "key": "AEG-UPSTREAM",
+      "title": "Upstream task",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": []
+    },
+    {
+      "id": "task-stage-block-1",
+      "key": "AEG-BLOCK-1",
+      "title": "Blocked In Progress",
+      "status": "todo",
+      "dependencies": [
+        "task-unmet-upstream"
+      ],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-stage-block-2",
+      "key": "AEG-NO-ARTIFACT",
+      "title": "Missing Artifact",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-unmet-upstream",
+      "key": "AEG-UPSTREAM",
+      "title": "Upstream task",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": []
+    },
+    {
+      "id": "task-stage-block-1",
+      "key": "AEG-BLOCK-1",
+      "title": "Blocked In Progress",
+      "status": "todo",
+      "dependencies": [
+        "task-unmet-upstream"
+      ],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-stage-block-2",
+      "key": "AEG-NO-ARTIFACT",
+      "title": "Missing Artifact",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "deliverables": []
     },
     {
       "id": "task-unmet-upstream",
@@ -651,6 +879,26 @@
   },
   "communications": [
     {
+      "id": "comm-1794017325326",
+      "timestamp": "02:08 AM",
+      "senderId": "agent-orch",
+      "senderName": "Aegis Prime Core",
+      "senderRole": "Chief Orchestrator",
+      "recipientId": "all",
+      "content": "Central Quality Gate enforced: Rejected unauthorized \"Done\" transition for [AEG-106]. Quality checks must pass before completion.",
+      "messageType": "blocker"
+    },
+    {
+      "id": "comm-1794016619748",
+      "timestamp": "01:56 AM",
+      "senderId": "agent-orch",
+      "senderName": "Aegis Prime Core",
+      "senderRole": "Chief Orchestrator",
+      "recipientId": "all",
+      "content": "Central Quality Gate enforced: Rejected unauthorized \"Done\" transition for [AEG-101, AEG-102, AEG-103, AEG-105]. Quality checks must pass before completion.",
+      "messageType": "blocker"
+    },
+    {
       "id": "comm-1792795574404",
       "timestamp": "10:46 PM",
       "senderId": "agent-arch",
@@ -796,5 +1044,5 @@
   ],
   "cycleCount": 12,
   "daemonRunning": false,
-  "lastUpdated": "2026-11-06T22:46:48.234Z"
+  "lastUpdated": "2026-11-07T02:20:36.441Z"
 }

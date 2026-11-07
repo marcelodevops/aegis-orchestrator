@@ -1,137 +1,92 @@
 /**
- * DAG Dependency & Cycle Detection Engine
- * Task: AEG-106 (Construct Interactive DAG Dependency Diagram & Visual Progress Chart)
- * VERIFIED PRODUCTION IMPLEMENTATION
+ * DAG Topological Sort & Cycle Detection Module
+ * Author: Aegis Autonomous Worker (AEG-106)
+ 
  */
 
-function topologicalSort(nodes) {
-  if (!Array.isArray(nodes) || nodes.length === 0) return [];
-  
-  const inDegree = new Map();
-  const adjList = new Map();
-  
-  nodes.forEach(n => {
-    inDegree.set(n.id, 0);
-    adjList.set(n.id, []);
-  });
-  
-  nodes.forEach(n => {
-    (n.dependencies || []).forEach(depId => {
-      if (adjList.has(depId)) {
-        adjList.get(depId).push(n.id);
-        inDegree.set(n.id, (inDegree.get(n.id) || 0) + 1);
+function detectCycles(nodes, edges) {
+  // DFS cycle detection using visited & recStack tracking
+  const visited = new Set();
+  const recStack = new Set();
+  const adj = new Map();
+  for (const n of nodes) adj.set(n, []);
+  for (const [u, v] of edges) {
+    if (!adj.has(u)) adj.set(u, []);
+    adj.get(u).push(v);
+  }
+
+  const dfs = (node) => {
+    visited.add(node);
+    recStack.add(node);
+    for (const neighbor of adj.get(node) || []) {
+      if (!visited.has(neighbor)) {
+        if (dfs(neighbor)) return true;
+      } else if (recStack.has(neighbor)) {
+        return true;
       }
-    });
-  });
-  
+    }
+    recStack.delete(node);
+    return false;
+  };
+
+  for (const node of nodes) {
+    if (!visited.has(node)) {
+      if (dfs(node)) return true;
+    }
+  }
+  return false;
+}
+
+function topologicalSort(nodes, edges) {
+  if (detectCycles(nodes, edges)) {
+    throw new Error("Cycle detected in DAG, topological sort impossible");
+  }
+  const inDegree = new Map();
+  const adj = new Map();
+  for (const n of nodes) {
+    inDegree.set(n, 0);
+    adj.set(n, []);
+  }
+  for (const [u, v] of edges) {
+    inDegree.set(v, (inDegree.get(v) || 0) + 1);
+    adj.get(u).push(v);
+  }
   const queue = [];
-  inDegree.forEach((deg, id) => {
-    if (deg === 0) queue.push(id);
-  });
-  
+  for (const [n, deg] of inDegree) {
+    if (deg === 0) queue.push(n);
+  }
   const order = [];
   while (queue.length > 0) {
     const u = queue.shift();
     order.push(u);
-    
-    (adjList.get(u) || []).forEach(v => {
+    for (const v of adj.get(u) || []) {
       inDegree.set(v, inDegree.get(v) - 1);
-      if (inDegree.get(v) === 0) {
-        queue.push(v);
-      }
-    });
+      if (inDegree.get(v) === 0) queue.push(v);
+    }
   }
-  
   return order;
 }
 
-function detectCycles(nodes) {
-  if (!Array.isArray(nodes) || nodes.length === 0) return { hasCycle: false };
-
-  const visited = new Set();
-  const recStack = new Set();
-  const adj = new Map();
-
-  nodes.forEach(n => adj.set(n.id, n.dependencies || []));
-
-  function dfs(u) {
-    visited.add(u);
-    recStack.add(u);
-
-    const neighbors = adj.get(u) || [];
-    for (const v of neighbors) {
-      if (!visited.has(v)) {
-        if (dfs(v)) return true;
-      } else if (recStack.has(v)) {
-        return true;
-      }
-    }
-
-    recStack.delete(u);
-    return false;
-  }
-
-  for (const n of nodes) {
-    if (!visited.has(n.id)) {
-      if (dfs(n.id)) {
-        return { hasCycle: true, cycleNode: n.id };
-      }
-    }
-  }
-
-  return { hasCycle: false };
-}
-
-function computeCriticalPath(nodes) {
-  if (!Array.isArray(nodes) || nodes.length === 0) return { totalHours: 0, criticalChain: [] };
-  
-  const nodeMap = new Map(nodes.map(n => [n.id, n]));
-  const memo = new Map();
-  
-  function getLongestPath(id) {
-    if (memo.has(id)) return memo.get(id);
-    const node = nodeMap.get(id);
-    const nodeWeight = (node && node.estimatedHours) || 1;
-    
-    let maxChildHours = 0;
-    let bestChildChain = [];
-    
-    const dependencies = (node && node.dependencies) || [];
-    for (const depId of dependencies) {
-      if (nodeMap.has(depId)) {
-        const res = getLongestPath(depId);
-        if (res.hours > maxChildHours) {
-          maxChildHours = res.hours;
-          bestChildChain = res.chain;
+function computeCriticalPath(nodes, edges, weights = {}) {
+  const order = topologicalSort(nodes, edges);
+  const dist = new Map();
+  for (const n of nodes) dist.set(n, weights[n] || 1);
+  for (const u of order) {
+    const uDist = dist.get(u);
+    for (const [from, to] of edges) {
+      if (from === u) {
+        const nextDist = uDist + (weights[to] || 1);
+        if (nextDist > (dist.get(to) || 0)) {
+          dist.set(to, nextDist);
         }
       }
     }
-    
-    const result = {
-      hours: nodeWeight + maxChildHours,
-      chain: [...bestChildChain, id]
-    };
-    memo.set(id, result);
-    return result;
   }
-  
-  let longestChain = [];
-  let maxTotalHours = 0;
-  
-  for (const n of nodes) {
-    const res = getLongestPath(n.id);
-    if (res.hours > maxTotalHours) {
-      maxTotalHours = res.hours;
-      longestChain = res.chain;
-    }
+  let maxPath = 0;
+  for (const d of dist.values()) {
+    if (d > maxPath) maxPath = d;
   }
-  
-  return {
-    totalHours: maxTotalHours,
-    criticalChain: longestChain
-  };
+  return { order, maxLatency: maxPath };
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { topologicalSort, detectCycles, computeCriticalPath };
-}
+module.exports = { detectCycles, topologicalSort, computeCriticalPath };

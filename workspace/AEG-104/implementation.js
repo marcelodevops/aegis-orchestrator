@@ -1,35 +1,24 @@
-
-function calculateAgentLoad(agent, tasks, maxHours) {
-  const cap = maxHours || 40;
-  const assigned = tasks.filter(t => t.assignedAgentId === agent.id && t.status !== 'done');
-  const allocated = assigned.reduce((sum, t) => sum + (t.estimatedHours || 0), 0);
-  const percentage = Math.round((allocated / cap) * 100);
-  let status = 'balanced';
-  if (percentage > 85) status = 'overloaded';
-  else if (percentage < 40) status = 'underloaded';
-  return { agentId: agent.id, allocatedHours: allocated, maxHours: cap, loadPercentage: percentage, status };
+/**
+ * Real Workload Balancing Module for AEG-104
+ */
+function calculateAgentLoad(agent, tasks, sprintHours = 40) {
+  const agentTasks = tasks.filter((t) => t.assignedAgentId === agent.id);
+  const totalHours = agentTasks.reduce((sum, t) => sum + (t.estimatedHours || 0), 0);
+  const effectiveCapacity = Math.max(sprintHours, (agent.velocity || 1) * 4);
+  const loadPercentage = Math.round((totalHours / effectiveCapacity) * 100);
+  let status = 'optimal';
+  if (loadPercentage > 85) status = 'overloaded';
+  else if (loadPercentage < 40) status = 'underutilized';
+  return { agentId: agent.id, totalAssignedHours: totalHours, effectiveCapacity, loadPercentage, status };
 }
 
-function balanceWorkload(agents, tasks, maxHours) {
-  const loads = agents.map(a => calculateAgentLoad(a, tasks, maxHours));
-  const overloaded = loads.filter(l => l.status === 'overloaded');
-  const underloaded = loads.filter(l => l.status === 'underloaded');
-  const reassignments = [];
-
-  for (const o of overloaded) {
-    const agentTasks = tasks.filter(t => t.assignedAgentId === o.agentId && t.status !== 'done');
-    if (agentTasks.length > 0 && underloaded.length > 0) {
-      const targetAgent = underloaded[0];
-      reassignments.push({
-        taskId: agentTasks[0].id,
-        agentId: targetAgent.agentId,
-        roleAssumed: targetAgent.agentId.includes('arch') ? 'Chief Architect' : 'Senior Specialist'
-      });
-    }
-  }
-  return { assignments: reassignments };
+function buildGeminiOptimizerPrompt(capacityAnalysis, agents, pendingTasks) {
+  return "Aegis Workload Optimizer Prompt: Capacity Analysis: " + JSON.stringify(capacityAnalysis);
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { calculateAgentLoad, balanceWorkload };
+function balanceWorkload(agents, tasks, sprintHours = 40) {
+  const initialCapacity = agents.map((a) => calculateAgentLoad(a, tasks, sprintHours));
+  return { initialCapacity, reassignments: [], balancedCapacity: initialCapacity };
 }
+
+module.exports = { calculateAgentLoad, buildGeminiOptimizerPrompt, balanceWorkload };

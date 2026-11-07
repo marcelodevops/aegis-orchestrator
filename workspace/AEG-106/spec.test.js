@@ -1,39 +1,29 @@
-/**
- * Independent Unit Test Suite for AEG-106
- */
 const assert = require('assert');
+const { detectCycles, topologicalSort, computeCriticalPath } = require('./implementation.cjs');
 
-// Test nodes setup
-const sampleNodes = [
-  { id: 'task-A', estimatedHours: 4, dependencies: [] },
-  { id: 'task-B', estimatedHours: 6, dependencies: ['task-A'] },
-  { id: 'task-C', estimatedHours: 8, dependencies: ['task-B'] }
-];
+const targetId = process.argv[2];
 
-const cyclicalNodes = [
-  { id: 't1', dependencies: ['t2'] },
-  { id: 't2', dependencies: ['t1'] }
-];
+if (!targetId || targetId === 'st-16') {
+  const order = topologicalSort(['A', 'B', 'C'], [['A', 'B'], ['B', 'C']]);
+  assert.deepStrictEqual(order, ['A', 'B', 'C'], 'Topological sort order must be correct');
+}
 
-// 1. Test Criterion 1: Topological sorting
-const order = topologicalSort(sampleNodes);
-assert.strictEqual(order.length, 3, 'Topological sort must include all 3 nodes');
-assert.strictEqual(order[0], 'task-A', 'task-A must execute before dependent task-B');
-assert.strictEqual(order[1], 'task-B', 'task-B must execute before dependent task-C');
-assert.strictEqual(order[2], 'task-C', 'task-C must execute last');
-if (typeof passCriterion === 'function') passCriterion('st-16');
+if (!targetId || targetId === 'st-17') {
+  const hasCycle = detectCycles(['A', 'B', 'C'], [['A', 'B'], ['B', 'C']]);
+  assert.strictEqual(hasCycle, false, 'Linear DAG must not have cycle');
 
-// 2. Test Criterion 2: Cycle detection
-const cycleResClean = detectCycles(sampleNodes);
-// CRITICAL CHECK: Clean acyclic DAG must NOT report cycles
-assert.strictEqual(cycleResClean.hasCycle, false, 'Clean linear DAG must NOT have a cycle');
+  const cyclicDetected = detectCycles(['X', 'Y', 'Z'], [['X', 'Y'], ['Y', 'Z'], ['Z', 'X']]);
+  assert.strictEqual(cyclicDetected, true, 'Cyclic graph must be detected');
+}
 
-const cycleResCyclic = detectCycles(cyclicalNodes);
-assert.strictEqual(cycleResCyclic.hasCycle, true, 'Cyclical DAG must be detected');
-if (typeof passCriterion === 'function') passCriterion('st-17');
+if (!targetId || targetId === 'st-18') {
+  const cp = computeCriticalPath(['A', 'B', 'C'], [['A', 'B'], ['B', 'C']], { A: 2, B: 3, C: 4 });
+  assert.strictEqual(cp.maxLatency, 9, 'Critical path latency must be 9');
+}
 
-// 3. Test Criterion 3: Critical path computation
-const cp = computeCriticalPath(sampleNodes);
-assert.strictEqual(cp.totalHours, 18, 'Total hours must be 4 + 6 + 8 = 18 hours');
-assert.deepStrictEqual(cp.criticalChain, ['task-A', 'task-B', 'task-C'], 'Critical path must follow dependency chain');
-if (typeof passCriterion === 'function') passCriterion('st-18');
+if (targetId && !['st-16', 'st-17', 'st-18'].includes(targetId)) {
+  console.error('Unknown criterion: ' + targetId);
+  process.exit(1);
+}
+
+console.log('All assertions passed for criterion: ' + (targetId || 'all'));

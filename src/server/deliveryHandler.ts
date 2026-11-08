@@ -383,13 +383,42 @@ export async function handleRepositoryDispatch(params: {
       };
     }
 
-    // Check 2: Remote Git delivery is strictly disabled until isolated worktree execution is implemented
+    // Check 2: Deliver via GitDeliveryService to remote repository
+    const { GitDeliveryService } = await import('./delivery/gitDeliveryService.js');
+    const remoteRes = await GitDeliveryService.deliverToRemote(targetTask.id, {
+      repoUrl: cleanUrl,
+      branchName: `${branchPrefix}${taskKey.toLowerCase()}`,
+      commitMessage: `Aegis Orchestrator: Verified remote delivery for ${taskKey}`,
+      targetDirectory,
+      defaultBranch,
+      apiToken,
+      deliveryMode,
+    });
+
+    if (!remoteRes.success) {
+      return {
+        status: remoteRes.blocked ? 400 : 500,
+        body: {
+          success: false,
+          blocked: true,
+          error: remoteRes.error,
+        },
+      };
+    }
+
     return {
-      status: 403,
+      status: 200,
       body: {
-        success: false,
-        blocked: true,
-        error: 'Remote Git delivery is currently disabled pending isolated worktree execution, branch creation isolation, and automated regression testing. Use local patch_export mode instead.',
+        success: true,
+        type: 'remote_git',
+        action: action === 'create_pr' ? 'create_pr' : 'deliver',
+        branchName: remoteRes.branchName,
+        commitHash: remoteRes.commitHash,
+        prUrl: remoteRes.prUrl,
+        prNumber: remoteRes.prNumber,
+        taskKey,
+        deliveredAt: new Date().toISOString(),
+        message: `Verified code delivered to remote repository on branch "${remoteRes.branchName}".${remoteRes.prUrl ? ` PR: ${remoteRes.prUrl}` : ''}`,
       },
     };
   }

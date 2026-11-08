@@ -195,6 +195,7 @@ export class CodingWorker {
     } catch (err: any) {
       return {
         success: false,
+        blocked: true,
         taskKey: task.key,
         workspaceDir: containment.resolvedPath,
         artifactPath: codeFilePath,
@@ -210,6 +211,39 @@ export class CodingWorker {
         actionTaken: 'Worker execution failed',
         deliverableContent: '',
         error: err.message,
+      };
+    }
+
+    // Handle failed, timed_out, and budget_exhausted statuses explicitly
+    // Pre-existing files in workspace must NEVER convert a failed run into success!
+    if (workerResult.status === 'failed' || workerResult.status === 'timed_out' || workerResult.status === 'budget_exhausted') {
+      const currentTask = storage.getTaskById(task.id) || storage.getTaskById(task.key);
+      if (currentTask) {
+        storage.updateTaskWithRevision(currentTask.id, currentTask.version, {
+          status: 'blocked',
+          lastAgentComment: `Worker execution ended with ${workerResult.status}: ${workerResult.error || 'Execution incomplete'}`,
+        });
+      }
+
+      return {
+        success: false,
+        blocked: true,
+        taskKey: task.key,
+        workspaceDir: containment.resolvedPath,
+        artifactPath: codeFilePath,
+        testPath: testFilePath,
+        implementationCode: '',
+        testCode: '',
+        diff: '',
+        sha256: '',
+        fileSize: 0,
+        subtasksCompleted: [],
+        testOutput: `Worker execution ended with status: ${workerResult.status}. ${workerResult.error || ''}`,
+        hasDefect: true,
+        defectDescription: workerResult.error || `Worker status: ${workerResult.status}`,
+        actionTaken: `Worker execution ended with ${workerResult.status}`,
+        deliverableContent: '',
+        error: workerResult.error || `Worker execution status: ${workerResult.status}`,
       };
     }
 
@@ -250,7 +284,8 @@ export class CodingWorker {
       : undefined;
 
     return {
-      success: true,
+      success: verification.allPassed && !options.defectMode,
+      blocked: !verification.allPassed,
       taskKey: task.key,
       workspaceDir: containment.resolvedPath,
       artifactPath: codeFilePath,
@@ -266,6 +301,7 @@ export class CodingWorker {
       defectDescription,
       actionTaken: options.defectFeedback ? 'Applied surgical defect correction' : 'Implemented task criteria',
       deliverableContent: implCode,
+      error: !verification.allPassed ? defectDescription : undefined,
     };
   }
 

@@ -2,15 +2,15 @@
  * Aegis Orchestrator - Independent Acceptance Engine & Evidence Ledger
  * 
  * Verifies candidate implementations against explicit criteria using
- * independent, out-of-process checks. Binds immutable evidence records
- * to candidate workspace digests.
+ * independent, out-of-process checks in an enforced sandbox runtime.
+ * Binds immutable evidence records to canonical candidate workspace digests.
  */
 
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { storage } from '../storage/db.js';
-import { runIsolatedProcess } from '../execution/isolatedProcess.js';
+import { runInSandbox } from '../execution/sandboxRuntime.js';
 import { assertPathContained } from '../execution/pathContainment.js';
 
 export interface CriterionVerificationSpec {
@@ -19,6 +19,7 @@ export interface CriterionVerificationSpec {
   expectedFile?: string;
   expectedContentPattern?: string;
   timeoutMs?: number;
+  trustedScriptPath?: string;
 }
 
 export interface CriterionCheckResult {
@@ -39,7 +40,8 @@ export interface AcceptanceEvaluationResult {
 }
 
 /**
- * Computes deterministic SHA-256 digest of workspace candidate state.
+ * Computes deterministic SHA-256 canonical digest of candidate workspace.
+ * Sorts relative paths, includes file mode, size, and content.
  */
 export function computeWorkspaceTreeHash(workspacePath: string): string {
   const hash = crypto.createHash('sha256');
@@ -50,15 +52,21 @@ export function computeWorkspaceTreeHash(workspacePath: string): string {
     entries.sort((a, b) => a.name.localeCompare(b.name));
 
     for (const entry of entries) {
-      if (entry.name === '.git' || entry.name === 'node_modules' || entry.name === 'dist') continue;
+      if (entry.name === '.git' || entry.name === 'node_modules' || entry.name === 'dist' || entry.name === '.sandbox_scratch') continue;
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         walk(full);
       } else if (entry.isFile()) {
         try {
+          const stats = fs.statSync(full);
           const content = fs.readFileSync(full);
           const rel = path.relative(workspacePath, full);
           hash.update(rel);
+          hash.update('\0');
+          hash.update((stats.mode & 0o777).toString(8));
+          hash.update('\0');
+          hash.update(String(stats.size));
+          hash.update('\0');
           hash.update(content);
         } catch {}
       }
@@ -68,6 +76,8 @@ export function computeWorkspaceTreeHash(workspacePath: string): string {
   walk(workspacePath);
   return hash.digest('hex');
 }
+
+export const computeCanonicalCandidateDigest = computeWorkspaceTreeHash;
 
 /**
  * Runs independent verification for all criteria of a task against the workspace.
@@ -157,12 +167,34 @@ export async function verifyTaskAcceptance(params: {
         }
       }
     } else {
-      // Default: trusted test command
-      verifierName = 'isolated_process_verifier';
+      // Default: trusted test command executed in sandbox runtime
+      verifierName = 'sandboxed_acceptance_verifier';
       const command = spec.command || 'node';
       let args = spec.args;
+      const trustedReadPaths: string[] = [];
 
-      if (!args || args.length === 0) {
+      // Check for server-owned trusted suite outside workspace
+      const serverTrustedById = path.resolve(process.cwd(), 'data/trusted_suites', task.id, `${crit.id}.test.cjs`);
+      const serverTrustedByKey = path.resolve(process.cwd(), 'data/trusted_suites', task.key, `${crit.id}.test.cjs`);
+      const serverIdSuite = path.resolve(process.cwd(), 'data/trusted_suites', task.id, 'spec.test.cjs');
+      const serverKeySuite = path.resolve(process.cwd(), 'data/trusted_suites', task.key, 'spec.test.cjs');
+
+      if (spec.trustedScriptPath && fs.existsSync(spec.trustedScriptPath)) {
+        args = [spec.trustedScriptPath, crit.id];
+        trustedReadPaths.push(spec.trustedScriptPath);
+      } else if (fs.existsSync(serverTrustedById)) {
+        args = [serverTrustedById, crit.id];
+        trustedReadPaths.push(serverTrustedById);
+      } else if (fs.existsSync(serverTrustedByKey)) {
+        args = [serverTrustedByKey, crit.id];
+        trustedReadPaths.push(serverTrustedByKey);
+      } else if (fs.existsSync(serverIdSuite)) {
+        args = [serverIdSuite, crit.id];
+        trustedReadPaths.push(serverIdSuite);
+      } else if (fs.existsSync(serverKeySuite)) {
+        args = [serverKeySuite, crit.id];
+        trustedReadPaths.push(serverKeySuite);
+      } else if (!args || args.length === 0) {
         const cjsTest = path.join(workspacePath, 'spec.test.cjs');
         const jsTest = path.join(workspacePath, 'spec.test.js');
         const taskTest = path.join(workspacePath, `${task.key}.test.js`);
@@ -183,11 +215,13 @@ export async function verifyTaskAcceptance(params: {
       }
 
       if (args && args.length > 0) {
-        const procRes = await runIsolatedProcess({
+        const procRes = await runInSandbox({
           command,
           args,
-          cwd: workspacePath,
+          workspacePath,
+          allowFsRead: trustedReadPaths,
           timeoutMs: spec.timeoutMs || 20000,
+          allowNetwork: false,
         });
 
         stdout = procRes.stdout;
@@ -235,6 +269,37 @@ export async function verifyTaskAcceptance(params: {
       stderr,
       failureReason,
     });
+  }
+
+  // Store immutable accepted candidate snapshot upon acceptance
+  if (allPassed) {
+    try {
+      const candidateSnapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, candidateHash);
+      if (!fs.existsSync(candidateSnapshotDir)) {
+        fs.mkdirSync(candidateSnapshotDir, { recursive: true });
+        fs.cpSync(workspacePath, candidateSnapshotDir, {
+          recursive: true,
+          filter: (src) => {
+            const base = path.basename(src);
+            return base !== '.git' && base !== 'node_modules' && base !== '.sandbox_scratch';
+          },
+        });
+        fs.writeFileSync(
+          path.join(candidateSnapshotDir, 'candidate_metadata.json'),
+          JSON.stringify({
+            taskId: task.id,
+            taskKey: task.key,
+            candidateHash,
+            acceptedAt: new Date().toISOString(),
+            baseCommit: baseCommit || null,
+            requirementsVersion: task.requirementsVersion || 1,
+          }, null, 2),
+          'utf8'
+        );
+      }
+    } catch (snapshotErr) {
+      console.warn('Failed to snapshot accepted candidate:', snapshotErr);
+    }
   }
 
   // Update task acceptedCandidateHash upon verification verdict

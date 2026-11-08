@@ -14,6 +14,7 @@ import { storage } from '../src/server/storage/db.js';
 import { coordinator } from '../src/server/coordinator.js';
 import { handleRepositoryDispatch, isPathContained } from '../src/server/deliveryHandler.js';
 import { calculateAgentLoad } from '../src/services/workloadBalancer.js';
+import { computeCanonicalCandidateDigest } from '../src/server/verification/acceptanceEngine.js';
 
 console.log('=== RUNNING AEGIS GUARDRAILS & LIVE DELIVERY REGRESSION SUITE ===\n');
 
@@ -249,13 +250,22 @@ async function executeSuite() {
       spawnSync('git', ['add', '.'], { cwd: gitRepoDir });
       spawnSync('git', ['commit', '-m', 'Initial commit'], { cwd: gitRepoDir });
 
+      // Compute real canonical candidate digest for AEG-104 delivery artifact
+      const sourceArtifact = path.resolve(process.cwd(), '.aegis_artifacts/AEG-104/implementation.js');
+      const tempStage = fs.mkdtempSync(path.join(os.tmpdir(), 'aeg104-stage-'));
+      const targetSub = path.join(tempStage, 'src/services');
+      fs.mkdirSync(targetSub, { recursive: true });
+      fs.copyFileSync(sourceArtifact, path.join(targetSub, 'AEG-104_Service.js'));
+      const realCandidateHash = computeCanonicalCandidateDigest(tempStage);
+      fs.rmSync(tempStage, { recursive: true, force: true });
+
       // Record passing evidence in SQLite for AEG-104 and set accepted candidate hash
       storage.updateTaskWithRevision(aeg104Task.id, storage.getTaskById(aeg104Task.id).version, {
-        acceptedCandidateHash: 'hash-aeg104-verified',
+        acceptedCandidateHash: realCandidateHash,
       });
       storage.recordEvidence({
         taskId: aeg104Task.id,
-        candidateHash: 'hash-aeg104-verified',
+        candidateHash: realCandidateHash,
         verifierName: 'unit_test_verifier',
         requirementsVersion: 1,
         outcome: 'passed',
@@ -285,7 +295,7 @@ async function executeSuite() {
     }
   });
 
-  await runTest('Actual delivery handler rejects remote Git PR delivery fail-closed (HTTP 403, blocked: true)', async () => {
+  await runTest('Actual delivery handler rejects unconfigured remote Git PR delivery fail-closed (blocked: true)', async () => {
     const res = await handleRepositoryDispatch({
       action: 'create_pr',
       repoConfig: {
@@ -295,9 +305,9 @@ async function executeSuite() {
       task: aeg104Task,
     });
 
-    assert.strictEqual(res.status, 403, 'Must return HTTP 403 for disabled remote Git delivery');
+    assert.strictEqual(res.status, 400, 'Must return HTTP 400 for unconfigured remote Git delivery');
     assert.strictEqual(res.body.blocked, true, 'Must return blocked: true');
-    assert.ok(res.body.error.includes('Remote Git delivery is currently disabled'));
+    assert.ok(res.body.error.includes('remote_git_not_configured'));
   });
 
   await runTest('Actual delivery handler blocks prefix-based path traversal (/tmp/project-other prefix attack)', async () => {

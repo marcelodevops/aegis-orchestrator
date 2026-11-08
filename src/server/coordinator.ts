@@ -24,6 +24,7 @@ import {
 } from '../data/defaultData';
 import { codingWorker, WorkerExecutionOptions } from './codingWorker.js';
 import { storage } from './storage/db.js';
+import { runInSandboxSync } from './execution/sandboxRuntime.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -159,27 +160,41 @@ class CoordinatorEngine {
       for (let task of partial.tasks) {
         const current = storage.getTaskById(task.id) || storage.getTaskById(task.key);
         if (current) {
-          // If task is requested to be marked 'done', verify quality gates first
-          if (task.status === 'done' && current.status !== 'done') {
-            const verification = this.verifyTaskQualityGates(task);
-            if (!verification.passed) {
-              rejectedDoneTasks.push(task.key);
-              const failingReasons = verification.checks
-                .filter((c) => !c.passed)
-                .map((c) => `${c.rule}: ${c.detail}`)
-                .join('; ');
-
-              task = {
-                ...task,
-                status: (current.status !== 'done' ? current.status : 'review') as TaskStatus,
-                lastAgentComment: `Quality Gate REJECTED "Done" transition: ${failingReasons}`,
-              };
-            }
+          // Reject missing version for existing tasks (optimistic locking requirement)
+          if (task.version === undefined) {
+            errors.push(`Revision required: Task ${task.key || current.key} update is missing version field`);
+            continue;
           }
 
-          // Optimistic revision control: reject stale overwrites
-          const expectedVersion = task.version !== undefined ? task.version : current.version;
-          const updateRes = storage.updateTaskWithRevision(current.id, expectedVersion, task);
+          // Reject status change through generic state update route (status changes must use transition endpoint)
+          if (task.status !== undefined && task.status !== current.status) {
+            errors.push(`Illegal status mutation on task ${task.key || current.key}: Status changes must use /api/orchestrate/tasks/:id/transition`);
+            continue;
+          }
+
+          // Strip client edits to server-owned lifecycle and evidence fields
+          const safeTaskUpdate: Partial<Task> = {
+            title: task.title !== undefined ? task.title : current.title,
+            description: task.description !== undefined ? task.description : current.description,
+            priority: task.priority !== undefined ? task.priority : current.priority,
+            estimatedHours: task.estimatedHours !== undefined ? task.estimatedHours : current.estimatedHours,
+            spentHours: task.spentHours !== undefined ? task.spentHours : current.spentHours,
+            assignedAgentId: task.assignedAgentId !== undefined ? task.assignedAgentId : current.assignedAgentId,
+            tags: task.tags !== undefined ? task.tags : current.tags,
+            epicId: task.epicId !== undefined ? task.epicId : current.epicId,
+            dependencies: task.dependencies !== undefined ? task.dependencies : current.dependencies,
+            lastAgentComment: task.lastAgentComment !== undefined ? task.lastAgentComment : current.lastAgentComment,
+            targetBranch: task.targetBranch !== undefined ? task.targetBranch : current.targetBranch,
+            // Keep server-owned fields protected
+            status: current.status,
+            subtasks: current.subtasks,
+            acceptedCandidateHash: current.acceptedCandidateHash,
+            acceptedBaseCommit: current.acceptedBaseCommit,
+            requirementsVersion: current.requirementsVersion,
+            deliverables: current.deliverables,
+          };
+
+          const updateRes = storage.updateTaskWithRevision(current.id, task.version, safeTaskUpdate);
           if (!updateRes.success) {
             errors.push(updateRes.error || `Stale write conflict on task ${task.key}`);
           }
@@ -371,12 +386,16 @@ class CoordinatorEngine {
     if (verifiedPath) {
       try {
         codeContent = fs.readFileSync(verifiedPath, 'utf-8');
-        const checkRes = spawnSync('node', ['--check', verifiedPath], {
-          timeout: 10000,
-          env: { PATH: process.env.PATH, HOME: process.env.HOME, NODE_ENV: 'test' },
+        const checkRes = runInSandboxSync({
+          command: 'node',
+          args: ['--check', verifiedPath],
+          workspacePath: path.dirname(verifiedPath),
+          allowFsRead: [verifiedPath],
+          timeoutMs: 10000,
+          allowNetwork: false,
         });
 
-        if (checkRes.status === 0) {
+        if (checkRes.exitCode === 0) {
           syntaxPassed = true;
           syntaxDetail = `Compiler AST verified: 0 syntax errors detected across ${codeContent.split('\n').length} lines`;
         } else {
@@ -422,19 +441,22 @@ class CoordinatorEngine {
 
     if (testFilePath && fs.existsSync(testFilePath)) {
       try {
-        const testRes = spawnSync('node', [testFilePath], {
-          cwd: path.dirname(testFilePath),
-          timeout: 10000,
-          env: { PATH: process.env.PATH, HOME: process.env.HOME, NODE_ENV: 'test' },
+        const testRes = runInSandboxSync({
+          command: 'node',
+          args: [testFilePath],
+          workspacePath: path.dirname(testFilePath),
+          allowFsRead: [testFilePath, verifiedPath || ''],
+          timeoutMs: 10000,
+          allowNetwork: false,
         });
 
-        if (testRes.status === 0) {
+        if (testRes.exitCode === 0) {
           testPassed = true;
           testDetail = `Automated unit assertions passed (SHA-256: ${computedSha256.slice(0, 16)}...)`;
         } else {
           testPassed = false;
           const outStr = (testRes.stderr || testRes.stdout || '').toString();
-          testDetail = `Unit assertion failure (exit ${testRes.status}): ${outStr.slice(0, 300) || 'Test process exited non-zero'}`;
+          testDetail = `Unit assertion failure (exit ${testRes.exitCode}): ${outStr.slice(0, 300) || 'Test process exited non-zero'}`;
         }
       } catch (testErr: any) {
         testPassed = false;
@@ -484,7 +506,7 @@ class CoordinatorEngine {
   }> {
     // Invoke autonomous specialist coding worker in isolated workspace
     const workerRes = await codingWorker.executeAssignment(task, agent, options);
-    if (!workerRes.success) {
+    if (!workerRes.success && !workerRes.hasDefect) {
       throw new Error(workerRes.error || `Worker execution failed for ${task.key}`);
     }
 

@@ -13,7 +13,7 @@ import path from 'path';
 import fs from 'fs';
 import { GoogleGenAI, Type, FunctionDeclaration } from '@google/genai';
 import { assertPathContained } from '../execution/pathContainment.js';
-import { runIsolatedProcess } from '../execution/isolatedProcess.js';
+import { runInSandbox } from '../execution/sandboxRuntime.js';
 
 export interface WorkerTaskContext {
   id: string;
@@ -160,23 +160,22 @@ export class WorkspaceToolExecutor {
   }
 
   public async runValidationTest(cmd: string, args: string[] = []): Promise<{ success: boolean; stdout: string; stderr: string; exitCode: number | null }> {
-    // Only allow safe test and build runners
-    const allowedCommands = ['node', 'npm', 'npx', 'tsx'];
     const baseCmd = path.basename(cmd);
-    if (!allowedCommands.includes(baseCmd)) {
+    if (baseCmd !== 'node') {
       return {
         success: false,
         stdout: '',
-        stderr: `Command '${cmd}' is not allowed in worker validation. Allowed: ${allowedCommands.join(', ')}`,
+        stderr: `Unsupported execution runner "${cmd}". Untrusted candidate validation must run inside an enforced sandbox runner (node).`,
         exitCode: -1,
       };
     }
 
-    const res = await runIsolatedProcess({
-      command: cmd,
+    const res = await runInSandbox({
+      command: 'node',
       args,
-      cwd: this.workspacePath,
+      workspacePath: this.workspacePath,
       timeoutMs: 15000,
+      allowNetwork: false,
     });
 
     return {
@@ -257,7 +256,8 @@ const workerToolDeclarations: FunctionDeclaration[] = [
  */
 export class GeminiWorkerAdapter implements WorkerAdapter {
   private ai: GoogleGenAI;
-  private modelName = 'gemini-3.8-flash';
+  private primaryModel = 'gemini-3.5-flash';
+  private fallbackModel = 'gemini-3.5-flash-lite';
 
   constructor(apiKey?: string) {
     const key = apiKey || process.env.GEMINI_API_KEY;
@@ -271,8 +271,35 @@ export class GeminiWorkerAdapter implements WorkerAdapter {
     });
   }
 
+  private async sendMessageWithRetry(chat: any, message: any, maxRetries = 3): Promise<any> {
+    let lastErr: any;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Gemini API call timed out after 20s')), 20000)
+        );
+        const res = await Promise.race([
+          chat.sendMessage({ message }),
+          timeoutPromise,
+        ]);
+        return res;
+      } catch (err: any) {
+        lastErr = err;
+        const msg = String(err?.message || '');
+        const isTransient = msg.includes('503') || msg.includes('429') || msg.includes('high demand') || msg.includes('UNAVAILABLE');
+        if (isTransient && attempt < maxRetries - 1) {
+          const delay = (attempt + 1) * 1500;
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastErr;
+  }
+
   public async executeTask(context: WorkerTaskContext): Promise<WorkerExecutionResult> {
-    const maxTurns = context.maxTurns || 12;
+    const maxTurns = context.maxTurns || 10;
     const toolExecutor = new WorkspaceToolExecutor(context.workspacePath);
     const toolHistory: WorkerToolCallResult[] = [];
     let tokensUsed = 0;
@@ -290,32 +317,70 @@ Workspace Rules:
 3. Validate your implementation using run_validation_test.
 4. When finished, provide a clear summary of your changes.`;
 
-    const chat = this.ai.chats.create({
-      model: this.modelName,
-      config: {
-        systemInstruction: systemPrompt,
-        tools: [{ functionDeclarations: workerToolDeclarations }],
-      },
-    });
+    let activeModel = this.primaryModel;
+    let chat: any;
+    try {
+      chat = this.ai.chats.create({
+        model: activeModel,
+        config: {
+          systemInstruction: systemPrompt,
+          tools: [{ functionDeclarations: workerToolDeclarations }],
+        },
+      });
+    } catch {
+      activeModel = this.fallbackModel;
+      chat = this.ai.chats.create({
+        model: activeModel,
+        config: {
+          systemInstruction: systemPrompt,
+          tools: [{ functionDeclarations: workerToolDeclarations }],
+        },
+      });
+    }
 
-    let currentPrompt = `Please start by inspecting the workspace and planning your implementation for ${context.key}.`;
+    let currentPrompt: any = `Please start by inspecting the workspace and planning your implementation for ${context.key}.`;
 
     while (turnsUsed < maxTurns) {
       turnsUsed++;
 
       let response: any;
       try {
-        response = await chat.sendMessage({ message: currentPrompt });
+        response = await this.sendMessageWithRetry(chat, currentPrompt);
       } catch (err: any) {
-        return {
-          status: 'failed',
-          tokensUsed,
-          turnsUsed,
-          modifiedFiles: Array.from(toolExecutor.modifiedFiles),
-          toolHistory,
-          summary: 'Worker execution failed during Gemini API call.',
-          error: err.message,
-        };
+        // If primary model failed with 503 on first turn, try fallback model
+        if (turnsUsed === 1 && activeModel === this.primaryModel) {
+          try {
+            activeModel = this.fallbackModel;
+            chat = this.ai.chats.create({
+              model: activeModel,
+              config: {
+                systemInstruction: systemPrompt,
+                tools: [{ functionDeclarations: workerToolDeclarations }],
+              },
+            });
+            response = await this.sendMessageWithRetry(chat, currentPrompt);
+          } catch (retryErr: any) {
+            return {
+              status: 'failed',
+              tokensUsed,
+              turnsUsed,
+              modifiedFiles: Array.from(toolExecutor.modifiedFiles),
+              toolHistory,
+              summary: 'Worker execution failed during Gemini API call.',
+              error: retryErr.message,
+            };
+          }
+        } else {
+          return {
+            status: 'failed',
+            tokensUsed,
+            turnsUsed,
+            modifiedFiles: Array.from(toolExecutor.modifiedFiles),
+            toolHistory,
+            summary: 'Worker execution failed during Gemini API call.',
+            error: err.message,
+          };
+        }
       }
 
       // Estimate tokens
@@ -346,7 +411,7 @@ Workspace Rules:
       }
 
       // Execute tool calls
-      const toolOutputs: string[] = [];
+      const toolResponseParts: any[] = [];
       for (const fc of functionCalls) {
         const name = fc.name;
         const args = fc.args as any;
@@ -355,23 +420,23 @@ Workspace Rules:
         let success = true;
 
         if (name === 'list_directory') {
-          const res = toolExecutor.listDirectory(args.dirPath);
+          const res = toolExecutor.listDirectory(args?.dirPath);
           resultOutput = res.success ? JSON.stringify(res.files) : `Error: ${res.error}`;
           success = res.success;
         } else if (name === 'inspect_file') {
-          const res = toolExecutor.inspectFile(args.filePath, args.startLine, args.endLine);
+          const res = toolExecutor.inspectFile(args?.filePath, args?.startLine, args?.endLine);
           resultOutput = res.success ? (res.content || '') : `Error: ${res.error}`;
           success = res.success;
         } else if (name === 'search_code') {
-          const res = toolExecutor.searchCode(args.query);
+          const res = toolExecutor.searchCode(args?.query);
           resultOutput = res.success ? JSON.stringify(res.matches) : `Error: ${res.error}`;
           success = res.success;
         } else if (name === 'apply_file_change') {
-          const res = toolExecutor.applyFileChange(args.filePath, args.newContent);
-          resultOutput = res.success ? `Successfully updated ${args.filePath}` : `Error: ${res.error}`;
+          const res = toolExecutor.applyFileChange(args?.filePath, args?.newContent);
+          resultOutput = res.success ? `Successfully updated ${args?.filePath}` : `Error: ${res.error}`;
           success = res.success;
         } else if (name === 'run_validation_test') {
-          const res = await toolExecutor.runValidationTest(args.cmd, args.args || []);
+          const res = await toolExecutor.runValidationTest(args?.cmd, args?.args || []);
           resultOutput = `Exit Code: ${res.exitCode}\nSTDOUT:\n${res.stdout}\nSTDERR:\n${res.stderr}`;
           success = res.success;
         } else {
@@ -386,10 +451,15 @@ Workspace Rules:
           success,
         });
 
-        toolOutputs.push(`[Tool ${name} result]:\n${resultOutput}`);
+        toolResponseParts.push({
+          functionResponse: {
+            name: fc.name,
+            response: { output: resultOutput },
+          },
+        });
       }
 
-      currentPrompt = toolOutputs.join('\n\n');
+      currentPrompt = toolResponseParts;
     }
 
     return {

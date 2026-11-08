@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Task, Agent, Epic } from '../types';
 import { 
   GitGraph, 
@@ -22,13 +22,27 @@ interface DiagramsProgressProps {
 }
 
 export const DiagramsProgress: React.FC<DiagramsProgressProps> = ({
-  tasks,
+  tasks: rawTasks,
   agents,
   epics,
   onTaskClick,
 }) => {
   const [activeDiagram, setActiveDiagram] = useState<'dag' | 'gantt' | 'burndown' | 'velocity'>('dag');
   const [selectedDagTaskId, setSelectedDagTaskId] = useState<string | null>(null);
+
+  // Enforce strictly unique tasks by id
+  const tasks = useMemo(() => {
+    const seen = new Set<string>();
+    const res: Task[] = [];
+    for (const t of rawTasks) {
+      if (!t || !t.id) continue;
+      if (!seen.has(t.id)) {
+        seen.add(t.id);
+        res.push(t);
+      }
+    }
+    return res;
+  }, [rawTasks]);
 
   // Status color mapping helper
   const getStatusColor = (status: string) => {

@@ -84,13 +84,26 @@ class CoordinatorEngine {
     }
   }
 
+  private deduplicateTasks(tasks: Task[]): Task[] {
+    const seen = new Set<string>();
+    const unique: Task[] = [];
+    for (const t of tasks) {
+      if (!t || !t.id) continue;
+      if (!seen.has(t.id)) {
+        seen.add(t.id);
+        unique.push(t);
+      }
+    }
+    return unique;
+  }
+
   private loadStateFromDisk(): ServerState {
     try {
       if (fs.existsSync(STATE_FILE)) {
         const raw = fs.readFileSync(STATE_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
         return {
-          tasks: parsed.tasks || DEFAULT_TASKS,
+          tasks: this.deduplicateTasks(parsed.tasks || DEFAULT_TASKS),
           agents: parsed.agents || DEFAULT_AGENTS,
           epics: parsed.epics || DEFAULT_EPICS,
           orchestratorConfig: parsed.orchestratorConfig || DEFAULT_ORCHESTRATOR_CONFIG,
@@ -106,7 +119,7 @@ class CoordinatorEngine {
     }
 
     const initialState: ServerState = {
-      tasks: DEFAULT_TASKS,
+      tasks: this.deduplicateTasks(DEFAULT_TASKS),
       agents: DEFAULT_AGENTS,
       epics: DEFAULT_EPICS,
       orchestratorConfig: DEFAULT_ORCHESTRATOR_CONFIG,
@@ -123,6 +136,7 @@ class CoordinatorEngine {
   public saveStateToDisk(stateToSave?: ServerState): void {
     try {
       const data = stateToSave || this.state;
+      data.tasks = this.deduplicateTasks(data.tasks || []);
       data.lastUpdated = new Date().toISOString();
       fs.writeFileSync(STATE_FILE, JSON.stringify(data, null, 2), 'utf-8');
     } catch (err) {
@@ -131,6 +145,7 @@ class CoordinatorEngine {
   }
 
   public getState(): ServerState {
+    this.state.tasks = this.deduplicateTasks(this.state.tasks || []);
     return this.state;
   }
 

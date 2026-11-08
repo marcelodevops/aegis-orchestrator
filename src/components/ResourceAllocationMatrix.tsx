@@ -26,11 +26,25 @@ interface ResourceAllocationMatrixProps {
 
 export const ResourceAllocationMatrix: React.FC<ResourceAllocationMatrixProps> = ({
   agents,
-  tasks,
+  tasks: rawTasks,
   onRebalanceComplete,
   onUpdateAgentRole,
   onTaskClick,
 }) => {
+  // Enforce strictly unique tasks by id
+  const tasks = useMemo(() => {
+    const seen = new Set<string>();
+    const res: Task[] = [];
+    for (const t of rawTasks) {
+      if (!t || !t.id) continue;
+      if (!seen.has(t.id)) {
+        seen.add(t.id);
+        res.push(t);
+      }
+    }
+    return res;
+  }, [rawTasks]);
+
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizationInsights, setOptimizationInsights] = useState<string[] | null>(null);
   const [selectedAgentForRoleShift, setSelectedAgentForRoleShift] = useState<Agent | null>(null);

@@ -29,6 +29,20 @@ import { TaskDetailModal } from './components/TaskDetailModal';
 import { AddTaskModal } from './components/AddTaskModal';
 import { Sparkles, Bot, AlertCircle, CheckCircle, Bell } from 'lucide-react';
 
+// Helper: Enforce unique tasks by id
+function deduplicateTaskList(taskList: Task[]): Task[] {
+  const seen = new Set<string>();
+  const unique: Task[] = [];
+  for (const t of taskList) {
+    if (!t || !t.id) continue;
+    if (!seen.has(t.id)) {
+      seen.add(t.id);
+      unique.push(t);
+    }
+  }
+  return unique;
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('kanban');
   const [projectTitle, setProjectTitle] = useState<string>(SAMPLE_PLANS[0].title);
@@ -37,13 +51,13 @@ export default function App() {
   const [isProcessingStep, setIsProcessingStep] = useState<boolean>(false);
   const [activeProcessingTaskId, setActiveProcessingTaskId] = useState<string | undefined>(undefined);
 
-  // Load state from localStorage or default
+  // Load state from localStorage or default (strictly deduplicated)
   const [tasks, setTasks] = useState<Task[]>(() => {
     try {
       const saved = localStorage.getItem('aegis_tasks');
-      return saved ? JSON.parse(saved) : DEFAULT_TASKS;
+      return saved ? deduplicateTaskList(JSON.parse(saved)) : deduplicateTaskList(DEFAULT_TASKS);
     } catch {
-      return DEFAULT_TASKS;
+      return deduplicateTaskList(DEFAULT_TASKS);
     }
   });
 
@@ -129,7 +143,7 @@ export default function App() {
         const res = await fetch('/api/orchestrate/state');
         if (res.ok) {
           const data = await res.json();
-          if (data.tasks && data.tasks.length > 0) setTasks(data.tasks);
+          if (data.tasks && data.tasks.length > 0) setTasks(deduplicateTaskList(data.tasks));
           if (data.agents && data.agents.length > 0) setAgents(data.agents);
           if (data.epics && data.epics.length > 0) setEpics(data.epics);
           if (data.communications && data.communications.length > 0) setCommunications(data.communications);
@@ -312,7 +326,7 @@ export default function App() {
       });
       const data = await res.json();
       if (data.state) {
-        setTasks(data.state.tasks);
+        setTasks(deduplicateTaskList(data.state.tasks));
         setAgents(data.state.agents);
         setCommunications(data.state.communications);
         setCycleCount(data.state.cycleCount);
@@ -352,12 +366,12 @@ export default function App() {
         const stateRes = await fetch('/api/orchestrate/state');
         if (stateRes.ok) {
           const fresh = await stateRes.json();
-          setTasks(fresh.tasks);
+          setTasks(deduplicateTaskList(fresh.tasks));
         }
         return;
       }
 
-      setTasks((prev) => prev.map((t) => (t.id === taskId ? data.task : t)));
+      setTasks((prev) => deduplicateTaskList(prev.map((t) => (t.id === taskId ? data.task : t))));
       showToast('Task Status Updated', `${data.task.key} moved to ${newStatus.toUpperCase()}`, 'success');
     } catch (err: any) {
       showToast('Status Update Error', err.message || 'Failed to update status', 'alert');
@@ -365,14 +379,14 @@ export default function App() {
   };
 
   const handleUpdateTask = (updatedTask: Task) => {
-    const updated = tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t));
+    const updated = deduplicateTaskList(tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
     setTasks(updated);
     setSelectedTaskForModal(updatedTask);
     syncToServer({ tasks: updated });
   };
 
   const handleAddTask = (newTask: Task) => {
-    const updated = [newTask, ...tasks];
+    const updated = deduplicateTaskList([newTask, ...tasks]);
     setTasks(updated);
     syncToServer({ tasks: updated });
     showToast('Task Created', `${newTask.key}: ${newTask.title} added to sprint board.`, 'success');
@@ -380,10 +394,10 @@ export default function App() {
 
   const handleAdoptPlan = (newEpics: Epic[], newTasks: Task[], planSummary: string) => {
     setEpics(newEpics);
-    setTasks(newTasks);
+    setTasks(deduplicateTaskList(newTasks));
     setProjectTitle(planSummary.slice(0, 50));
     setCycleCount(1);
-    syncToServer({ epics: newEpics, tasks: newTasks });
+    syncToServer({ epics: newEpics, tasks: deduplicateTaskList(newTasks) });
     showToast('Plan Adopted', `Generated ${newTasks.length} tasks across ${newEpics.length} epics.`, 'success');
   };
 

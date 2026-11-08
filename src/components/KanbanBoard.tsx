@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Task, 
   TaskStatus, 
@@ -54,8 +54,22 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [selectedPriority, setSelectedPriority] = useState<string>('all');
   const [selectedEpicId, setSelectedEpicId] = useState<string>('all');
 
+  // Enforce unique tasks by id
+  const uniqueTasks: Task[] = useMemo<Task[]>(() => {
+    const seen = new Set<string>();
+    const res: Task[] = [];
+    for (const t of tasks) {
+      if (!t || !t.id) continue;
+      if (!seen.has(t.id)) {
+        seen.add(t.id);
+        res.push(t);
+      }
+    }
+    return res;
+  }, [tasks]);
+
   // Filter tasks based on filters
-  const filteredTasks = tasks.filter((t) => {
+  const filteredTasks = uniqueTasks.filter((t) => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const matchText = `${t.key} ${t.title} ${t.description} ${t.tags.join(' ')}`.toLowerCase();

@@ -130,6 +130,9 @@ async function executeSuite() {
 
     const verification = coordinator.verifyTaskQualityGates(blockedTask as any);
     assert.strictEqual(verification.passed, false, 'Must fail when dependency is in_progress');
+
+    // Clean up transient test task
+    coordinator.getState().tasks = coordinator.getState().tasks.filter((t) => t.id !== 'task-unmet-upstream');
   });
 
   await runTest('Server-owned lifecycle blocks unverified transitions at every entry stage', () => {
@@ -168,6 +171,12 @@ async function executeSuite() {
     // 3. Block transition to done if criteria or quality gates fail
     const resDone = coordinator.transitionTaskStatus('task-stage-block-2', 'done');
     assert.strictEqual(resDone.success, false, 'Must reject transition to done when quality gates fail');
+
+    // Clean up transient test tasks from coordinator state
+    coordinator.getState().tasks = coordinator.getState().tasks.filter(
+      (t) => !['task-unmet-upstream', 'task-stage-block-1', 'task-stage-block-2'].includes(t.id)
+    );
+    coordinator.saveStateToDisk();
   });
 
   // --- 3. REAL CODING WORKER ASSIGNMENT & END-TO-END TRIAL TESTS ---

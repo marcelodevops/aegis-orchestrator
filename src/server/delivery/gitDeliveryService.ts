@@ -200,6 +200,16 @@ export class GitDeliveryService {
       }
       const commitHash = revRes.stdout.trim();
 
+      // Verify acceptance evidence: Must have passing evidence in ledger
+      const evidenceList = storage.getEvidenceForTask(task.id).filter((e: any) => e.outcome === 'passed');
+      if (evidenceList.length === 0) {
+        return {
+          success: false,
+          branchName: sanitizedBranch,
+          error: `Delivery rejected: Task ${task.key} has no passing acceptance evidence in the verification ledger. Autonomous delivery requires cryptographically bound evidence.`,
+        };
+      }
+
       // Generate diff patch
       const patchRes = await runIsolatedProcess({
         command: 'git',
@@ -208,17 +218,50 @@ export class GitDeliveryService {
       });
       const patch = patchRes.stdout;
 
-      // Verify patch applies cleanly against base
-      const checkPatch = await runIsolatedProcess({
-        command: 'git',
-        args: ['apply', '--check'],
-        cwd: repoPath,
-        env: { GIT_INDEX_FILE: path.join(tempWorktree, '.git_test_index') },
-      });
+      if (!patch || patch.trim().length === 0) {
+        return {
+          success: false,
+          branchName: sanitizedBranch,
+          error: 'Delivery rejected: Worktree produced an empty patch',
+        };
+      }
+
+      // Write patch to temp file and run git apply --check against base repository
+      const tempPatchFile = path.join(os.tmpdir(), `aegis-patch-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.patch`);
+      fs.writeFileSync(tempPatchFile, patch, 'utf8');
+
+      let patchValid = false;
+      let patchError = '';
+
+      try {
+        const checkPatch = await runIsolatedProcess({
+          command: 'git',
+          args: ['apply', '--check', tempPatchFile],
+          cwd: repoPath,
+        });
+
+        patchValid = checkPatch.exitCode === 0;
+        if (!patchValid) {
+          patchError = checkPatch.stderr || checkPatch.stdout || 'Patch failed to apply cleanly to base commit';
+        }
+      } finally {
+        try {
+          if (fs.existsSync(tempPatchFile)) fs.unlinkSync(tempPatchFile);
+        } catch {}
+      }
+
+      if (!patchValid) {
+        return {
+          success: false,
+          branchName: sanitizedBranch,
+          error: `Patch application verification failed: ${patchError}`,
+        };
+      }
 
       storage.logAudit('delivery', task.id, 'branch_delivered', 'aegis_delivery_service', {
         branch: sanitizedBranch,
         commit: commitHash,
+        evidenceCount: evidenceList.length,
       });
 
       return {

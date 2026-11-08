@@ -92,22 +92,36 @@ export default function App() {
     }
   });
 
-  const [authToken, setAuthToken] = useState<string>('');
+  const [authToken, setAuthToken] = useState<string>(() => {
+    try {
+      return localStorage.getItem('aegis_auth_token') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   const getAuthHeaders = () => ({
     'Content-Type': 'application/json',
     ...(authToken ? { 'X-Aegis-Auth-Token': authToken } : {}),
   });
 
+  const saveAuthToken = (token: string) => {
+    setAuthToken(token);
+    try {
+      localStorage.setItem('aegis_auth_token', token);
+    } catch {}
+  };
+
   // Server-authoritative state synchronization (survives browser close)
   useEffect(() => {
-    // 1. Fetch auth session token
-    fetch('/api/auth/session')
+    // 1. Verify auth session
+    fetch('/api/auth/session', { headers: getAuthHeaders() })
       .then((r) => r.json())
       .then((data) => {
-        if (data.token) setAuthToken(data.token);
+        setIsAuthenticated(Boolean(data.authenticated));
       })
-      .catch((e) => console.warn('Auth session init error:', e));
+      .catch((e) => console.warn('Auth session verify error:', e));
 
     // 2. Fetch server state
     const fetchServerState = async () => {

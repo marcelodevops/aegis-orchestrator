@@ -9,6 +9,8 @@ import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { spawnSync } from 'child_process';
+import { storage } from '../src/server/storage/db.js';
 import { coordinator } from '../src/server/coordinator.js';
 import { handleRepositoryDispatch, isPathContained } from '../src/server/deliveryHandler.js';
 import { calculateAgentLoad } from '../src/services/workloadBalancer.js';
@@ -210,7 +212,7 @@ async function executeSuite() {
   });
 
   // --- 4. ACTUAL DELIVERY HANDLER TESTS (LIVE DISPATCH & TEMP DIRS) ---
-  await runTest('Actual delivery handler rejects Git branch delivery fail-closed (HTTP 403, blocked: true)', async () => {
+  await runTest('Actual delivery handler rejects Git branch delivery fail-closed when directory is not a git repo (HTTP 400, blocked: true)', async () => {
     const res = await handleRepositoryDispatch({
       action: 'deliver',
       repoConfig: {
@@ -221,9 +223,53 @@ async function executeSuite() {
       task: aeg104Task,
     });
 
-    assert.strictEqual(res.status, 403, 'Must return HTTP 403 for disabled git_branch');
+    assert.strictEqual(res.status, 400, 'Must return HTTP 400 for non-git directory');
     assert.strictEqual(res.body.blocked, true, 'Must return blocked: true');
-    assert.ok(res.body.error.includes('Git branch delivery is currently disabled'));
+    assert.ok(res.body.error.includes('not an initialized Git repository'));
+  });
+
+  await runTest('Actual delivery handler executes isolated Git branch delivery on verified repository with passing evidence', async () => {
+    const gitRepoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-git-repo-'));
+    try {
+      // Initialize real git repo
+      spawnSync('git', ['init'], { cwd: gitRepoDir });
+      spawnSync('git', ['config', 'user.name', 'Aegis Test'], { cwd: gitRepoDir });
+      spawnSync('git', ['config', 'user.email', 'test@aegis.local'], { cwd: gitRepoDir });
+      // Create initial commit
+      fs.writeFileSync(path.join(gitRepoDir, 'README.md'), '# Test Base Repo\n', 'utf8');
+      spawnSync('git', ['add', '.'], { cwd: gitRepoDir });
+      spawnSync('git', ['commit', '-m', 'Initial commit'], { cwd: gitRepoDir });
+
+      // Record passing evidence in SQLite for AEG-104
+      storage.recordEvidence({
+        taskId: aeg104Task.id,
+        candidateHash: 'hash-aeg104-verified',
+        verifierName: 'unit_test_verifier',
+        outcome: 'passed',
+      });
+      storage.updateCriterionStatus('st-10', 'passed');
+      storage.updateCriterionStatus('st-11', 'passed');
+      storage.updateCriterionStatus('st-12', 'passed');
+      storage.updateCriterionStatus('st-fake', 'passed');
+
+      const res = await handleRepositoryDispatch({
+        action: 'deliver',
+        repoConfig: {
+          type: 'local_directory',
+          localPath: gitRepoDir,
+          localWriteMode: 'git_branch',
+          branchPrefix: 'aegis-test/',
+        },
+        task: aeg104Task,
+      });
+
+      assert.strictEqual(res.status, 200, 'Must deliver successfully to git branch');
+      assert.strictEqual(res.body.success, true);
+      assert.ok(res.body.commitHash, 'Must return real commit hash');
+      assert.ok(res.body.branchName.includes('aegis-test/'), 'Must return created branch name');
+    } finally {
+      fs.rmSync(gitRepoDir, { recursive: true, force: true });
+    }
   });
 
   await runTest('Actual delivery handler rejects remote Git PR delivery fail-closed (HTTP 403, blocked: true)', async () => {

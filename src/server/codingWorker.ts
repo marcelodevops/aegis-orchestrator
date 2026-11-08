@@ -31,6 +31,7 @@ export interface WorkerExecutionOptions {
   defectFeedback?: string;
   workerAdapter?: WorkerAdapter;
   useGeminiIfAvailable?: boolean;
+  useFixtureInTest?: boolean;
 }
 
 export interface WorkerExecutionResult {
@@ -130,17 +131,25 @@ export class CodingWorker {
       );
     }
 
-    // Choose worker adapter: provided > Gemini (if key present) > Fixture
+    // Choose worker adapter: explicit options.workerAdapter > Gemini (if key present) > authorized test fixtures in test env > fail-closed
     let adapter: WorkerAdapter;
     if (options.workerAdapter) {
       adapter = options.workerAdapter;
     } else if (process.env.GEMINI_API_KEY && options.useGeminiIfAvailable !== false) {
       adapter = new GeminiWorkerAdapter();
-    } else {
-      // Deterministic implementation generator based on task specs and defect mode
+    } else if (
+      (process.env.NODE_ENV === 'test' || process.env.npm_lifecycle_event === 'test' || process.argv.some((a) => a.includes('test')) || options.useFixtureInTest) &&
+      (task.key === 'AEG-104' || task.key === 'AEG-106' || task.title.toLowerCase().includes('dag') || task.title.toLowerCase().includes('workload'))
+    ) {
+      // Deterministic implementation generator ONLY for known test suite specs
       adapter = new FixtureWorkerAdapter(async (ctx, executor) => {
         return this.synthesizeFixtureCode(task, options, codeFilePath, testFilePath);
       });
+    } else {
+      // FAIL CLOSED: Autonomous execution requires real AI provider or explicit fixture in controlled test mode
+      throw new Error(
+        `Worker execution blocked: AI model provider credentials (GEMINI_API_KEY) are not configured. Autonomous implementation requires an active AI worker or an explicit test fixture.`
+      );
     }
 
     // Ensure task and criteria exist in storage
@@ -157,7 +166,7 @@ export class CodingWorker {
           title: st.title,
           verificationMethod: (st as any).verificationMethod || 'trusted_test',
           verificationSpec: (st as any).verificationSpec || {},
-          status: st.completed ? 'passed' : 'pending',
+          status: 'pending',
         });
       }
     }
@@ -454,24 +463,10 @@ if (targetId && !['st-10', 'st-11', 'st-12'].includes(targetId)) {
 console.log('Passed assertions for criterion: ' + (targetId || 'all'));
 `;
     } else {
-      // General bounded implementation
-      implCode = `/**
- * Implementation for ${task.key}: ${task.title}
- */
-function processTask() {
-  return { status: "success", executedAt: "${new Date().toISOString()}", defect: ${isDefect} };
-}
-
-module.exports = { processTask };
-`;
-      testCode = `const assert = require('assert');
-const { processTask } = require('./implementation.js');
-
-const res = processTask();
-assert.strictEqual(res.status, 'success');
-assert.strictEqual(res.defect, false, 'Candidate must not have defect');
-console.log('Unit test passed for ${task.key}');
-`;
+      // FAIL CLOSED: Do not fabricate generic processTask success boilerplate
+      throw new Error(
+        `Worker execution blocked: Task ${task.key} ("${task.title}") has no configured implementation fixture. Real AI worker execution required; fake progress boilerplate is forbidden.`
+      );
     }
 
     const cjsCodePath = codePath.replace(/\.js$/, '.cjs');

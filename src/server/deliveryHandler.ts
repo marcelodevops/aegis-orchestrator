@@ -144,14 +144,56 @@ export async function handleRepositoryDispatch(params: {
         };
       }
 
-      // Check 3: Git branch delivery is disabled until isolated branch execution cycle is proven
+      // Check 3: Git branch delivery via isolated git worktree
       if (localWriteMode === 'git_branch') {
+        if (!isGitRepo) {
+          return {
+            status: 400,
+            body: {
+              success: false,
+              blocked: true,
+              error: `Delivery blocked: Directory ${resolvedLocal} is not an initialized Git repository. Git branch delivery requires an active Git checkout.`,
+            },
+          };
+        }
+
+        const { GitDeliveryService } = await import('./delivery/gitDeliveryService.js');
+        const deliveryRes = await GitDeliveryService.deliverToBranch(targetTask.id, {
+          repoPath: resolvedLocal,
+          branchName: `${branchPrefix}${taskKey.toLowerCase()}`,
+          commitMessage: `Aegis Orchestrator: Verified implementation for ${taskKey}`,
+          filesToCommit: [
+            {
+              relPath: path.join(targetDirectory, `${taskKey}_Service.js`),
+              content: fs.readFileSync(sourceArtifact, 'utf-8'),
+            },
+          ],
+        });
+
+        if (!deliveryRes.success) {
+          return {
+            status: 400,
+            body: {
+              success: false,
+              blocked: true,
+              error: `Git delivery failed: ${deliveryRes.error}`,
+            },
+          };
+        }
+
         return {
-          status: 403,
+          status: 200,
           body: {
-            success: false,
-            blocked: true,
-            error: 'Git branch delivery is currently disabled pending isolated worktree execution, branch creation isolation, and automated regression testing. Use local patch_export mode instead.',
+            success: true,
+            type: 'local_directory',
+            action: 'deliver',
+            localWriteMode: 'git_branch',
+            branchName: deliveryRes.branchName,
+            commitHash: deliveryRes.commitHash,
+            patch: deliveryRes.patch,
+            taskKey,
+            deliveredAt: new Date().toISOString(),
+            message: `Verified code committed to isolated branch "${deliveryRes.branchName}" (commit: ${deliveryRes.commitHash?.slice(0, 8)}).`,
           },
         };
       }

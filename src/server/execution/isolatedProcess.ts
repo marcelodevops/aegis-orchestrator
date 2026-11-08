@@ -28,19 +28,19 @@ export interface ProcessRunResult {
   error?: string;
 }
 
+import os from 'os';
+import path from 'path';
+
 const DEFAULT_TIMEOUT_MS = 30000;
 const DEFAULT_MAX_BUFFER = 1024 * 512; // 512 KB
 
-const BLOCKED_ENV_VARS = [
-  'GEMINI_API_KEY',
-  'AEGIS_AUTH_TOKEN',
-  'JIRA_API_TOKEN',
-  'SLACK_BOT_TOKEN',
-  'GITHUB_TOKEN',
-  'GH_TOKEN',
-  'SECRET',
-  'AWS_SECRET_ACCESS_KEY',
-  'DATABASE_URL',
+// Strict allowlist: ONLY permitted system variables are forwarded
+const ALLOWED_ENV_VARS = [
+  'PATH',
+  'LANG',
+  'LC_ALL',
+  'TMPDIR',
+  'TZ',
 ];
 
 export async function runIsolatedProcess(options: ProcessRunOptions): Promise<ProcessRunResult> {
@@ -53,24 +53,29 @@ export async function runIsolatedProcess(options: ProcessRunOptions): Promise<Pr
     maxBufferBytes = DEFAULT_MAX_BUFFER,
   } = options;
 
-  // Build scrubbed environment
-  const safeEnv: NodeJS.ProcessEnv = {};
-  for (const [key, value] of Object.entries(process.env)) {
-    if (!BLOCKED_ENV_VARS.some((blocked) => key.toUpperCase().includes(blocked))) {
-      safeEnv[key] = value;
+  // Build minimal, scrubbed environment from strict allowlist
+  const safeEnv: NodeJS.ProcessEnv = {
+    PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
+    HOME: cwd, // Confine HOME to target workspace
+    TMPDIR: os.tmpdir(),
+    LANG: process.env.LANG || 'en_US.UTF-8',
+    LC_ALL: process.env.LC_ALL || 'en_US.UTF-8',
+    NODE_ENV: 'test',
+    AEGIS_ISOLATED: '1',
+  };
+
+  for (const key of ALLOWED_ENV_VARS) {
+    if (process.env[key] !== undefined && safeEnv[key] === undefined) {
+      safeEnv[key] = process.env[key];
     }
   }
 
-  // Merge custom caller environment (also scrubbed)
+  // Merge explicitly provided caller variables (never inheriting server secrets)
   for (const [k, v] of Object.entries(env)) {
-    if (!BLOCKED_ENV_VARS.some((blocked) => k.toUpperCase().includes(blocked))) {
+    if (ALLOWED_ENV_VARS.includes(k) || k.startsWith('AEGIS_') || k === 'NODE_ENV' || k === 'GIT_INDEX_FILE') {
       safeEnv[k] = v;
     }
   }
-
-  // Set default safe execution vars
-  safeEnv.NODE_ENV = safeEnv.NODE_ENV || 'test';
-  safeEnv.AEGIS_ISOLATED = '1';
 
   const startTime = Date.now();
   let stdoutData = '';
@@ -87,7 +92,7 @@ export async function runIsolatedProcess(options: ProcessRunOptions): Promise<Pr
         cwd,
         env: safeEnv,
         shell: false, // Disallow shell evaluation
-        detached: false,
+        detached: true, // Process group leader to enable whole-tree termination
       });
     } catch (err: any) {
       return resolve({
@@ -100,17 +105,28 @@ export async function runIsolatedProcess(options: ProcessRunOptions): Promise<Pr
       });
     }
 
+    // Helper to terminate entire process tree via process group
+    const killProcessTree = (signal: NodeJS.Signals = 'SIGTERM') => {
+      try {
+        if (child?.pid) {
+          process.kill(-child.pid, signal);
+        }
+      } catch {
+        try {
+          child?.kill(signal);
+        } catch {}
+      }
+    };
+
     // Set timeout handler
     timer = setTimeout(() => {
       timedOut = true;
       try {
-        child.kill('SIGTERM');
-        // Give 1.5 seconds for graceful shutdown, else SIGKILL
+        killProcessTree('SIGTERM');
+        // Give 1000ms for graceful shutdown, else SIGKILL entire process group
         killTimer = setTimeout(() => {
-          try {
-            child.kill('SIGKILL');
-          } catch {}
-        }, 1500);
+          killProcessTree('SIGKILL');
+        }, 1000);
       } catch {}
     }, timeoutMs);
 

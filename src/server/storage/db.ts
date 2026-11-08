@@ -251,7 +251,7 @@ export class StorageEngine {
           title: st.title,
           verificationMethod: st.verificationMethod || 'trusted_test',
           verificationSpec: st.verificationSpec || {},
-          status: st.completed ? 'passed' : 'pending',
+          status: 'pending',
         });
       }
     }
@@ -540,6 +540,15 @@ export class StorageEngine {
       ORDER BY recorded_at DESC
     `);
     return stmt.all(taskId, candidateHash) as any[];
+  }
+
+  public getEvidenceForTask(taskId: string): any[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM evidence
+      WHERE task_id = ?
+      ORDER BY recorded_at DESC
+    `);
+    return stmt.all(taskId) as any[];
   }
 
   // --- Audit Logging ---

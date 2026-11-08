@@ -162,40 +162,51 @@ export async function verifyTaskAcceptance(params: {
       const command = spec.command || 'node';
       let args = spec.args;
 
-      if (!args) {
+      if (!args || args.length === 0) {
         const cjsTest = path.join(workspacePath, 'spec.test.cjs');
         const jsTest = path.join(workspacePath, 'spec.test.js');
+        const taskTest = path.join(workspacePath, `${task.key}.test.js`);
+        const taskCjsTest = path.join(workspacePath, `${task.key}.test.cjs`);
         if (fs.existsSync(cjsTest)) {
           args = [cjsTest, crit.id];
         } else if (fs.existsSync(jsTest)) {
           args = [jsTest, crit.id];
-        } else if (fs.existsSync(path.join(workspacePath, 'implementation.js'))) {
-          args = ['--check', path.join(workspacePath, 'implementation.js')];
+        } else if (fs.existsSync(taskCjsTest)) {
+          args = [taskCjsTest, crit.id];
+        } else if (fs.existsSync(taskTest)) {
+          args = [taskTest, crit.id];
         } else {
-          args = ['--version'];
+          // FAIL CLOSED: Never substitute --check, --version, or placeholder commands!
+          passed = false;
+          failureReason = `Acceptance blocked: No explicit test command or test suite (spec.test.cjs / spec.test.js) exists to verify criterion "${crit.title}". Syntax checks or version flags cannot certify acceptance.`;
         }
       }
 
-      const procRes = await runIsolatedProcess({
-        command,
-        args,
-        cwd: workspacePath,
-        timeoutMs: spec.timeoutMs || 20000,
-      });
+      if (args && args.length > 0) {
+        const procRes = await runIsolatedProcess({
+          command,
+          args,
+          cwd: workspacePath,
+          timeoutMs: spec.timeoutMs || 20000,
+        });
 
-      stdout = procRes.stdout;
-      stderr = procRes.stderr;
-      passed = procRes.exitCode === 0 && !procRes.timedOut;
+        stdout = procRes.stdout;
+        stderr = procRes.stderr;
+        passed = procRes.exitCode === 0 && !procRes.timedOut;
 
-      if (!passed) {
-        failureReason = procRes.timedOut
-          ? `Verifier timed out after ${spec.timeoutMs || 20000}ms`
-          : (procRes.error || `Process exited with code ${procRes.exitCode}. Error output: ${stderr.slice(0, 300)}`);
+        if (!passed) {
+          failureReason = procRes.timedOut
+            ? `Verifier timed out after ${spec.timeoutMs || 20000}ms`
+            : (procRes.error || `Process exited with code ${procRes.exitCode}. Error output: ${stderr.slice(0, 300)}`);
+        }
       }
     }
 
     if (!passed) {
       allPassed = false;
+      storage.updateCriterionStatus(crit.id, 'failed');
+    } else {
+      storage.updateCriterionStatus(crit.id, 'passed');
     }
 
     const evId = storage.recordEvidence({

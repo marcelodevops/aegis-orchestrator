@@ -71,6 +71,49 @@ export function requireAuthToken(req: Request, res: Response, next: NextFunction
  * Validates a candidate token string directly (for internal services or test suites)
  */
 export function isValidToken(candidate?: string): boolean {
-  if (!candidate) return false;
-  return candidate === getOrGenerateAuthToken();
+  if (!candidate || typeof candidate !== 'string') return false;
+  const serverToken = getOrGenerateAuthToken();
+  if (candidate.length !== serverToken.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(candidate), Buffer.from(serverToken));
+}
+
+/**
+ * Handles session status check without leaking the secret token.
+ */
+export function handleAuthSessionStatus(req: Request, res: Response): void {
+  const headerToken = (req.headers['x-aegis-auth-token'] as string) || '';
+  const authHeader = (req.headers['authorization'] as string) || '';
+  let bearerToken = '';
+  if (authHeader.startsWith('Bearer ')) {
+    bearerToken = authHeader.substring(7).trim();
+  }
+  const candidate = headerToken || bearerToken;
+
+  if (candidate && isValidToken(candidate)) {
+    res.json({ authenticated: true, status: 'authorized' });
+  } else {
+    res.status(401).json({
+      authenticated: false,
+      status: 'unauthorized',
+      message: 'Authentication required. Provide valid X-Aegis-Auth-Token header or login via POST /api/auth/session with admin token.',
+    });
+  }
+}
+
+/**
+ * Handles credential login/exchange.
+ */
+export function handleAuthLogin(req: Request, res: Response): void {
+  const { token, secret } = req.body || {};
+  const candidate = token || secret;
+  if (!candidate || typeof candidate !== 'string') {
+    res.status(400).json({ success: false, error: 'Authentication token or secret is required.' });
+    return;
+  }
+
+  if (isValidToken(candidate)) {
+    res.json({ success: true, authenticated: true, message: 'Authentication successful.' });
+  } else {
+    res.status(401).json({ success: false, authenticated: false, error: 'Invalid authentication credential.' });
+  }
 }

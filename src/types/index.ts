@@ -34,6 +34,7 @@ export interface Task {
   slackNotified?: boolean;
   targetBranch?: string;
   pullRequestUrl?: string;
+  version?: number;
   lastUpdated?: string;
 }
 

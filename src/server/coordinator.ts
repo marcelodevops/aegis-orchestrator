@@ -133,45 +133,61 @@ class CoordinatorEngine {
     return this.state;
   }
 
-  // --- Central State Enforcement with Quality Gates ---
-  public updateState(partial: Partial<ServerState>): { state: ServerState; rejectedDoneTasks: string[] } {
+  // --- Central State Enforcement with Quality Gates & Optimistic Locking ---
+  public updateState(partial: Partial<ServerState>): { state: ServerState; rejectedDoneTasks: string[]; errors?: string[] } {
     const rejectedDoneTasks: string[] = [];
+    const errors: string[] = [];
 
-    // If incoming tasks are marked as 'done', verify each one strictly
-    if (partial.tasks) {
-      const existingTasks = this.state.tasks;
-      partial.tasks = partial.tasks.map((task) => {
-        const existing = existingTasks.find((t) => t.id === task.id || t.key === task.key);
+    // If incoming tasks are sent, update each through storage with optimistic concurrency revision checks
+    if (partial.tasks && Array.isArray(partial.tasks)) {
+      for (let task of partial.tasks) {
+        const current = storage.getTaskById(task.id) || storage.getTaskById(task.key);
+        if (current) {
+          // If task is requested to be marked 'done', verify quality gates first
+          if (task.status === 'done' && current.status !== 'done') {
+            const verification = this.verifyTaskQualityGates(task);
+            if (!verification.passed) {
+              rejectedDoneTasks.push(task.key);
+              const failingReasons = verification.checks
+                .filter((c) => !c.passed)
+                .map((c) => `${c.rule}: ${c.detail}`)
+                .join('; ');
 
-        // Check if task is requested to be 'done'
-        if (task.status === 'done') {
-          // Verify quality gates
-          const verification = this.verifyTaskQualityGates(task);
-          if (!verification.passed) {
-            rejectedDoneTasks.push(task.key);
-            const failingReasons = verification.checks
-              .filter((c) => !c.passed)
-              .map((c) => `${c.rule}: ${c.detail}`)
-              .join('; ');
-
-            // Clamp back to review or existing status
-            return {
-              ...task,
-              status: (existing?.status && existing.status !== 'done' ? existing.status : 'review') as TaskStatus,
-              lastAgentComment: `Quality Gate REJECTED "Done" transition: ${failingReasons}`,
-              lastUpdated: 'Just now',
-            };
+              task = {
+                ...task,
+                status: (current.status !== 'done' ? current.status : 'review') as TaskStatus,
+                lastAgentComment: `Quality Gate REJECTED "Done" transition: ${failingReasons}`,
+              };
+            }
           }
+
+          // Optimistic revision control: reject stale overwrites
+          const expectedVersion = task.version !== undefined ? task.version : current.version;
+          const updateRes = storage.updateTaskWithRevision(current.id, expectedVersion, task);
+          if (!updateRes.success) {
+            errors.push(updateRes.error || `Stale write conflict on task ${task.key}`);
+          }
+        } else {
+          storage.insertTask(task);
         }
-        return task;
-      });
+      }
     }
 
-    this.state = {
-      ...this.state,
-      ...partial,
-      lastUpdated: new Date().toISOString(),
-    };
+    if (partial.agents) this.state.agents = partial.agents;
+    if (partial.epics) this.state.epics = partial.epics;
+    if (partial.orchestratorConfig) this.state.orchestratorConfig = partial.orchestratorConfig;
+    if (partial.integrationConfig) this.state.integrationConfig = partial.integrationConfig;
+    if (partial.communications) this.state.communications = partial.communications;
+    if (typeof partial.daemonRunning === 'boolean') this.state.daemonRunning = partial.daemonRunning;
+    if (typeof partial.cycleCount === 'number') this.state.cycleCount = partial.cycleCount;
+
+    // Synchronize tasks directly with durable SQLite store
+    const dbTasks = storage.getAllTasks();
+    if (dbTasks.length > 0) {
+      this.state.tasks = dbTasks;
+    }
+
+    this.state.lastUpdated = new Date().toISOString();
 
     if (rejectedDoneTasks.length > 0) {
       this.addCommunication({
@@ -185,7 +201,7 @@ class CoordinatorEngine {
     }
 
     this.saveStateToDisk();
-    return { state: this.state, rejectedDoneTasks };
+    return { state: this.state, rejectedDoneTasks, errors: errors.length > 0 ? errors : undefined };
   }
 
   // Centralized transition method

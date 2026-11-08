@@ -36,15 +36,14 @@ if (geminiApiKey) {
 import { coordinator } from './src/server/coordinator.js';
 import { balanceWorkload, calculateAgentLoad, buildGeminiOptimizerPrompt } from './src/services/workloadBalancer.js';
 import { handleRepositoryDispatch } from './src/server/deliveryHandler.js';
-import { requireAuthToken, getOrGenerateAuthToken } from './src/server/security/auth.js';
+import { requireAuthToken, getOrGenerateAuthToken, handleAuthSessionStatus, handleAuthLogin } from './src/server/security/auth.js';
 import { redactSensitiveConfig } from './src/server/security/secrets.js';
 import { validateOutboundUrl } from './src/server/security/networkPolicy.js';
 import { storage } from './src/server/storage/db.js';
 
-// Auth Token session endpoint for client bootstrap
-app.get('/api/auth/session', (_req: Request, res: Response) => {
-  res.json({ token: getOrGenerateAuthToken() });
-});
+// Secure Auth Session check & login endpoints
+app.get('/api/auth/session', handleAuthSessionStatus);
+app.post('/api/auth/session', handleAuthLogin);
 
 // Protect all mutating API endpoints with authentication token
 app.use('/api', requireAuthToken);
@@ -73,6 +72,13 @@ app.get('/api/orchestrate/state', (_req: Request, res: Response) => {
 
 app.post('/api/orchestrate/state', (req: Request, res: Response) => {
   const result = coordinator.updateState(req.body);
+  if (result.errors && result.errors.length > 0) {
+    return res.status(409).json({
+      error: 'State synchronization conflict: ' + result.errors.join('; '),
+      details: result.errors,
+      state: redactSensitiveConfig(result.state),
+    });
+  }
   res.json(redactSensitiveConfig(result));
 });
 

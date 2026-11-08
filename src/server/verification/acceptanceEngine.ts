@@ -54,15 +54,27 @@ export function computeWorkspaceTreeHash(workspacePath: string): string {
     for (const entry of entries) {
       if (entry.name === '.git' || entry.name === 'node_modules' || entry.name === 'dist' || entry.name === '.sandbox_scratch') continue;
       const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
+      const rel = path.relative(workspacePath, full);
+
+      if (entry.isSymbolicLink()) {
+        try {
+          const lstats = fs.lstatSync(full);
+          const linkTarget = fs.readlinkSync(full);
+          hash.update(rel);
+          hash.update('\0symlink\0');
+          hash.update((lstats.mode & 0o777).toString(8));
+          hash.update('\0');
+          hash.update(linkTarget);
+          hash.update('\0');
+        } catch {}
+      } else if (entry.isDirectory()) {
         walk(full);
       } else if (entry.isFile()) {
         try {
           const stats = fs.statSync(full);
           const content = fs.readFileSync(full);
-          const rel = path.relative(workspacePath, full);
           hash.update(rel);
-          hash.update('\0');
+          hash.update('\0file\0');
           hash.update((stats.mode & 0o777).toString(8));
           hash.update('\0');
           hash.update(String(stats.size));
@@ -195,23 +207,9 @@ export async function verifyTaskAcceptance(params: {
         args = [serverKeySuite, crit.id];
         trustedReadPaths.push(serverKeySuite);
       } else if (!args || args.length === 0) {
-        const cjsTest = path.join(workspacePath, 'spec.test.cjs');
-        const jsTest = path.join(workspacePath, 'spec.test.js');
-        const taskTest = path.join(workspacePath, `${task.key}.test.js`);
-        const taskCjsTest = path.join(workspacePath, `${task.key}.test.cjs`);
-        if (fs.existsSync(cjsTest)) {
-          args = [cjsTest, crit.id];
-        } else if (fs.existsSync(jsTest)) {
-          args = [jsTest, crit.id];
-        } else if (fs.existsSync(taskCjsTest)) {
-          args = [taskCjsTest, crit.id];
-        } else if (fs.existsSync(taskTest)) {
-          args = [taskTest, crit.id];
-        } else {
-          // FAIL CLOSED: Never substitute --check, --version, or placeholder commands!
-          passed = false;
-          failureReason = `Acceptance blocked: No explicit test command or test suite (spec.test.cjs / spec.test.js) exists to verify criterion "${crit.title}". Syntax checks or version flags cannot certify acceptance.`;
-        }
+        // FAIL CLOSED: Never trust worker-writable workspace tests! Acceptance requires an authoritative, server-owned verifier.
+        passed = false;
+        failureReason = `Acceptance blocked: No server-owned trusted suite found in data/trusted_suites/ for task ${task.key} (${task.id}). Verification cannot fall back to worker-writable workspace files or shell substitutions.`;
       }
 
       if (args && args.length > 0) {

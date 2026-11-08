@@ -1,0 +1,8 @@
+{
+  "taskId": "task-tb-1794151908302",
+  "taskKey": "AEG-TB-8302",
+  "candidateHash": "2d4197dff6f9cf7b6ac0188a1f5b2ecdb942483fa38affb12fc0cbcc859d19d0",
+  "acceptedAt": "2026-11-08T15:32:00.444Z",
+  "baseCommit": "4c6717ea003666a6ba424153fc5195244009149d",
+  "requirementsVersion": 1
+}

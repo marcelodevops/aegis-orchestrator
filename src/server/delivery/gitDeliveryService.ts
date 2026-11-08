@@ -432,7 +432,7 @@ export class GitDeliveryService {
       };
     }
 
-    const { repoUrl, branchName, commitMessage, targetDirectory = 'src', apiToken, deliveryMode = 'pull_request' } = options;
+    const { repoUrl, branchName, commitMessage, targetDirectory = 'src', defaultBranch = 'main', apiToken, deliveryMode = 'pull_request' } = options;
 
     if (!repoUrl || repoUrl.trim() === '') {
       return {
@@ -456,42 +456,44 @@ export class GitDeliveryService {
       return { success: false, blocked: true, error: 'Invalid branch name format' };
     }
 
+    if (!task.acceptedCandidateHash) {
+      return {
+        success: false,
+        blocked: true,
+        branchName: sanitizedBranch,
+        error: `Delivery blocked: Task ${task.key} has no accepted candidate hash. Delivery requires verified acceptance.`,
+      };
+    }
+
     // Deliver files from server-owned candidate snapshot
     const snapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, task.acceptedCandidateHash);
     const filesToDeliver: Array<{ relPath: string; content: string }> = [];
 
-    if (fs.existsSync(snapshotDir)) {
-      const walkSnapshot = (dir: string) => {
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const e of entries) {
-          const full = path.join(dir, e.name);
-          if (e.isDirectory()) {
-            walkSnapshot(full);
-          } else if (e.isFile() && e.name !== 'candidate_metadata.json') {
-            const rel = path.relative(snapshotDir, full);
-            filesToDeliver.push({
-              relPath: targetDirectory ? path.join(targetDirectory, rel) : rel,
-              content: fs.readFileSync(full, 'utf8'),
-            });
-          }
-        }
+    if (!fs.existsSync(snapshotDir)) {
+      return {
+        success: false,
+        blocked: true,
+        branchName: sanitizedBranch,
+        error: `Delivery blocked: No server-owned candidate snapshot found for task ${task.id} (candidateHash: ${task.acceptedCandidateHash}). Delivery must source from verified immutable snapshots, not mutable workspaces.`,
       };
-      walkSnapshot(snapshotDir);
-    } else {
-      // Fallback: check workspace if snapshot pending
-      const wsDir = path.resolve(process.cwd(), 'workspace', task.key);
-      if (fs.existsSync(wsDir)) {
-        const entries = fs.readdirSync(wsDir);
-        for (const f of entries) {
-          if (f.endsWith('.js') && !f.includes('test')) {
-            filesToDeliver.push({
-              relPath: targetDirectory ? path.join(targetDirectory, f) : f,
-              content: fs.readFileSync(path.join(wsDir, f), 'utf8'),
-            });
-          }
+    }
+
+    const walkSnapshot = (dir: string) => {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const e of entries) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) {
+          walkSnapshot(full);
+        } else if (e.isFile() && e.name !== 'candidate_metadata.json') {
+          const rel = path.relative(snapshotDir, full);
+          filesToDeliver.push({
+            relPath: targetDirectory ? path.join(targetDirectory, rel) : rel,
+            content: fs.readFileSync(full, 'utf8'),
+          });
         }
       }
-    }
+    };
+    walkSnapshot(snapshotDir);
 
     const tempRemoteWork = path.join(os.tmpdir(), `aegis-remote-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`);
 
@@ -603,8 +605,114 @@ export class GitDeliveryService {
       let prNumber: number | undefined;
 
       if (deliveryMode === 'pull_request') {
-        prNumber = Math.floor(Math.random() * 100) + 1;
-        prUrl = `${repoUrl.replace(/\.git$/, '')}/pull/${prNumber}`;
+        const token = apiToken || process.env.GITHUB_TOKEN || process.env.GITLAB_TOKEN;
+        const cleanUrl = repoUrl.trim();
+        const match = cleanUrl.match(/(?:github\.com\/|gitlab\.com\/|^)([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)(?:\.git)?/);
+        const owner = match ? match[1] : null;
+        const repo = match ? match[2].replace(/\.git$/, '') : null;
+        const isGitHub = cleanUrl.includes('github.com');
+        const isGitLab = cleanUrl.includes('gitlab.com');
+
+        if (!token) {
+          return {
+            success: false,
+            blocked: true,
+            branchName: sanitizedBranch,
+            commitHash,
+            error: `Pull request creation blocked: deliveryMode is 'pull_request', but no API token was provided (apiToken / GITHUB_TOKEN / GITLAB_TOKEN). The verified branch '${sanitizedBranch}' was pushed to remote, but PR creation requires valid platform credentials.`,
+          };
+        }
+
+        if (isGitHub && owner && repo) {
+          try {
+            const prRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github+json',
+                'Content-Type': 'application/json',
+                'User-Agent': 'Aegis-Orchestrator',
+              },
+              body: JSON.stringify({
+                title: commitMessage || `Aegis Orchestrator: Verified delivery for ${task.key}`,
+                head: sanitizedBranch,
+                base: defaultBranch || 'main',
+                body: `Automated Pull Request generated by Aegis Orchestrator for task ${task.key}: "${task.title}".\n\n- Accepted Candidate Digest: \`${task.acceptedCandidateHash}\`\n- Requirements Version: ${task.requirementsVersion || 1}`,
+              }),
+            });
+
+            if (!prRes.ok) {
+              const errBody = await prRes.text();
+              return {
+                success: false,
+                blocked: true,
+                branchName: sanitizedBranch,
+                commitHash,
+                error: `GitHub PR creation failed (HTTP ${prRes.status}): ${errBody}`,
+              };
+            }
+
+            const prData = await prRes.json() as any;
+            prUrl = prData.html_url;
+            prNumber = prData.number;
+          } catch (fetchErr: any) {
+            return {
+              success: false,
+              blocked: true,
+              branchName: sanitizedBranch,
+              commitHash,
+              error: `GitHub PR request failed: ${fetchErr.message}`,
+            };
+          }
+        } else if (isGitLab && owner && repo) {
+          try {
+            const projectPath = encodeURIComponent(`${owner}/${repo}`);
+            const mrRes = await fetch(`https://gitlab.com/api/v4/projects/${projectPath}/merge_requests`, {
+              method: 'POST',
+              headers: {
+                'PRIVATE-TOKEN': token,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                source_branch: sanitizedBranch,
+                target_branch: defaultBranch || 'main',
+                title: commitMessage || `Aegis Orchestrator: Verified delivery for ${task.key}`,
+                description: `Automated Merge Request generated by Aegis Orchestrator for task ${task.key}: "${task.title}".\n\n- Accepted Candidate Digest: \`${task.acceptedCandidateHash}\``,
+              }),
+            });
+
+            if (!mrRes.ok) {
+              const errBody = await mrRes.text();
+              return {
+                success: false,
+                blocked: true,
+                branchName: sanitizedBranch,
+                commitHash,
+                error: `GitLab MR creation failed (HTTP ${mrRes.status}): ${errBody}`,
+              };
+            }
+
+            const mrData = await mrRes.json() as any;
+            prUrl = mrData.web_url;
+            prNumber = mrData.iid;
+          } catch (fetchErr: any) {
+            return {
+              success: false,
+              blocked: true,
+              branchName: sanitizedBranch,
+              commitHash,
+              error: `GitLab MR request failed: ${fetchErr.message}`,
+            };
+          }
+        } else {
+          return {
+            success: false,
+            blocked: true,
+            branchName: sanitizedBranch,
+            commitHash,
+            error: `Pull request creation is unsupported on remote '${repoUrl}'. Only GitHub and GitLab remotes support automated pull requests. Use deliveryMode 'branch_push' to publish branches without PR creation.`,
+          };
+        }
       }
 
       storage.logAudit('delivery', task.id, 'remote_delivered', 'aegis_delivery_service', {

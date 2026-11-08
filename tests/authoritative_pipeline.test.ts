@@ -61,7 +61,7 @@ async function runTest(name: string, fn: () => void | Promise<void>) {
 }
 
 async function executeSuite() {
-  console.log('\n=== RUNNING 19 CRITICAL AUTHORITATIVE PIPELINE REGRESSION TESTS ===\n');
+  console.log('\n=== RUNNING 22 CRITICAL AUTHORITATIVE PIPELINE REGRESSION TESTS ===\n');
 
   const testTempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-auth-pipe-'));
   const authToken = getOrGenerateAuthToken();
@@ -814,7 +814,7 @@ async function executeSuite() {
     assert.strictEqual(unconfRes.blocked, true);
     assert.ok(unconfRes.error?.includes('remote_git_not_configured'));
 
-    // 2. Deliver to real test bare remote
+    // 2. Deliver to real test bare remote via branch_push
     const bareRemoteDir = path.join(testTempDir, 'test-remote.git');
     spawnSync('git', ['init', '--bare', bareRemoteDir]);
 
@@ -838,16 +838,140 @@ async function executeSuite() {
       repoUrl: bareRemoteDir,
       branchName: 'aegis/remote-feature',
       commitMessage: 'Verified remote delivery',
-      deliveryMode: 'pull_request',
+      deliveryMode: 'branch_push',
     });
 
     assert.strictEqual(remoteDelivRes.success, true, `Remote delivery must succeed: ${remoteDelivRes.error}`);
     assert.ok(remoteDelivRes.commitHash, 'Must generate valid commit hash');
-    assert.ok(remoteDelivRes.prUrl, 'Must generate pull request URL');
+    assert.strictEqual(remoteDelivRes.prUrl, undefined, 'Must not fabricate PR URL for branch_push');
 
     // Verify branch exists in the bare remote
     const checkHeads = spawnSync('git', ['ls-remote', '--heads', bareRemoteDir, 'aegis/remote-feature'], { encoding: 'utf8' });
     assert.ok(checkHeads.stdout.includes('refs/heads/aegis/remote-feature'), 'Delivered branch must exist on remote');
+
+    // 3. PR creation on remote fails closed without token and does not invent fake PRs
+    const prUnauthRes = await GitDeliveryService.deliverToRemote(remTaskId, {
+      repoUrl: 'https://github.com/acme-org/repo.git',
+      branchName: 'aegis/remote-pr-check',
+      deliveryMode: 'pull_request',
+    });
+    assert.strictEqual(prUnauthRes.success, false, 'PR delivery without token must fail');
+    assert.strictEqual(prUnauthRes.blocked, true, 'PR delivery without token must be blocked');
+    assert.ok(prUnauthRes.error?.includes('API token'), 'Error must explicitly require API token');
+  });
+
+  // --- TEST 20: Symlink sensitivity in candidate tree digest ---
+  await runTest('20. Canonical candidate digest incorporates symlinks and detects symlink mutations', async () => {
+    const symlinkDir = path.join(testTempDir, 'symlink-test-tree');
+    fs.mkdirSync(path.join(symlinkDir, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(symlinkDir, 'src/target-a.js'), 'console.log("target A");\n');
+    fs.writeFileSync(path.join(symlinkDir, 'src/target-b.js'), 'console.log("target B");\n');
+
+    const digestBase = computeCanonicalCandidateDigest(symlinkDir);
+
+    // Create a symlink pointing to target-a.js
+    const symlinkPath = path.join(symlinkDir, 'src/link.js');
+    fs.symlinkSync('target-a.js', symlinkPath);
+
+    const digestWithSymlinkA = computeCanonicalCandidateDigest(symlinkDir);
+    assert.notStrictEqual(digestWithSymlinkA, digestBase, 'Digest must change when a symlink is added');
+
+    // Retarget symlink to target-b.js
+    fs.unlinkSync(symlinkPath);
+    fs.symlinkSync('target-b.js', symlinkPath);
+
+    const digestWithSymlinkB = computeCanonicalCandidateDigest(symlinkDir);
+    assert.notStrictEqual(digestWithSymlinkB, digestWithSymlinkA, 'Digest must change when symlink target changes');
+  });
+
+  // --- TEST 21: Rejection of worker-writable workspace test fallbacks ---
+  await runTest('21. Acceptance engine rejects worker-writable workspace tests when no server-owned suite exists', async () => {
+    const rogueTaskId = `task-rogue-${Date.now()}`;
+    const rogueCritId = `crit-rogue-${Date.now()}`;
+    const rogueWs = path.join(testTempDir, 'rogue-ws');
+    fs.mkdirSync(rogueWs, { recursive: true });
+
+    // Worker creates a passing test in its own workspace to try certifying acceptance
+    fs.writeFileSync(path.join(rogueWs, 'spec.test.cjs'), 'console.log("PASS"); process.exit(0);');
+    fs.writeFileSync(path.join(rogueWs, 'index.js'), 'module.exports = {};');
+
+    storage.insertTask({
+      id: rogueTaskId,
+      key: `ROGUE-1`,
+      title: 'Untrusted Task',
+      description: 'Attempting to pass via workspace test',
+      status: 'todo',
+      priority: 'medium',
+      assignedAgentId: 'agent-dev',
+      estimatedHours: 1,
+      spentHours: 0,
+      dependencies: [],
+      subtasks: [{ id: rogueCritId, title: 'Rogue criterion', verificationMethod: 'trusted_test' }],
+    });
+
+    storage.insertCriterion({
+      id: rogueCritId,
+      taskId: rogueTaskId,
+      title: 'Rogue criterion',
+      verificationMethod: 'trusted_test',
+      status: 'pending',
+    });
+
+    // Run verification - NO trusted suite installed in data/trusted_suites/
+    const verdict = await verifyTaskAcceptance({
+      taskId: rogueTaskId,
+      workspacePath: rogueWs,
+    });
+
+    assert.strictEqual(verdict.allPassed, false, 'Acceptance must be rejected');
+    assert.ok(!storage.getTaskById(rogueTaskId).acceptedCandidateHash, 'acceptedCandidateHash must remain null');
+    assert.ok(verdict.results[0].failureReason?.includes('No server-owned trusted suite'), 'Must explicitly fail closed');
+  });
+
+  // --- TEST 22: Remote delivery fails closed when candidate snapshot is missing ---
+  await runTest('22. Remote delivery fails closed when server-owned snapshot is missing (no workspace fallback)', async () => {
+    const missingSnapTaskId = `task-nosnap-${Date.now()}`;
+    const fakeHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+
+    storage.insertTask({
+      id: missingSnapTaskId,
+      key: 'NOSNAP-1',
+      title: 'Task without snapshot',
+      description: 'Snapshot was deleted or never stored',
+      status: 'review',
+      priority: 'high',
+      assignedAgentId: 'agent-dev',
+      estimatedHours: 2,
+      spentHours: 0,
+      dependencies: [],
+      acceptedCandidateHash: fakeHash,
+      subtasks: [],
+    });
+
+    // Create a mutable workspace with files to test if deliverToRemote would fall back to it
+    const mutableWs = path.resolve(process.cwd(), 'workspace', 'NOSNAP-1');
+    fs.mkdirSync(mutableWs, { recursive: true });
+    fs.writeFileSync(path.join(mutableWs, 'rogue.js'), 'module.exports = "unverified workspace code";');
+
+    try {
+      const delivRes = await GitDeliveryService.deliverToRemote(missingSnapTaskId, {
+        repoUrl: 'https://github.com/acme/repo.git',
+        branchName: 'aegis/nosnap-test',
+        deliveryMode: 'branch_push',
+        apiToken: 'fake-token',
+      });
+
+      assert.strictEqual(delivRes.success, false, 'Delivery must fail when snapshot is missing');
+      assert.strictEqual(delivRes.blocked, true, 'Delivery must be blocked');
+      assert.ok(
+        delivRes.error?.includes('No server-owned candidate snapshot found'),
+        `Error must specify missing candidate snapshot (got: ${delivRes.error})`
+      );
+    } finally {
+      try {
+        fs.rmSync(mutableWs, { recursive: true, force: true });
+      } catch {}
+    }
   });
 
   // Cleanup
@@ -855,7 +979,7 @@ async function executeSuite() {
     fs.rmSync(testTempDir, { recursive: true, force: true });
   } catch {}
 
-  console.log(`\n=== ALL 19 CRITICAL PIPELINE TESTS PASSED CLEANLY: ${passedTests}/${totalTests} ===\n`);
+  console.log(`\n=== ALL 22 CRITICAL PIPELINE TESTS PASSED CLEANLY: ${passedTests}/${totalTests} ===\n`);
 }
 
 executeSuite().catch((err) => {

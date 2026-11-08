@@ -216,6 +216,7 @@ export async function verifyTaskAcceptance(params: {
       baseCommit,
       candidateHash,
       verifierName,
+      requirementsVersion: task.requirementsVersion || 1,
       command: spec.command ? `${spec.command} ${(spec.args || []).join(' ')}` : undefined,
       exitCode: passed ? 0 : 1,
       stdout,
@@ -233,6 +234,15 @@ export async function verifyTaskAcceptance(params: {
       stdout,
       stderr,
       failureReason,
+    });
+  }
+
+  // Update task acceptedCandidateHash upon verification verdict
+  const currentTask = storage.getTaskById(task.id);
+  if (currentTask) {
+    storage.updateTaskWithRevision(currentTask.id, currentTask.version, {
+      acceptedCandidateHash: allPassed ? candidateHash : null,
+      acceptedBaseCommit: allPassed ? (baseCommit || null) : null,
     });
   }
 

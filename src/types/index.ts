@@ -35,6 +35,9 @@ export interface Task {
   targetBranch?: string;
   pullRequestUrl?: string;
   version?: number;
+  requirementsVersion?: number;
+  acceptedCandidateHash?: string;
+  acceptedBaseCommit?: string;
   lastUpdated?: string;
 }
 

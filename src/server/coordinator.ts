@@ -70,6 +70,7 @@ class CoordinatorEngine {
     this.ensureDirectories();
     try {
       storage.seedIfEmpty(DEFAULT_TASKS, DEFAULT_AGENTS, DEFAULT_EPICS);
+      storage.recoverInterruptedRunsOnBoot();
     } catch {}
     this.state = this.loadStateFromDisk();
   }

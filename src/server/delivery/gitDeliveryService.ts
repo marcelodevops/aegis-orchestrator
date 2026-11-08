@@ -26,6 +26,7 @@ export interface GitDeliveryOptions {
   branchName: string;
   commitMessage: string;
   baseCommit?: string;
+  candidateHash?: string;
   filesToCommit: Array<{ relPath: string; content: string }>;
 }
 
@@ -50,7 +51,24 @@ export class GitDeliveryService {
       return { success: false, branchName: options.branchName, error: `Delivery rejected: Task not found (${taskId})` };
     }
 
-    // Verify acceptance evidence: Must have passing evidence
+    // Verify acceptance evidence: Must have passing evidence and active accepted candidate hash
+    if (!task.acceptedCandidateHash) {
+      return {
+        success: false,
+        branchName: options.branchName,
+        error: `Delivery rejected: Task ${task.key} has not been verified and accepted by the independent quality gate`,
+      };
+    }
+
+    // Verify candidate digest match if provided by caller
+    if (options.candidateHash && options.candidateHash !== task.acceptedCandidateHash) {
+      return {
+        success: false,
+        branchName: options.branchName,
+        error: `Delivery rejected: Candidate hash mismatch (${options.candidateHash} != ${task.acceptedCandidateHash}). Candidate was altered after acceptance.`,
+      };
+    }
+
     const criteria = storage.getCriteriaForTask(task.id);
     if (criteria.length === 0) {
       return {
@@ -66,6 +84,25 @@ export class GitDeliveryService {
         success: false,
         branchName: options.branchName,
         error: `Delivery rejected: Task ${task.key} has ${unpassedCriteria.length} unverified or failing criteria.`,
+      };
+    }
+
+    // Verify evidence bound to accepted candidate hash and current requirements_version
+    const evidenceList = storage.getEvidenceForCandidate(task.id, task.acceptedCandidateHash).filter((e: any) => e.outcome === 'passed');
+    if (evidenceList.length === 0) {
+      return {
+        success: false,
+        branchName: options.branchName,
+        error: `Delivery rejected: Task ${task.key} has no passing acceptance evidence bound to candidate hash ${task.acceptedCandidateHash.slice(0, 10)}.`,
+      };
+    }
+
+    const staleEvidence = evidenceList.some((e: any) => e.requirements_version !== task.requirementsVersion);
+    if (staleEvidence) {
+      return {
+        success: false,
+        branchName: options.branchName,
+        error: `Delivery rejected: Evidence for task ${task.key} is stale (requirements version mismatch). Re-verification required.`,
       };
     }
 
@@ -121,10 +158,13 @@ export class GitDeliveryService {
       });
 
       if (wtAdd.exitCode !== 0) {
+        const isConflict = (wtAdd.stderr || wtAdd.stdout).includes('already exists');
         return {
           success: false,
           branchName: sanitizedBranch,
-          error: `Failed to create isolated git worktree: ${wtAdd.stderr || wtAdd.stdout}`,
+          error: isConflict
+            ? `Branch conflict: A branch named '${sanitizedBranch}' already exists in repository`
+            : `Failed to create isolated git worktree: ${wtAdd.stderr || wtAdd.stdout}`,
         };
       }
 

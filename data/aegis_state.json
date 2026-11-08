@@ -770,6 +770,118 @@
       "dependencies": [],
       "subtasks": [],
       "deliverables": []
+    },
+    {
+      "id": "task-unmet-upstream",
+      "key": "AEG-UPSTREAM",
+      "title": "Upstream task",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": []
+    },
+    {
+      "id": "task-stage-block-1",
+      "key": "AEG-BLOCK-1",
+      "title": "Blocked In Progress",
+      "status": "todo",
+      "dependencies": [
+        "task-unmet-upstream"
+      ],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-stage-block-2",
+      "key": "AEG-NO-ARTIFACT",
+      "title": "Missing Artifact",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-unmet-upstream",
+      "key": "AEG-UPSTREAM",
+      "title": "Upstream task",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": []
+    },
+    {
+      "id": "task-stage-block-1",
+      "key": "AEG-BLOCK-1",
+      "title": "Blocked In Progress",
+      "status": "todo",
+      "dependencies": [
+        "task-unmet-upstream"
+      ],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-stage-block-2",
+      "key": "AEG-NO-ARTIFACT",
+      "title": "Missing Artifact",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-unmet-upstream",
+      "key": "AEG-UPSTREAM",
+      "title": "Upstream task",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": []
+    },
+    {
+      "id": "task-stage-block-1",
+      "key": "AEG-BLOCK-1",
+      "title": "Blocked In Progress",
+      "status": "todo",
+      "dependencies": [
+        "task-unmet-upstream"
+      ],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-stage-block-2",
+      "key": "AEG-NO-ARTIFACT",
+      "title": "Missing Artifact",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-unmet-upstream",
+      "key": "AEG-UPSTREAM",
+      "title": "Upstream task",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": []
+    },
+    {
+      "id": "task-stage-block-1",
+      "key": "AEG-BLOCK-1",
+      "title": "Blocked In Progress",
+      "status": "todo",
+      "dependencies": [
+        "task-unmet-upstream"
+      ],
+      "subtasks": [],
+      "deliverables": []
+    },
+    {
+      "id": "task-stage-block-2",
+      "key": "AEG-NO-ARTIFACT",
+      "title": "Missing Artifact",
+      "status": "in_progress",
+      "dependencies": [],
+      "subtasks": [],
+      "deliverables": []
     }
   ],
   "agents": [
@@ -1184,5 +1296,5 @@
   ],
   "cycleCount": 12,
   "daemonRunning": false,
-  "lastUpdated": "2026-11-08T04:30:03.398Z"
+  "lastUpdated": "2026-11-08T04:48:45.788Z"
 }

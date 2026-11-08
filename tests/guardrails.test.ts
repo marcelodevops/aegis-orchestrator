@@ -240,11 +240,15 @@ async function executeSuite() {
       spawnSync('git', ['add', '.'], { cwd: gitRepoDir });
       spawnSync('git', ['commit', '-m', 'Initial commit'], { cwd: gitRepoDir });
 
-      // Record passing evidence in SQLite for AEG-104
+      // Record passing evidence in SQLite for AEG-104 and set accepted candidate hash
+      storage.updateTaskWithRevision(aeg104Task.id, storage.getTaskById(aeg104Task.id).version, {
+        acceptedCandidateHash: 'hash-aeg104-verified',
+      });
       storage.recordEvidence({
         taskId: aeg104Task.id,
         candidateHash: 'hash-aeg104-verified',
         verifierName: 'unit_test_verifier',
+        requirementsVersion: 1,
         outcome: 'passed',
       });
       storage.updateCriterionStatus('st-10', 'passed');

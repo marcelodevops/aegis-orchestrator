@@ -67,6 +67,9 @@ export class StorageEngine {
         last_comment TEXT,
         jira_synced INTEGER DEFAULT 0,
         slack_notified INTEGER DEFAULT 0,
+        requirements_version INTEGER DEFAULT 1,
+        accepted_candidate_hash TEXT,
+        accepted_base_commit TEXT,
         version INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
@@ -90,7 +93,7 @@ export class StorageEngine {
         id TEXT PRIMARY KEY,
         task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
         agent_id TEXT NOT NULL,
-        status TEXT NOT NULL CHECK(status IN ('dispatched', 'running', 'awaiting_review', 'accepted', 'rejected', 'cancelled', 'failed')),
+        status TEXT NOT NULL CHECK(status IN ('dispatched', 'running', 'awaiting_review', 'accepted', 'rejected', 'cancelled', 'failed', 'interrupted', 'timed_out', 'budget_exhausted')),
         base_commit TEXT,
         candidate_hash TEXT,
         workspace_path TEXT NOT NULL,
@@ -112,6 +115,8 @@ export class StorageEngine {
         base_commit TEXT,
         candidate_hash TEXT NOT NULL,
         verifier_name TEXT NOT NULL,
+        verifier_version TEXT DEFAULT '1.0.0',
+        requirements_version INTEGER DEFAULT 1,
         command TEXT,
         exit_code INTEGER,
         stdout TEXT,
@@ -177,10 +182,62 @@ export class StorageEngine {
         task_id TEXT
       );
     `);
+
+    // Schema migrations for existing databases
+    try {
+      this.db.exec('ALTER TABLE tasks ADD COLUMN requirements_version INTEGER DEFAULT 1;');
+    } catch {}
+    try {
+      this.db.exec('ALTER TABLE tasks ADD COLUMN accepted_candidate_hash TEXT;');
+    } catch {}
+    try {
+      this.db.exec('ALTER TABLE tasks ADD COLUMN accepted_base_commit TEXT;');
+    } catch {}
+    try {
+      this.db.exec('ALTER TABLE evidence ADD COLUMN requirements_version INTEGER DEFAULT 1;');
+    } catch {}
+    try {
+      this.db.exec("ALTER TABLE evidence ADD COLUMN verifier_version TEXT DEFAULT '1.0.0';");
+    } catch {}
+
+    try {
+      const runsInfo = this.db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='runs'").get() as any;
+      if (runsInfo?.sql && !runsInfo.sql.includes('interrupted')) {
+        this.db.exec(`
+          CREATE TABLE runs_new (
+            id TEXT PRIMARY KEY,
+            task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+            agent_id TEXT NOT NULL,
+            status TEXT NOT NULL CHECK(status IN ('dispatched', 'running', 'awaiting_review', 'accepted', 'rejected', 'cancelled', 'failed', 'interrupted', 'timed_out', 'budget_exhausted')),
+            base_commit TEXT,
+            candidate_hash TEXT,
+            workspace_path TEXT NOT NULL,
+            diff TEXT,
+            token_budget INTEGER DEFAULT 20000,
+            tokens_used INTEGER DEFAULT 0,
+            deadline_at TEXT,
+            error TEXT,
+            started_at TEXT NOT NULL,
+            completed_at TEXT
+          );
+          INSERT INTO runs_new SELECT * FROM runs;
+          DROP TABLE runs;
+          ALTER TABLE runs_new RENAME TO runs;
+        `);
+      }
+    } catch (e) {
+      console.warn('Runs table migration note:', e);
+    }
   }
 
-  // Transaction helper
+  private inTransaction = false;
+
+  // Transaction helper (supports nested calls safely)
   public transaction<T>(fn: () => T): T {
+    if (this.inTransaction) {
+      return fn();
+    }
+    this.inTransaction = true;
     this.db.exec('BEGIN TRANSACTION;');
     try {
       const result = fn();
@@ -189,6 +246,8 @@ export class StorageEngine {
     } catch (err) {
       this.db.exec('ROLLBACK;');
       throw err;
+    } finally {
+      this.inTransaction = false;
     }
   }
 
@@ -216,8 +275,9 @@ export class StorageEngine {
       INSERT OR REPLACE INTO tasks (
         id, key, title, description, epic_id, status, priority, assigned_agent_id,
         estimated_hours, spent_hours, dependencies, tags, deliverables, last_comment,
-        jira_synced, slack_notified, version, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        jira_synced, slack_notified, requirements_version, accepted_candidate_hash,
+        accepted_base_commit, version, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -237,6 +297,9 @@ export class StorageEngine {
       task.lastAgentComment || task.last_comment || '',
       task.jiraSynced ? 1 : 0,
       task.slackNotified ? 1 : 0,
+      task.requirementsVersion ?? task.requirements_version ?? 1,
+      task.acceptedCandidateHash ?? task.accepted_candidate_hash ?? null,
+      task.acceptedBaseCommit ?? task.accepted_base_commit ?? null,
       version,
       now,
       now
@@ -300,6 +363,9 @@ export class StorageEngine {
           last_comment = ?,
           jira_synced = ?,
           slack_notified = ?,
+          requirements_version = ?,
+          accepted_candidate_hash = ?,
+          accepted_base_commit = ?,
           version = ?,
           updated_at = ?
         WHERE id = ? AND version = ?
@@ -320,6 +386,9 @@ export class StorageEngine {
         merged.lastAgentComment || '',
         merged.jiraSynced ? 1 : 0,
         merged.slackNotified ? 1 : 0,
+        merged.requirementsVersion ?? current.requirementsVersion ?? 1,
+        merged.acceptedCandidateHash ?? current.acceptedCandidateHash ?? null,
+        merged.acceptedBaseCommit ?? current.acceptedBaseCommit ?? null,
         nextVersion,
         now,
         current.id,
@@ -334,6 +403,84 @@ export class StorageEngine {
       });
 
       return { success: true, task: this.getTaskById(current.id), newVersion: nextVersion };
+    });
+  }
+
+  public invalidateTaskAcceptance(taskId: string, reason: string): any {
+    return this.transaction(() => {
+      const task = this.getTaskById(taskId);
+      if (!task) return null;
+
+      const newRequirementsVersion = (task.requirementsVersion || 1) + 1;
+      const now = new Date().toISOString();
+      const nextVersion = task.version + 1;
+      const nextStatus = (task.status === 'done' || task.status === 'review') ? 'in_progress' : task.status;
+
+      // Reset criteria to pending
+      this.db.prepare(`
+        UPDATE acceptance_criteria
+        SET status = 'pending', evidence_id = NULL, updated_at = ?
+        WHERE task_id = ?
+      `).run(now, task.id);
+
+      // Invalidate accepted candidate hash and increment requirements_version
+      this.db.prepare(`
+        UPDATE tasks SET
+          requirements_version = ?,
+          accepted_candidate_hash = NULL,
+          accepted_base_commit = NULL,
+          status = ?,
+          last_comment = ?,
+          version = ?,
+          updated_at = ?
+        WHERE id = ?
+      `).run(
+        newRequirementsVersion,
+        nextStatus,
+        `Acceptance invalidated: ${reason}`,
+        nextVersion,
+        now,
+        task.id
+      );
+
+      this.logAudit('task', task.id, 'acceptance_invalidated', 'system', {
+        reason,
+        previousRequirementsVersion: task.requirementsVersion,
+        newRequirementsVersion,
+      });
+
+      return this.getTaskById(task.id);
+    });
+  }
+
+  public recoverInterruptedRunsOnBoot(): number {
+    return this.transaction(() => {
+      const now = new Date().toISOString();
+      const inFlightRuns = this.db.prepare(`
+        SELECT id, task_id, status FROM runs WHERE status IN ('dispatched', 'running')
+      `).all() as any[];
+
+      for (const run of inFlightRuns) {
+        this.db.prepare(`
+          UPDATE runs SET
+            status = 'interrupted',
+            error = 'Server restarted while run was in-flight',
+            completed_at = ?
+          WHERE id = ?
+        `).run(now, run.id);
+
+        const task = this.getTaskById(run.task_id);
+        if (task && task.status === 'in_progress') {
+          this.updateTaskWithRevision(task.id, task.version, {
+            status: 'blocked',
+            lastAgentComment: 'Execution interrupted by server restart',
+          }, 'system');
+        }
+
+        this.logAudit('run', run.id, 'interrupted_on_boot', 'system', { taskId: run.task_id });
+      }
+
+      return inFlightRuns.length;
     });
   }
 
@@ -365,6 +512,9 @@ export class StorageEngine {
       jiraSynced: Boolean(row.jira_synced),
       slackNotified: Boolean(row.slack_notified),
       version: row.version,
+      requirementsVersion: row.requirements_version ?? 1,
+      acceptedCandidateHash: row.accepted_candidate_hash || undefined,
+      acceptedBaseCommit: row.accepted_base_commit || undefined,
       subtasks,
       createdAt: row.created_at,
       lastUpdated: row.updated_at,
@@ -494,6 +644,8 @@ export class StorageEngine {
     baseCommit?: string;
     candidateHash: string;
     verifierName: string;
+    verifierVersion?: string;
+    requirementsVersion?: number;
     command?: string;
     exitCode?: number;
     stdout?: string;
@@ -506,8 +658,9 @@ export class StorageEngine {
     const stmt = this.db.prepare(`
       INSERT INTO evidence (
         id, run_id, task_id, criterion_id, base_commit, candidate_hash,
-        verifier_name, command, exit_code, stdout, stderr, outcome, failure_reason, recorded_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        verifier_name, verifier_version, requirements_version, command,
+        exit_code, stdout, stderr, outcome, failure_reason, recorded_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     stmt.run(
       id,
@@ -517,6 +670,8 @@ export class StorageEngine {
       e.baseCommit || null,
       e.candidateHash,
       e.verifierName,
+      e.verifierVersion || '1.0.0',
+      e.requirementsVersion || 1,
       e.command || null,
       e.exitCode ?? null,
       e.stdout || '',

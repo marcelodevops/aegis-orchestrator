@@ -6138,18 +6138,7 @@
       "slackNotified": false,
       "version": 2,
       "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-indep",
-          "title": "Verify security property",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {
-            "trustedScriptPath": "/app/applet/data/trusted_suites/task-indep-1794151897426/crit-indep.test.cjs"
-          },
-          "evidenceId": "ev-1794151897590-h6o4"
-        }
-      ],
+      "subtasks": [],
       "createdAt": "2026-11-08T15:31:37.426Z",
       "lastUpdated": "2026-11-08T15:31:37.591Z"
     },
@@ -6173,74 +6162,9 @@
       "version": 1,
       "requirementsVersion": 1,
       "acceptedCandidateHash": "b4dba62600e461961acf3fbd55d7d575b7eeaee9ef5877620da199e86229a95a",
-      "subtasks": [
-        {
-          "id": "c-rem",
-          "title": "Remote test",
-          "completed": true,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794151897595-19ta"
-        }
-      ],
+      "subtasks": [],
       "createdAt": "2026-11-08T15:31:37.594Z",
       "lastUpdated": "2026-11-08T15:31:37.594Z"
-    },
-    {
-      "id": "task-rogue-1794151897840",
-      "key": "ROGUE-1",
-      "title": "Untrusted Task",
-      "description": "Attempting to pass via workspace test",
-      "epicId": "epic-core",
-      "status": "todo",
-      "priority": "medium",
-      "assignedAgentId": "agent-dev",
-      "estimatedHours": 1,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-rogue-1794151897840",
-          "title": "Rogue criterion",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794151897843-1jlp"
-        }
-      ],
-      "createdAt": "2026-11-08T15:31:37.841Z",
-      "lastUpdated": "2026-11-08T15:31:37.843Z"
-    },
-    {
-      "id": "task-nosnap-1794151897844",
-      "key": "NOSNAP-1",
-      "title": "Task without snapshot",
-      "description": "Snapshot was deleted or never stored",
-      "epicId": "epic-core",
-      "status": "review",
-      "priority": "high",
-      "assignedAgentId": "agent-dev",
-      "estimatedHours": 2,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "acceptedCandidateHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:31:37.844Z",
-      "lastUpdated": "2026-11-08T15:31:37.844Z"
     },
     {
       "id": "task-tb-1794151908302",
@@ -6263,32 +6187,7 @@
       "requirementsVersion": 1,
       "acceptedCandidateHash": "2d4197dff6f9cf7b6ac0188a1f5b2ecdb942483fa38affb12fc0cbcc859d19d0",
       "acceptedBaseCommit": "4c6717ea003666a6ba424153fc5195244009149d",
-      "subtasks": [
-        {
-          "id": "crit-tb-1",
-          "title": "Calculate elapsed time in refill() and replenish tokens accurately",
-          "completed": true,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794151920146-mhnp"
-        },
-        {
-          "id": "crit-tb-2",
-          "title": "Cap tokens at maximum capacity and handle fractional token refills",
-          "completed": true,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794151920296-vjj7"
-        },
-        {
-          "id": "crit-tb-3",
-          "title": "consume() consumes tokens and rejects requests when insufficient tokens remain",
-          "completed": true,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794151920441-wszt"
-        }
-      ],
+      "subtasks": [],
       "createdAt": "2026-11-08T15:31:48.394Z",
       "lastUpdated": "2026-11-08T15:32:00.445Z"
     },
@@ -6470,6 +6369,353 @@
       ],
       "createdAt": "2026-11-08T15:33:21.234Z",
       "lastUpdated": "2026-11-08T15:33:21.236Z"
+    },
+    {
+      "id": "task-dep-1794152001346",
+      "key": "AEG-DEP-1346",
+      "title": "Prerequisite task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-08T15:33:21.346Z",
+      "lastUpdated": "2026-11-08T15:33:21.346Z"
+    },
+    {
+      "id": "task-main-1794152001346",
+      "key": "AEG-MAIN-1347",
+      "title": "Dependent task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "todo",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [
+        "task-dep-1794152001346"
+      ],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-08T15:33:21.347Z",
+      "lastUpdated": "2026-11-08T15:33:21.347Z"
+    },
+    {
+      "id": "task-req-1794152003491",
+      "key": "AEG-REQ-3491",
+      "title": "Requirements test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Acceptance invalidated: Product specification updated with new constraints",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 3,
+      "requirementsVersion": 2,
+      "subtasks": [
+        {
+          "id": "crit-r-1794152003491",
+          "title": "Spec test",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {
+            "command": "node",
+            "args": [
+              "/tmp/aegis-auth-pipe-cvkewu/req-workspace/spec.test.js"
+            ]
+          },
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-08T15:33:23.491Z",
+      "lastUpdated": "2026-11-08T15:33:23.630Z"
+    },
+    {
+      "id": "task-tamper-1794152003681",
+      "key": "AEG-TAMPER-3681",
+      "title": "Tamper test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+      "subtasks": [
+        {
+          "id": "crit-t-1794152003681",
+          "title": "Validated criterion",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-08T15:33:23.681Z",
+      "lastUpdated": "2026-11-08T15:33:23.681Z"
+    },
+    {
+      "id": "task-conflict-1794152003820",
+      "key": "AEG-CONF-3821",
+      "title": "Branch conflict task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "f50c50077fce14f2bef804d5b6131230d6717d548a2f2bae7d029086ad1fe88f",
+      "subtasks": [
+        {
+          "id": "c-conf-1794152003820",
+          "title": "Passing test",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794152003823-ggm2"
+        }
+      ],
+      "createdAt": "2026-11-08T15:33:23.821Z",
+      "lastUpdated": "2026-11-08T15:33:23.821Z"
+    },
+    {
+      "id": "task-inter-1794152003865",
+      "key": "AEG-INTR-3865",
+      "title": "Interrupted task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "blocked",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Execution interrupted by server restart",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-08T15:33:23.865Z",
+      "lastUpdated": "2026-11-08T15:33:23.867Z"
+    },
+    {
+      "id": "task-indep-1794152004100",
+      "key": "AEG-INDEP-4100",
+      "title": "Independent check task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-indep",
+          "title": "Verify security property",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {
+            "trustedScriptPath": "/app/applet/data/trusted_suites/task-indep-1794152004100/crit-indep.test.cjs"
+          },
+          "evidenceId": "ev-1794152004271-qk3e"
+        }
+      ],
+      "createdAt": "2026-11-08T15:33:24.100Z",
+      "lastUpdated": "2026-11-08T15:33:24.271Z"
+    },
+    {
+      "id": "task-rem-1794152004273",
+      "key": "AEG-REM-4273",
+      "title": "Remote delivery task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "b4dba62600e461961acf3fbd55d7d575b7eeaee9ef5877620da199e86229a95a",
+      "subtasks": [
+        {
+          "id": "c-rem",
+          "title": "Remote test",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794152004274-8hjd"
+        }
+      ],
+      "createdAt": "2026-11-08T15:33:24.273Z",
+      "lastUpdated": "2026-11-08T15:33:24.273Z"
+    },
+    {
+      "id": "task-rogue-1794152004518",
+      "key": "ROGUE-1",
+      "title": "Untrusted Task",
+      "description": "Attempting to pass via workspace test",
+      "epicId": "epic-core",
+      "status": "todo",
+      "priority": "medium",
+      "assignedAgentId": "agent-dev",
+      "estimatedHours": 1,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-rogue-1794152004518",
+          "title": "Rogue criterion",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794152004520-blbn"
+        }
+      ],
+      "createdAt": "2026-11-08T15:33:24.518Z",
+      "lastUpdated": "2026-11-08T15:33:24.521Z"
+    },
+    {
+      "id": "task-nosnap-1794152004522",
+      "key": "NOSNAP-1",
+      "title": "Task without snapshot",
+      "description": "Snapshot was deleted or never stored",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "high",
+      "assignedAgentId": "agent-dev",
+      "estimatedHours": 2,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "subtasks": [],
+      "createdAt": "2026-11-08T15:33:24.522Z",
+      "lastUpdated": "2026-11-08T15:33:24.522Z"
+    },
+    {
+      "id": "task-tb-1794152013668",
+      "key": "AEG-TB-3668",
+      "title": "Fix Token Bucket elapsed-time replenishment and capacity enforcement",
+      "description": "The TokenBucket rate limiter fails to calculate elapsed time during refill() and fails to cap at max capacity.",
+      "epicId": "epic-core",
+      "status": "done",
+      "priority": "high",
+      "assignedAgentId": "agent-dev",
+      "estimatedHours": 4,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Verified by independent quality gate (Candidate digest: c9d2475e)",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 5,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "c9d2475ec42d53a588d873ab90e69f5eeffd5e8ece75b8527c39a2e17e436e9e",
+      "acceptedBaseCommit": "cdc022346d8d55ef2380b268099d39f4f7360630",
+      "subtasks": [
+        {
+          "id": "crit-tb-1",
+          "title": "Calculate elapsed time in refill() and replenish tokens accurately",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794152025490-y1v4"
+        },
+        {
+          "id": "crit-tb-2",
+          "title": "Cap tokens at maximum capacity and handle fractional token refills",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794152025646-gkdk"
+        },
+        {
+          "id": "crit-tb-3",
+          "title": "consume() consumes tokens and rejects requests when insufficient tokens remain",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794152025839-fgqk"
+        }
+      ],
+      "createdAt": "2026-11-08T15:33:33.773Z",
+      "lastUpdated": "2026-11-08T15:33:45.841Z"
     }
   ],
   "agents": [
@@ -6884,5 +7130,5 @@
   ],
   "cycleCount": 12,
   "daemonRunning": false,
-  "lastUpdated": "2026-11-08T15:33:21.327Z"
+  "lastUpdated": "2026-11-08T19:19:30.438Z"
 }

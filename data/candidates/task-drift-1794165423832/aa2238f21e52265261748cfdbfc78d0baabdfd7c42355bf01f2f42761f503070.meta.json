@@ -1,0 +1,8 @@
+{
+  "taskId": "task-drift-1794165423832",
+  "taskKey": "DRIFT-1",
+  "candidateHash": "aa2238f21e52265261748cfdbfc78d0baabdfd7c42355bf01f2f42761f503070",
+  "acceptedAt": "2026-11-08T19:17:03.985Z",
+  "baseCommit": "fb8616697663b08227b0df1eaa0a4986a58ae5de",
+  "requirementsVersion": 1
+}

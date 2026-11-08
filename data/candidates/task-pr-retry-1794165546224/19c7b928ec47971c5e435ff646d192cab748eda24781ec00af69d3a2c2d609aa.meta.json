@@ -1,0 +1,8 @@
+{
+  "taskId": "task-pr-retry-1794165546224",
+  "taskKey": "PR-RETRY-1",
+  "candidateHash": "19c7b928ec47971c5e435ff646d192cab748eda24781ec00af69d3a2c2d609aa",
+  "acceptedAt": "2026-11-08T19:19:06.392Z",
+  "baseCommit": "b48b845bee156189b81201a95756a3f6df9108cc",
+  "requirementsVersion": 1
+}

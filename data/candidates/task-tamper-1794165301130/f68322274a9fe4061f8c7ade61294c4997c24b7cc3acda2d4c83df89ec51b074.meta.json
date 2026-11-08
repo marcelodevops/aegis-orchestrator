@@ -1,0 +1,8 @@
+{
+  "taskId": "task-tamper-1794165301130",
+  "taskKey": "TAMPER-1",
+  "candidateHash": "f68322274a9fe4061f8c7ade61294c4997c24b7cc3acda2d4c83df89ec51b074",
+  "acceptedAt": "2026-11-08T19:15:01.270Z",
+  "baseCommit": null,
+  "requirementsVersion": 1
+}

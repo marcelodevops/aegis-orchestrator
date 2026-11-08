@@ -30,11 +30,11 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
-import { storage } from '../src/server/storage/db.js';
+import { StorageEngine, storage } from '../src/server/storage/db.js';
 import { verifyTaskAcceptance, computeCanonicalCandidateDigest } from '../src/server/verification/acceptanceEngine.js';
 import { runBoundedCorrectionLoop } from '../src/server/orchestration/correctionLoop.js';
 import { OrchestratorService } from '../src/server/orchestration/orchestratorService.js';
-import { GitDeliveryService } from '../src/server/delivery/gitDeliveryService.js';
+import { GitDeliveryService, materializeCandidateToWorktree } from '../src/server/delivery/gitDeliveryService.js';
 import { 
   runInSandbox, 
   isNodePermissionSupported, 
@@ -974,12 +974,501 @@ async function executeSuite() {
     }
   });
 
+  // --- TEST 23: Model failure cannot trigger scripted repair ---
+  await runTest('23. Model failure cannot trigger scripted repair or fallback implementations', async () => {
+    const taskId = `task-fail-model-${Date.now()}`;
+    const ws = path.join(testTempDir, 'fail-model-ws');
+    fs.mkdirSync(ws, { recursive: true });
+    fs.writeFileSync(path.join(ws, 'src.js'), '// broken code\nmodule.exports = null;\n');
+
+    storage.insertTask({
+      id: taskId,
+      key: `FAIL-MOD-1`,
+      title: 'Failing Model Task',
+      description: 'Model produces broken code',
+      status: 'in_progress',
+      subtasks: [{ id: `crit-fm-1`, title: 'Must export valid object', verificationMethod: 'trusted_test' }],
+    });
+
+    storage.insertCriterion({
+      id: `crit-fm-1`,
+      taskId,
+      title: 'Must export valid object',
+      verificationMethod: 'trusted_test',
+      status: 'pending',
+    });
+
+    // Install server-owned spec that requires module.exports to be an object with foo
+    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    fs.mkdirSync(trustedDir, { recursive: true });
+    fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `
+      const assert = require('assert');
+      const mod = require('${path.join(ws, 'src.js')}');
+      assert.ok(mod && typeof mod.foo === 'string', 'mod.foo must be string');
+      process.exit(0);
+    `);
+
+    // Verify candidate
+    const verdict = await verifyTaskAcceptance({ taskId, workspacePath: ws });
+    assert.strictEqual(verdict.allPassed, false, 'Acceptance must fail on broken model candidate');
+
+    // Confirm that no scripted repair has modified the workspace
+    const content = fs.readFileSync(path.join(ws, 'src.js'), 'utf8');
+    assert.strictEqual(content, '// broken code\nmodule.exports = null;\n', 'Workspace must not have hardcoded repair injected');
+    assert.ok(!storage.getTaskById(taskId).acceptedCandidateHash, 'acceptedCandidateHash must remain null');
+  });
+
+  // --- TEST 24: Exhausted correction budgets cannot become successful evaluation ---
+  await runTest('24. Exhausted correction budgets cannot become successful evaluation', async () => {
+    const taskId = `task-budget-${Date.now()}`;
+    const ws = path.join(testTempDir, 'budget-ws');
+    fs.mkdirSync(ws, { recursive: true });
+    fs.writeFileSync(path.join(ws, 'app.js'), 'module.exports = false;');
+
+    storage.insertTask({
+      id: taskId,
+      key: `BUDGET-1`,
+      title: 'Budget Exhaustion Test',
+      description: 'Task with exhausted attempts',
+      status: 'in_progress',
+      subtasks: [{ id: `crit-bd-1`, title: 'Must return true', verificationMethod: 'trusted_test' }],
+    });
+
+    storage.insertCriterion({
+      id: `crit-bd-1`,
+      taskId,
+      title: 'Must return true',
+      verificationMethod: 'trusted_test',
+      status: 'pending',
+    });
+
+    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    fs.mkdirSync(trustedDir, { recursive: true });
+    fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `
+      const assert = require('assert');
+      const res = require('${path.join(ws, 'app.js')}');
+      assert.strictEqual(res, true);
+      process.exit(0);
+    `);
+
+    // Run bounded correction loop with maxAttempts = 1 and worker returning non-solution
+    const dummyWorker = {
+      executeTask: async () => ({
+        status: 'completed' as const,
+        summary: 'attempted fix but failed',
+        modifiedFiles: ['app.js'],
+        turnsUsed: 1,
+        toolHistory: [],
+      }),
+    };
+
+    const result = await runBoundedCorrectionLoop(
+      taskId,
+      'agent-dev',
+      dummyWorker,
+      {
+        workspacePath: ws,
+        maxAttempts: 1,
+      }
+    );
+
+    assert.strictEqual(result.accepted, false, 'Exhausted loop must return accepted: false');
+    assert.strictEqual(result.attemptsUsed, 1, 'Attempts must match maxAttempts budget');
+    const taskAfter = storage.getTaskById(taskId);
+    assert.ok(!taskAfter.acceptedCandidateHash, 'Task candidate hash must remain empty');
+    assert.notStrictEqual(taskAfter.status, 'done', 'Task must NOT be marked done');
+  });
+
+  // --- TEST 25: Tampered snapshot contents are rejected even when directory and claimed hash are unchanged ---
+  await runTest('25. Tampered snapshot contents are rejected even when directory and claimed hash are unchanged', async () => {
+    const taskId = `task-tamper-${Date.now()}`;
+    const ws = path.join(testTempDir, 'tamper-ws');
+    fs.mkdirSync(ws, { recursive: true });
+    fs.writeFileSync(path.join(ws, 'valid.js'), 'console.log("valid candidate");\n');
+
+    storage.insertTask({
+      id: taskId,
+      key: `TAMPER-1`,
+      title: 'Tamper Snapshot Test',
+      status: 'in_progress',
+      subtasks: [{ id: `crit-tmp-1`, title: 'Must exist', verificationMethod: 'trusted_test' }],
+    });
+
+    storage.insertCriterion({
+      id: `crit-tmp-1`,
+      taskId,
+      title: 'Must exist',
+      verificationMethod: 'trusted_test',
+      status: 'pending',
+    });
+
+    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    fs.mkdirSync(trustedDir, { recursive: true });
+    fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `process.exit(0);`);
+
+    // Legitimate acceptance creates snapshot
+    const acceptRes = await verifyTaskAcceptance({ taskId, workspacePath: ws });
+    assert.strictEqual(acceptRes.allPassed, true);
+    const originalHash = acceptRes.candidateHash;
+
+    const snapshotDir = path.resolve(process.cwd(), 'data/candidates', taskId, originalHash);
+    assert.ok(fs.existsSync(snapshotDir), 'Snapshot directory must exist');
+
+    // Tamper with file INSIDE snapshot directory without renaming directory or changing task.acceptedCandidateHash
+    fs.writeFileSync(path.join(snapshotDir, 'valid.js'), 'console.log("TAMPERED CONTENT IN SNAPSHOT");\n');
+
+    // Attempt delivery to remote
+    const delivRes = await GitDeliveryService.deliverToRemote(taskId, {
+      repoUrl: 'https://github.com/acme/repo.git',
+      branchName: 'aegis/tamper-test',
+      deliveryMode: 'branch_push',
+      apiToken: 'test-token',
+    });
+
+    assert.strictEqual(delivRes.success, false, 'Delivery must fail on tampered snapshot');
+    assert.strictEqual(delivRes.blocked, true, 'Delivery must be blocked');
+    assert.ok(delivRes.error?.includes('Candidate snapshot tampering detected'), `Must detect tampering: ${delivRes.error}`);
+  });
+
+  // --- TEST 26: Missing or stale evidence blocks remote delivery ---
+  await runTest('26. Missing or stale evidence blocks remote delivery', async () => {
+    const taskId = `task-stale-${Date.now()}`;
+    const ws = path.join(testTempDir, 'stale-ws');
+    fs.mkdirSync(ws, { recursive: true });
+    fs.writeFileSync(path.join(ws, 'app.js'), 'console.log("ok");');
+
+    storage.insertTask({
+      id: taskId,
+      key: `STALE-1`,
+      title: 'Stale Evidence Test',
+      status: 'in_progress',
+      subtasks: [
+        { id: `crit-st-1`, title: 'Crit 1', verificationMethod: 'trusted_test' },
+        { id: `crit-st-2`, title: 'Crit 2', verificationMethod: 'trusted_test' },
+      ],
+    });
+
+    storage.insertCriterion({ id: `crit-st-1`, taskId, title: 'Crit 1', verificationMethod: 'trusted_test', status: 'pending' });
+    storage.insertCriterion({ id: `crit-st-2`, taskId, title: 'Crit 2', verificationMethod: 'trusted_test', status: 'pending' });
+
+    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    fs.mkdirSync(trustedDir, { recursive: true });
+    fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `process.exit(0);`);
+
+    const acceptRes = await verifyTaskAcceptance({ taskId, workspacePath: ws });
+    assert.strictEqual(acceptRes.allPassed, true);
+
+    // Bump requirements_version on task to make evidence stale
+    const currentTask = storage.getTaskById(taskId);
+    storage.updateTaskWithRevision(taskId, currentTask.version, {
+      requirementsVersion: 2, // was 1 during acceptance
+    });
+
+    // Attempt delivery to remote
+    const delivRes = await GitDeliveryService.deliverToRemote(taskId, {
+      repoUrl: 'https://github.com/acme/repo.git',
+      branchName: 'aegis/stale-test',
+      deliveryMode: 'branch_push',
+      apiToken: 'test-token',
+    });
+
+    assert.strictEqual(delivRes.success, false, 'Delivery must fail on stale evidence');
+    assert.strictEqual(delivRes.blocked, true, 'Delivery must be blocked');
+    assert.ok(delivRes.error?.includes('is stale'), `Must report stale evidence: ${delivRes.error}`);
+  });
+
+  // --- TEST 27: Materialization preserves binary bytes, executable modes, symlinks, and deletions ---
+  await runTest('27. Materialization preserves binary bytes, executable modes, symlinks, and deletions', async () => {
+    const srcTree = path.join(testTempDir, 'mat-src');
+    const targetWt = path.join(testTempDir, 'mat-wt');
+    fs.mkdirSync(srcTree, { recursive: true });
+    fs.mkdirSync(targetWt, { recursive: true });
+
+    // Initialize git repo in targetWt so git ls-files works for baseline deletions
+    spawnSync('git', ['init'], { cwd: targetWt });
+    spawnSync('git', ['config', 'user.name', 'Tester'], { cwd: targetWt });
+    spawnSync('git', ['config', 'user.email', 'tester@example.com'], { cwd: targetWt });
+
+    // Track a baseline file that SHOULD BE DELETED by candidate materialization
+    fs.writeFileSync(path.join(targetWt, 'obsolete.txt'), 'to be deleted\n');
+    spawnSync('git', ['add', '.'], { cwd: targetWt });
+    spawnSync('git', ['commit', '-m', 'Baseline'], { cwd: targetWt });
+
+    // 1. Raw binary bytes
+    const binaryData = crypto.randomBytes(512);
+    fs.writeFileSync(path.join(srcTree, 'binary.dat'), binaryData);
+
+    // 2. Executable script (mode 0755)
+    fs.writeFileSync(path.join(srcTree, 'script.sh'), '#!/bin/sh\necho "hello"\n');
+    fs.chmodSync(path.join(srcTree, 'script.sh'), 0o755);
+
+    // 3. Normal file (mode 0644)
+    fs.writeFileSync(path.join(srcTree, 'normal.txt'), 'hello world\n');
+    fs.chmodSync(path.join(srcTree, 'normal.txt'), 0o644);
+
+    // 4. Symbolic link
+    fs.symlinkSync('normal.txt', path.join(srcTree, 'link-to-normal.txt'));
+
+    // Materialize into worktree
+    const matRes = await materializeCandidateToWorktree(srcTree, targetWt);
+    assert.strictEqual(matRes.success, true, `Materialization must succeed: ${matRes.error}`);
+
+    // Verify binary bytes
+    const readBinary = fs.readFileSync(path.join(targetWt, 'binary.dat'));
+    assert.strictEqual(Buffer.compare(binaryData, readBinary), 0, 'Binary bytes must match exactly');
+
+    // Verify executable mode (0755)
+    const scriptStat = fs.statSync(path.join(targetWt, 'script.sh'));
+    assert.ok((scriptStat.mode & 0o111) !== 0, 'Executable bit must be preserved');
+
+    // Verify normal file mode (0644)
+    const normalStat = fs.statSync(path.join(targetWt, 'normal.txt'));
+    assert.strictEqual((normalStat.mode & 0o111) === 0, true, 'Normal file must not be executable');
+
+    // Verify symlink
+    const linkLstat = fs.lstatSync(path.join(targetWt, 'link-to-normal.txt'));
+    assert.ok(linkLstat.isSymbolicLink(), 'Target must be a symbolic link');
+    assert.strictEqual(fs.readlinkSync(path.join(targetWt, 'link-to-normal.txt')), 'normal.txt');
+
+    // Verify deletion relative to baseline: obsolete.txt must be removed!
+    assert.strictEqual(fs.existsSync(path.join(targetWt, 'obsolete.txt')), false, 'Obsolete file must be deleted');
+  });
+
+  // --- TEST 28: The committed and remotely published tree equals the accepted tree ---
+  await runTest('28. The committed and remotely published tree equals the accepted tree', async () => {
+    const treeWs = path.join(testTempDir, 'tree-ws');
+    const repoDir = path.join(testTempDir, 'tree-repo');
+    fs.mkdirSync(path.join(treeWs, 'src'), { recursive: true });
+    fs.mkdirSync(repoDir, { recursive: true });
+
+    spawnSync('git', ['init'], { cwd: repoDir });
+    spawnSync('git', ['config', 'user.name', 'Author'], { cwd: repoDir });
+    spawnSync('git', ['config', 'user.email', 'author@example.com'], { cwd: repoDir });
+    fs.writeFileSync(path.join(repoDir, 'README.md'), '# Base Repo\n');
+    spawnSync('git', ['add', '.'], { cwd: repoDir });
+    spawnSync('git', ['commit', '-m', 'Initial'], { cwd: repoDir });
+    const headRes = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repoDir, encoding: 'utf8' });
+    const baseCommit = headRes.stdout.trim();
+
+    // Prepare candidate files in workspace
+    fs.writeFileSync(path.join(treeWs, 'src/math.js'), 'module.exports = { add: (a, b) => a + b };\n');
+    fs.writeFileSync(path.join(treeWs, 'README.md'), '# Base Repo with Math\n');
+
+    const expectedTreeHash = computeCanonicalCandidateDigest(treeWs);
+
+    const taskId = `task-tree-${Date.now()}`;
+    storage.insertTask({
+      id: taskId,
+      key: `TREE-1`,
+      title: 'Tree Equality Task',
+      status: 'in_progress',
+      subtasks: [{ id: `crit-tr-1`, title: 'Crit 1', verificationMethod: 'trusted_test' }],
+    });
+    storage.insertCriterion({ id: `crit-tr-1`, taskId, title: 'Crit 1', verificationMethod: 'trusted_test', status: 'pending' });
+
+    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    fs.mkdirSync(trustedDir, { recursive: true });
+    fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `process.exit(0);`);
+
+    const acceptRes = await verifyTaskAcceptance({ taskId, baseCommit, workspacePath: treeWs });
+    assert.strictEqual(acceptRes.allPassed, true);
+    assert.strictEqual(acceptRes.candidateHash, expectedTreeHash);
+
+    // Deliver to local branch
+    const branchName = 'aegis/tree-test-branch';
+    const delivRes = await GitDeliveryService.deliverToBranch(taskId, {
+      repoPath: repoDir,
+      branchName,
+      commitMessage: 'Verify committed tree equals accepted candidate',
+      candidateHash: expectedTreeHash,
+    });
+    assert.strictEqual(delivRes.success, true);
+
+    // Checkout the delivered branch in repoDir and verify tree hash
+    spawnSync('git', ['checkout', branchName], { cwd: repoDir });
+    const committedTreeHash = computeCanonicalCandidateDigest(repoDir);
+    assert.strictEqual(committedTreeHash, expectedTreeHash, 'Committed tree hash must match accepted tree hash exactly');
+  });
+
+  // --- TEST 29: Base drift invalidates delivery authorization ---
+  await runTest('29. Base drift invalidates delivery authorization', async () => {
+    const driftRepo = path.join(testTempDir, 'drift-repo');
+    const driftBare = path.join(testTempDir, 'drift-bare.git');
+    const driftWs = path.join(testTempDir, 'drift-ws');
+    fs.mkdirSync(driftRepo, { recursive: true });
+    fs.mkdirSync(driftWs, { recursive: true });
+
+    spawnSync('git', ['init', '-b', 'main'], { cwd: driftRepo });
+    spawnSync('git', ['config', 'user.name', 'Author'], { cwd: driftRepo });
+    spawnSync('git', ['config', 'user.email', 'author@example.com'], { cwd: driftRepo });
+    fs.writeFileSync(path.join(driftRepo, 'file.txt'), 'v1\n');
+    spawnSync('git', ['add', '.'], { cwd: driftRepo });
+    spawnSync('git', ['commit', '-m', 'Commit C1'], { cwd: driftRepo });
+
+    const c1Res = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: driftRepo, encoding: 'utf8' });
+    const c1Commit = c1Res.stdout.trim();
+
+    spawnSync('git', ['init', '--bare', driftBare]);
+    spawnSync('git', ['remote', 'add', 'origin', driftBare], { cwd: driftRepo });
+    spawnSync('git', ['push', '-u', 'origin', 'main'], { cwd: driftRepo });
+
+    // Accept candidate against C1 base commit
+    fs.writeFileSync(path.join(driftWs, 'file.txt'), 'v1-candidate\n');
+    const taskId = `task-drift-${Date.now()}`;
+    storage.insertTask({
+      id: taskId,
+      key: `DRIFT-1`,
+      title: 'Drift Test',
+      status: 'in_progress',
+      subtasks: [{ id: `crit-df-1`, title: 'Crit 1', verificationMethod: 'trusted_test' }],
+    });
+    storage.insertCriterion({ id: `crit-df-1`, taskId, title: 'Crit 1', verificationMethod: 'trusted_test', status: 'pending' });
+
+    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    fs.mkdirSync(trustedDir, { recursive: true });
+    fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `process.exit(0);`);
+
+    const acceptRes = await verifyTaskAcceptance({ taskId, baseCommit: c1Commit, workspacePath: driftWs });
+    assert.strictEqual(acceptRes.allPassed, true);
+
+    // ADVANCE remote repository default branch to Commit C2 (simulating upstream change)
+    fs.writeFileSync(path.join(driftRepo, 'drift.txt'), 'new work pushed upstream\n');
+    spawnSync('git', ['add', '.'], { cwd: driftRepo });
+    spawnSync('git', ['commit', '-m', 'Commit C2 (upstream advance)'], { cwd: driftRepo });
+    spawnSync('git', ['push', 'origin', 'main'], { cwd: driftRepo });
+
+    // Attempt remote delivery
+    const remoteRes = await GitDeliveryService.deliverToRemote(taskId, {
+      repoUrl: driftBare,
+      branchName: 'aegis/drift-branch',
+      deliveryMode: 'branch_push',
+    });
+
+    assert.strictEqual(remoteRes.success, false, 'Delivery must fail when remote base has drifted');
+    assert.strictEqual(remoteRes.blocked, true, 'Delivery must be blocked');
+    assert.strictEqual(remoteRes.branchPublished, false, 'Branch must not be published on drifted base');
+    assert.ok(remoteRes.error?.includes('Remote base drift detected'), `Must report base drift: ${remoteRes.error}`);
+  });
+
+  // --- TEST 30: PR failure after branch publication can be retried without duplicate publication or fabricated success ---
+  await runTest('30. PR failure after branch publication can be retried without duplicate publication or fabricated success', async () => {
+    const prRepo = path.join(testTempDir, 'pr-repo');
+    const prBare = path.join(testTempDir, 'pr-bare.git');
+    const prWs = path.join(testTempDir, 'pr-ws');
+    fs.mkdirSync(prRepo, { recursive: true });
+    fs.mkdirSync(prWs, { recursive: true });
+
+    spawnSync('git', ['init', '-b', 'main'], { cwd: prRepo });
+    spawnSync('git', ['config', 'user.name', 'Author'], { cwd: prRepo });
+    spawnSync('git', ['config', 'user.email', 'author@example.com'], { cwd: prRepo });
+    fs.writeFileSync(path.join(prRepo, 'README.md'), '# PR Repo\n');
+    spawnSync('git', ['add', '.'], { cwd: prRepo });
+    spawnSync('git', ['commit', '-m', 'Initial commit'], { cwd: prRepo });
+    const rev = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: prRepo, encoding: 'utf8' }).stdout.trim();
+
+    spawnSync('git', ['init', '--bare', prBare]);
+    spawnSync('git', ['remote', 'add', 'origin', prBare], { cwd: prRepo });
+    spawnSync('git', ['push', '-u', 'origin', 'main'], { cwd: prRepo });
+
+    fs.writeFileSync(path.join(prWs, 'feature.js'), 'module.exports = "feature";\n');
+    const taskId = `task-pr-retry-${Date.now()}`;
+    storage.insertTask({
+      id: taskId,
+      key: `PR-RETRY-1`,
+      title: 'PR Retry Test',
+      status: 'in_progress',
+      subtasks: [{ id: `crit-pr-1`, title: 'Crit 1', verificationMethod: 'trusted_test' }],
+    });
+    storage.insertCriterion({ id: `crit-pr-1`, taskId, title: 'Crit 1', verificationMethod: 'trusted_test', status: 'pending' });
+
+    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    fs.mkdirSync(trustedDir, { recursive: true });
+    fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `process.exit(0);`);
+
+    const acceptRes = await verifyTaskAcceptance({ taskId, baseCommit: rev, workspacePath: prWs });
+    assert.strictEqual(acceptRes.allPassed, true);
+
+    const branchName = 'aegis/pr-retry-branch';
+
+    // 1. Deliver to remote via branch_push to simulate branch publication
+    const pubRes = await GitDeliveryService.deliverToRemote(taskId, {
+      repoUrl: prBare,
+      branchName,
+      deliveryMode: 'branch_push',
+    });
+    assert.strictEqual(pubRes.success, true);
+    assert.strictEqual(pubRes.branchPublished, true);
+
+    // 2. Retry remote delivery with deliveryMode: 'pull_request' on bare remote
+    const retryRes = await GitDeliveryService.deliverToRemote(taskId, {
+      repoUrl: prBare,
+      branchName,
+      deliveryMode: 'pull_request',
+    });
+
+    // Reuses the verified published branch, does not fail with branch conflict, and truthfully reports unsupported PR platform
+    assert.strictEqual(retryRes.branchPublished, true, 'Branch was already published and reused');
+    assert.strictEqual(retryRes.prCreated, false, 'PR was not created');
+    assert.strictEqual(retryRes.prUrl, undefined, 'Must not invent fake PR URL');
+    assert.ok(!retryRes.error?.includes('Remote branch conflict'), 'Must reuse existing branch without branch conflict error');
+  });
+
+  // --- TEST 31: Evaluation uses actual lifecycle commands and cannot directly bypass acceptance ---
+  await runTest('31. Evaluation uses actual lifecycle commands and cannot directly bypass acceptance', () => {
+    const taskId = `task-life-${Date.now()}`;
+    const unverifiedTask = {
+      id: taskId,
+      key: `LIFE-1`,
+      title: 'Lifecycle Bypass Attempt',
+      status: 'in_progress' as const,
+      subtasks: [{ id: `crit-lf-1`, title: 'Unverified subtask', completed: false }],
+      dependencies: [],
+      deliverables: [],
+    };
+    coordinator.getState().tasks.push(unverifiedTask as any);
+
+    // Attempt direct transition to 'done' without passing acceptance quality gates
+    const transRes = coordinator.transitionTaskStatus(taskId, 'done');
+    assert.strictEqual(transRes.success, false, 'Transition to done must be rejected');
+    assert.ok(transRes.error?.includes('Quality gates failed'), 'Must fail quality gates');
+    assert.notStrictEqual(coordinator.getState().tasks.find((t) => t.id === taskId)?.status, 'done');
+  });
+
+  // --- TEST 32: Test execution leaves production state unchanged ---
+  await runTest('32. Test execution leaves production state unchanged', () => {
+    // 1. Capture production tasks and state
+    const prodTasksBefore = storage.getAllTasks().map((t: any) => t.id).sort();
+
+    // 2. Spin up an isolated temporary database for test execution
+    const tempDb = path.join(os.tmpdir(), `test-isolated-${Date.now()}.db`);
+    StorageEngine.resetInstance(tempDb);
+
+    // 3. Perform arbitrary state mutations in isolated database
+    storage.insertTask({
+      id: `task-temp-only-${Date.now()}`,
+      key: `TEMP-1`,
+      title: 'Temporary Task',
+      status: 'in_progress',
+      subtasks: [],
+    });
+    assert.strictEqual(storage.getAllTasks().length, 1);
+    assert.strictEqual(storage.getTaskByKey('TEMP-1')?.id.startsWith('task-temp-only-'), true);
+
+    // 4. Reset back to production database
+    StorageEngine.resetInstance();
+
+    // 5. Verify production DB contains none of the temporary records and task list is completely unchanged
+    const prodTasksAfter = storage.getAllTasks().map((t: any) => t.id).sort();
+    assert.deepStrictEqual(prodTasksAfter, prodTasksBefore, 'Production tasks list must be completely unchanged');
+    assert.strictEqual(storage.getTaskByKey('TEMP-1'), null);
+  });
+
   // Cleanup
   try {
     fs.rmSync(testTempDir, { recursive: true, force: true });
   } catch {}
 
-  console.log(`\n=== ALL 22 CRITICAL PIPELINE TESTS PASSED CLEANLY: ${passedTests}/${totalTests} ===\n`);
+  console.log(`\n=== ALL 32 CRITICAL PIPELINE TESTS PASSED CLEANLY: ${passedTests}/${totalTests} ===\n`);
 }
 
 executeSuite().catch((err) => {

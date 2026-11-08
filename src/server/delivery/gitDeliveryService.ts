@@ -52,12 +52,106 @@ export interface RemoteDeliveryOptions {
 export interface RemoteDeliveryResult {
   success: boolean;
   blocked?: boolean;
+  branchPublished?: boolean;
+  prCreated?: boolean;
   branchName?: string;
   commitHash?: string;
   prUrl?: string;
   prNumber?: number;
   patch?: string;
   error?: string;
+}
+
+/**
+ * Preserves raw binary bytes, Git modes (0100644, 0100755), symlinks,
+ * and deletions relative to baseline without relocating paths.
+ */
+export async function materializeCandidateToWorktree(
+  sourceDir: string,
+  worktreeDir: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // 1. Delete files in worktree that do not exist in candidate (deletion relative to baseline)
+    const trackedRes = await runIsolatedProcess({
+      command: 'git',
+      args: ['ls-files'],
+      cwd: worktreeDir,
+    });
+    if (trackedRes.exitCode === 0) {
+      const trackedFiles = trackedRes.stdout.split('\n').map((l) => l.trim()).filter(Boolean);
+      for (const rel of trackedFiles) {
+        const sourcePath = path.join(sourceDir, rel);
+        if (!fs.existsSync(sourcePath) && !fs.lstatSync(sourcePath, { throwIfNoEntry: false })) {
+          const wtPath = path.join(worktreeDir, rel);
+          if (fs.existsSync(wtPath) || fs.lstatSync(wtPath, { throwIfNoEntry: false })) {
+            fs.rmSync(wtPath, { force: true, recursive: true });
+          }
+        }
+      }
+    }
+
+    // 2. Walk source candidate and copy every entry with exact types and permissions
+    const walk = (currentDir: string) => {
+      const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (
+          entry.name === '.git' ||
+          entry.name === 'node_modules' ||
+          entry.name === 'dist' ||
+          entry.name === '.sandbox_scratch' ||
+          entry.name === 'candidate_metadata.json' ||
+          entry.name === '.aegis_metadata.json'
+        ) {
+          continue;
+        }
+
+        const fullSrc = path.join(currentDir, entry.name);
+        const rel = path.relative(sourceDir, fullSrc);
+        const fullDest = path.join(worktreeDir, rel);
+
+        const check = assertPathContained(rel, worktreeDir);
+        if (!check.valid) {
+          throw new Error(`File path escapes worktree boundary: ${check.error}`);
+        }
+
+        if (entry.isSocket() || entry.isFIFO() || entry.isCharacterDevice() || entry.isBlockDevice()) {
+          throw new Error(`Unsupported file type in candidate at: ${rel}`);
+        }
+
+        if (entry.isDirectory()) {
+          if (!fs.existsSync(fullDest)) {
+            fs.mkdirSync(fullDest, { recursive: true });
+          }
+          walk(fullSrc);
+        } else if (entry.isSymbolicLink()) {
+          const linkTarget = fs.readlinkSync(fullSrc);
+          const parent = path.dirname(fullDest);
+          if (!fs.existsSync(parent)) fs.mkdirSync(parent, { recursive: true });
+          if (fs.existsSync(fullDest) || fs.lstatSync(fullDest, { throwIfNoEntry: false })) {
+            fs.rmSync(fullDest, { force: true, recursive: true });
+          }
+          fs.symlinkSync(linkTarget, fullDest);
+        } else if (entry.isFile()) {
+          const parent = path.dirname(fullDest);
+          if (!fs.existsSync(parent)) fs.mkdirSync(parent, { recursive: true });
+          if (fs.existsSync(fullDest) || fs.lstatSync(fullDest, { throwIfNoEntry: false })) {
+            fs.rmSync(fullDest, { force: true, recursive: true });
+          }
+          // Preserve raw binary bytes
+          const rawBuffer = fs.readFileSync(fullSrc);
+          fs.writeFileSync(fullDest, rawBuffer);
+          const srcStat = fs.statSync(fullSrc);
+          const isExecutable = (srcStat.mode & 0o111) !== 0;
+          fs.chmodSync(fullDest, isExecutable ? 0o755 : 0o644);
+        }
+      }
+    };
+
+    walk(sourceDir);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
 }
 
 export class GitDeliveryService {
@@ -93,6 +187,7 @@ export class GitDeliveryService {
 
     // Recompute canonical candidate digest from actual contents and metadata
     let verifiedFilesToCommit: Array<{ relPath: string; content: string }> = [];
+    const snapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, task.acceptedCandidateHash);
 
     if (options.filesToCommit && options.filesToCommit.length > 0) {
       const tempStaging = path.join(os.tmpdir(), `aegis-stage-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`);
@@ -128,7 +223,6 @@ export class GitDeliveryService {
       }
     } else {
       // Deliver from server-owned candidate snapshot
-      const snapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, task.acceptedCandidateHash);
       if (!fs.existsSync(snapshotDir)) {
         return {
           success: false,
@@ -181,13 +275,29 @@ export class GitDeliveryService {
       };
     }
 
-    const staleEvidence = evidenceList.some((e: any) => e.requirements_version !== task.requirementsVersion);
-    if (staleEvidence) {
-      return {
-        success: false,
-        branchName: options.branchName,
-        error: `Delivery rejected: Evidence for task ${task.key} is stale (requirements version mismatch). Re-verification required.`,
-      };
+    for (const crit of criteria) {
+      const critEv = evidenceList.find((e: any) => e.criterion_id === crit.id);
+      if (!critEv) {
+        return {
+          success: false,
+          branchName: options.branchName,
+          error: `Delivery rejected: Criterion "${crit.title}" has no passing evidence bound to candidate ${task.acceptedCandidateHash.slice(0, 10)}.`,
+        };
+      }
+      if (critEv.requirements_version !== task.requirementsVersion) {
+        return {
+          success: false,
+          branchName: options.branchName,
+          error: `Delivery rejected: Evidence for criterion "${crit.title}" is stale (requirements version mismatch). Re-verification required.`,
+        };
+      }
+      if (task.acceptedBaseCommit && critEv.base_commit && critEv.base_commit !== task.acceptedBaseCommit) {
+        return {
+          success: false,
+          branchName: options.branchName,
+          error: `Delivery rejected: Evidence for criterion "${crit.title}" base commit mismatch (${critEv.base_commit} != ${task.acceptedBaseCommit}).`,
+        };
+      }
     }
 
     // Sanitize branch name
@@ -252,21 +362,40 @@ export class GitDeliveryService {
         };
       }
 
-      // Write files inside worktree with strict containment check
-      for (const item of verifiedFilesToCommit) {
-        const check = assertPathContained(item.relPath, tempWorktree);
-        if (!check.valid) {
+      // Materialize files into worktree
+      if (!options.filesToCommit || options.filesToCommit.length === 0) {
+        const matRes = await materializeCandidateToWorktree(snapshotDir, tempWorktree);
+        if (!matRes.success) {
           return {
             success: false,
             branchName: sanitizedBranch,
-            error: `File path escapes worktree boundary: ${check.error}`,
+            error: `Materialization failed: ${matRes.error}`,
           };
         }
-        const parent = path.dirname(check.resolvedPath);
-        if (!fs.existsSync(parent)) {
-          fs.mkdirSync(parent, { recursive: true });
+        const wtDigest = computeCanonicalCandidateDigest(tempWorktree);
+        if (wtDigest !== task.acceptedCandidateHash) {
+          return {
+            success: false,
+            branchName: sanitizedBranch,
+            error: `Delivery rejected: Materialized worktree digest mismatch (${wtDigest} != ${task.acceptedCandidateHash})`,
+          };
         }
-        fs.writeFileSync(check.resolvedPath, item.content, 'utf8');
+      } else {
+        for (const item of verifiedFilesToCommit) {
+          const check = assertPathContained(item.relPath, tempWorktree);
+          if (!check.valid) {
+            return {
+              success: false,
+              branchName: sanitizedBranch,
+              error: `File path escapes worktree boundary: ${check.error}`,
+            };
+          }
+          const parent = path.dirname(check.resolvedPath);
+          if (!fs.existsSync(parent)) {
+            fs.mkdirSync(parent, { recursive: true });
+          }
+          fs.writeFileSync(check.resolvedPath, item.content, 'utf8');
+        }
       }
 
       // git add -A
@@ -421,23 +550,17 @@ export class GitDeliveryService {
   ): Promise<RemoteDeliveryResult> {
     const task = storage.getTaskById(taskId);
     if (!task) {
-      return { success: false, blocked: true, error: `Delivery rejected: Task not found (${taskId})` };
+      return { success: false, blocked: true, branchPublished: false, prCreated: false, error: `Delivery rejected: Task not found (${taskId})` };
     }
 
-    if (!task.acceptedCandidateHash) {
-      return {
-        success: false,
-        blocked: true,
-        error: `Delivery rejected: Task ${task.key} has not been verified and accepted by the independent quality gate`,
-      };
-    }
-
-    const { repoUrl, branchName, commitMessage, targetDirectory = 'src', defaultBranch = 'main', apiToken, deliveryMode = 'pull_request' } = options;
+    const { repoUrl, branchName, commitMessage, defaultBranch = 'main', apiToken, deliveryMode = 'pull_request' } = options;
 
     if (!repoUrl || repoUrl.trim() === '') {
       return {
         success: false,
         blocked: true,
+        branchPublished: false,
+        prCreated: false,
         error: 'remote_git_not_configured: Remote repository URL is required for remote delivery.',
       };
     }
@@ -447,53 +570,101 @@ export class GitDeliveryService {
       return {
         success: false,
         blocked: true,
+        branchPublished: false,
+        prCreated: false,
         error: 'remote_git_not_configured: Remote publication requires a verified API token with repository write permissions.',
       };
     }
 
     const sanitizedBranch = (branchName || `aegis/${task.key.toLowerCase()}`).replace(/[^a-zA-Z0-9_\-\/]/g, '-');
     if (!sanitizedBranch || sanitizedBranch.startsWith('-')) {
-      return { success: false, blocked: true, error: 'Invalid branch name format' };
+      return { success: false, blocked: true, branchPublished: false, prCreated: false, error: 'Invalid branch name format' };
     }
 
     if (!task.acceptedCandidateHash) {
       return {
         success: false,
         blocked: true,
+        branchPublished: false,
+        prCreated: false,
         branchName: sanitizedBranch,
         error: `Delivery blocked: Task ${task.key} has no accepted candidate hash. Delivery requires verified acceptance.`,
       };
     }
 
-    // Deliver files from server-owned candidate snapshot
+    // 1. Deliver files strictly from server-owned candidate snapshot (NO workspace fallback)
     const snapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, task.acceptedCandidateHash);
-    const filesToDeliver: Array<{ relPath: string; content: string }> = [];
-
     if (!fs.existsSync(snapshotDir)) {
       return {
         success: false,
         blocked: true,
+        branchPublished: false,
+        prCreated: false,
         branchName: sanitizedBranch,
         error: `Delivery blocked: No server-owned candidate snapshot found for task ${task.id} (candidateHash: ${task.acceptedCandidateHash}). Delivery must source from verified immutable snapshots, not mutable workspaces.`,
       };
     }
 
-    const walkSnapshot = (dir: string) => {
-      const entries = fs.readdirSync(dir, { withFileTypes: true });
-      for (const e of entries) {
-        const full = path.join(dir, e.name);
-        if (e.isDirectory()) {
-          walkSnapshot(full);
-        } else if (e.isFile() && e.name !== 'candidate_metadata.json') {
-          const rel = path.relative(snapshotDir, full);
-          filesToDeliver.push({
-            relPath: targetDirectory ? path.join(targetDirectory, rel) : rel,
-            content: fs.readFileSync(full, 'utf8'),
-          });
-        }
+    // 2. Recompute snapshot canonical digest to guarantee candidate was not tampered with
+    const snapshotDigest = computeCanonicalCandidateDigest(snapshotDir);
+    if (snapshotDigest !== task.acceptedCandidateHash) {
+      return {
+        success: false,
+        blocked: true,
+        branchPublished: false,
+        prCreated: false,
+        branchName: sanitizedBranch,
+        error: `Delivery blocked: Candidate snapshot tampering detected! Recomputed digest (${snapshotDigest}) does not match accepted digest (${task.acceptedCandidateHash}).`,
+      };
+    }
+
+    // 3. Strict verification evidence validation: Every criterion must have passing, un-stale evidence
+    const criteria = storage.getCriteriaForTask(task.id);
+    if (criteria.length === 0) {
+      return {
+        success: false,
+        blocked: true,
+        branchPublished: false,
+        prCreated: false,
+        branchName: sanitizedBranch,
+        error: `Delivery blocked: Task ${task.key} has no configured acceptance criteria`,
+      };
+    }
+
+    const evidenceList = storage.getEvidenceForCandidate(task.id, task.acceptedCandidateHash).filter((e: any) => e.outcome === 'passed');
+    for (const crit of criteria) {
+      const critEv = evidenceList.find((e: any) => e.criterion_id === crit.id);
+      if (!critEv) {
+        return {
+          success: false,
+          blocked: true,
+          branchPublished: false,
+          prCreated: false,
+          branchName: sanitizedBranch,
+          error: `Delivery blocked: Missing passing evidence for criterion "${crit.title}" bound to candidate ${task.acceptedCandidateHash.slice(0, 10)}.`,
+        };
       }
-    };
-    walkSnapshot(snapshotDir);
+      if (critEv.requirements_version !== task.requirementsVersion) {
+        return {
+          success: false,
+          blocked: true,
+          branchPublished: false,
+          prCreated: false,
+          branchName: sanitizedBranch,
+          error: `Delivery blocked: Evidence for criterion "${crit.title}" is stale (requirements version mismatch: ${critEv.requirements_version} != ${task.requirementsVersion}). Re-verification required.`,
+        };
+      }
+      if (task.acceptedBaseCommit && critEv.base_commit && critEv.base_commit !== task.acceptedBaseCommit) {
+        return {
+          success: false,
+          blocked: true,
+          branchPublished: false,
+          prCreated: false,
+          branchName: sanitizedBranch,
+          error: `Delivery blocked: Evidence for criterion "${crit.title}" has base commit mismatch (${critEv.base_commit} != ${task.acceptedBaseCommit}).`,
+        };
+      }
+    }
 
     const tempRemoteWork = path.join(os.tmpdir(), `aegis-remote-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`);
 
@@ -506,104 +677,183 @@ export class GitDeliveryService {
         authenticatedUrl = repoUrl.replace('https://', `https://${apiToken}@`);
       }
 
-      // Check remote branch conflict
-      const lsRemote = await runIsolatedProcess({
+      // 4. Validate remote base drift before publication
+      const lsRemoteBase = await runIsolatedProcess({
+        command: 'git',
+        args: ['ls-remote', '--heads', authenticatedUrl],
+        cwd: tempRemoteWork,
+      });
+
+      if (lsRemoteBase.exitCode === 0 && lsRemoteBase.stdout.trim().length > 0) {
+        const match = lsRemoteBase.stdout.match(new RegExp(`^([a-f0-9]{40})\\s+refs/heads/${defaultBranch}`, 'm'));
+        const remoteBaseCommit = match ? match[1] : null;
+        if (remoteBaseCommit && task.acceptedBaseCommit && remoteBaseCommit !== task.acceptedBaseCommit) {
+          return {
+            success: false,
+            blocked: true,
+            branchPublished: false,
+            prCreated: false,
+            branchName: sanitizedBranch,
+            error: `Delivery blocked: Remote base drift detected. Remote ${defaultBranch} HEAD (${remoteBaseCommit.slice(0, 8)}) does not match accepted base commit (${task.acceptedBaseCommit.slice(0, 8)}). Re-verification against latest remote base is required.`,
+          };
+        }
+      }
+
+      // 5. Remote branch publication & retryability check
+      const lsRemoteBranch = await runIsolatedProcess({
         command: 'git',
         args: ['ls-remote', '--heads', authenticatedUrl, sanitizedBranch],
         cwd: tempRemoteWork,
       });
 
-      if (lsRemote.exitCode === 0 && lsRemote.stdout.includes(`refs/heads/${sanitizedBranch}`)) {
-        return {
-          success: false,
-          blocked: true,
-          branchName: sanitizedBranch,
-          error: `Remote branch conflict: Branch '${sanitizedBranch}' already exists on remote repository`,
-        };
-      }
+      let alreadyPublished = false;
+      let commitHash: string | undefined;
 
-      // Clone or initialize checkout
-      const cloneRes = await runIsolatedProcess({
-        command: 'git',
-        args: ['clone', '--depth', '1', authenticatedUrl, tempRemoteWork],
-        cwd: path.dirname(tempRemoteWork),
-      });
+      if (lsRemoteBranch.exitCode === 0 && lsRemoteBranch.stdout.includes(`refs/heads/${sanitizedBranch}`)) {
+        const match = lsRemoteBranch.stdout.match(new RegExp(`^([a-f0-9]{40})\\s+refs/heads/${sanitizedBranch}`, 'm'));
+        const existingBranchCommit = match ? match[1] : null;
 
-      if (cloneRes.exitCode !== 0) {
-        return {
-          success: false,
-          blocked: true,
-          error: `Failed to connect to remote repository: ${cloneRes.stderr || cloneRes.stdout}`,
-        };
-      }
+        // Check if existing remote branch already contains the verified candidate
+        const checkBranchRes = await runIsolatedProcess({
+          command: 'git',
+          args: ['clone', '--depth', '1', '-b', sanitizedBranch, authenticatedUrl, tempRemoteWork],
+          cwd: path.dirname(tempRemoteWork),
+        });
 
-      // Create new branch
-      const checkoutRes = await runIsolatedProcess({
-        command: 'git',
-        args: ['checkout', '-b', sanitizedBranch],
-        cwd: tempRemoteWork,
-      });
-      if (checkoutRes.exitCode !== 0) {
-        return { success: false, blocked: true, error: `Git checkout failed: ${checkoutRes.stderr}` };
-      }
-
-      // Write candidate snapshot files
-      for (const file of filesToDeliver) {
-        const check = assertPathContained(file.relPath, tempRemoteWork);
-        if (!check.valid) {
-          return { success: false, blocked: true, error: `Path traversal: ${check.error}` };
+        if (checkBranchRes.exitCode === 0) {
+          const branchDigest = computeCanonicalCandidateDigest(tempRemoteWork);
+          if (branchDigest === task.acceptedCandidateHash) {
+            alreadyPublished = true;
+            commitHash = existingBranchCommit || undefined;
+          }
         }
-        const parent = path.dirname(check.resolvedPath);
-        if (!fs.existsSync(parent)) fs.mkdirSync(parent, { recursive: true });
-        fs.writeFileSync(check.resolvedPath, file.content, 'utf8');
+
+        if (!alreadyPublished) {
+          return {
+            success: false,
+            blocked: true,
+            branchPublished: false,
+            prCreated: false,
+            branchName: sanitizedBranch,
+            error: `Remote branch conflict: Branch '${sanitizedBranch}' already exists on remote repository with conflicting contents`,
+          };
+        }
       }
 
-      // Configure git identity and add, commit, push
-      await runIsolatedProcess({ command: 'git', args: ['config', 'user.name', 'Aegis Autonomous Worker'], cwd: tempRemoteWork });
-      await runIsolatedProcess({ command: 'git', args: ['config', 'user.email', 'worker@aegis.local'], cwd: tempRemoteWork });
-      await runIsolatedProcess({ command: 'git', args: ['add', '-A'], cwd: tempRemoteWork });
-      const commitRes = await runIsolatedProcess({
-        command: 'git',
-        args: [
-          'commit',
-          '-m',
-          commitMessage || `Aegis Orchestrator: Verified delivery for ${task.key}`,
-          '--author',
-          'Aegis Autonomous Worker <worker@aegis.local>',
-        ],
-        cwd: tempRemoteWork,
-        env: {
-          GIT_COMMITTER_NAME: 'Aegis Autonomous Worker',
-          GIT_COMMITTER_EMAIL: 'worker@aegis.local',
-          GIT_AUTHOR_NAME: 'Aegis Autonomous Worker',
-          GIT_AUTHOR_EMAIL: 'worker@aegis.local',
-        },
-      });
+      if (!alreadyPublished) {
+        // Clone default base branch
+        const cloneRes = await runIsolatedProcess({
+          command: 'git',
+          args: ['clone', '--depth', '1', '-b', defaultBranch, authenticatedUrl, tempRemoteWork],
+          cwd: path.dirname(tempRemoteWork),
+        });
 
-      if (commitRes.exitCode !== 0) {
-        return { success: false, blocked: true, error: `Git commit failed: ${commitRes.stderr}` };
+        if (cloneRes.exitCode !== 0) {
+          // If defaultBranch fails, try bare clone without branch
+          const fallbackClone = await runIsolatedProcess({
+            command: 'git',
+            args: ['clone', '--depth', '1', authenticatedUrl, tempRemoteWork],
+            cwd: path.dirname(tempRemoteWork),
+          });
+          if (fallbackClone.exitCode !== 0) {
+            return {
+              success: false,
+              blocked: true,
+              branchPublished: false,
+              prCreated: false,
+              error: `Failed to connect to remote repository: ${fallbackClone.stderr || fallbackClone.stdout}`,
+            };
+          }
+        }
+
+        // Create new delivery branch
+        const checkoutRes = await runIsolatedProcess({
+          command: 'git',
+          args: ['checkout', '-b', sanitizedBranch],
+          cwd: tempRemoteWork,
+        });
+        if (checkoutRes.exitCode !== 0) {
+          return { success: false, blocked: true, branchPublished: false, prCreated: false, error: `Git checkout failed: ${checkoutRes.stderr}` };
+        }
+
+        // Materialize candidate files preserving binary bytes, modes, symlinks, and deletions
+        const matRes = await materializeCandidateToWorktree(snapshotDir, tempRemoteWork);
+        if (!matRes.success) {
+          return {
+            success: false,
+            blocked: true,
+            branchPublished: false,
+            prCreated: false,
+            error: `Candidate materialization failed: ${matRes.error}`,
+          };
+        }
+
+        // Verify pre-commit tree matches accepted candidate
+        const preCommitDigest = computeCanonicalCandidateDigest(tempRemoteWork);
+        if (preCommitDigest !== task.acceptedCandidateHash) {
+          return {
+            success: false,
+            blocked: true,
+            branchPublished: false,
+            prCreated: false,
+            error: `Materialization tree digest mismatch (${preCommitDigest} != ${task.acceptedCandidateHash})`,
+          };
+        }
+
+        // Configure git identity and add, commit, push
+        await runIsolatedProcess({ command: 'git', args: ['config', 'user.name', 'Aegis Autonomous Worker'], cwd: tempRemoteWork });
+        await runIsolatedProcess({ command: 'git', args: ['config', 'user.email', 'worker@aegis.local'], cwd: tempRemoteWork });
+        await runIsolatedProcess({ command: 'git', args: ['add', '-A'], cwd: tempRemoteWork });
+
+        const commitRes = await runIsolatedProcess({
+          command: 'git',
+          args: [
+            'commit',
+            '-m',
+            commitMessage || `Aegis Orchestrator: Verified delivery for ${task.key}`,
+            '--author',
+            'Aegis Autonomous Worker <worker@aegis.local>',
+          ],
+          cwd: tempRemoteWork,
+          env: {
+            GIT_COMMITTER_NAME: 'Aegis Autonomous Worker',
+            GIT_COMMITTER_EMAIL: 'worker@aegis.local',
+            GIT_AUTHOR_NAME: 'Aegis Autonomous Worker',
+            GIT_AUTHOR_EMAIL: 'worker@aegis.local',
+          },
+        });
+
+        if (commitRes.exitCode !== 0) {
+          return { success: false, blocked: true, branchPublished: false, prCreated: false, error: `Git commit failed: ${commitRes.stderr}` };
+        }
+
+        const revRes = await runIsolatedProcess({
+          command: 'git',
+          args: ['rev-parse', 'HEAD'],
+          cwd: tempRemoteWork,
+        });
+        commitHash = revRes.stdout.trim();
+
+        const pushRes = await runIsolatedProcess({
+          command: 'git',
+          args: ['push', 'origin', sanitizedBranch],
+          cwd: tempRemoteWork,
+        });
+
+        if (pushRes.exitCode !== 0) {
+          return { success: false, blocked: true, branchPublished: false, prCreated: false, error: `Git push failed: ${pushRes.stderr || pushRes.stdout}` };
+        }
+
+        alreadyPublished = true;
       }
 
-      const revRes = await runIsolatedProcess({
-        command: 'git',
-        args: ['rev-parse', 'HEAD'],
-        cwd: tempRemoteWork,
-      });
-      const commitHash = revRes.stdout.trim();
-
-      const pushRes = await runIsolatedProcess({
-        command: 'git',
-        args: ['push', 'origin', sanitizedBranch],
-        cwd: tempRemoteWork,
-      });
-
-      if (pushRes.exitCode !== 0) {
-        return { success: false, blocked: true, error: `Git push failed: ${pushRes.stderr || pushRes.stdout}` };
-      }
-
+      // At this point, branch publication was successful
+      const branchPublished = true;
       let prUrl: string | undefined;
       let prNumber: number | undefined;
+      let prCreated = false;
 
+      // 6. Pull Request Handling (truthful, retryable, recover on 422)
       if (deliveryMode === 'pull_request') {
         const token = apiToken || process.env.GITHUB_TOKEN || process.env.GITLAB_TOKEN;
         const cleanUrl = repoUrl.trim();
@@ -617,9 +867,11 @@ export class GitDeliveryService {
           return {
             success: false,
             blocked: true,
+            branchPublished: true,
+            prCreated: false,
             branchName: sanitizedBranch,
             commitHash,
-            error: `Pull request creation blocked: deliveryMode is 'pull_request', but no API token was provided (apiToken / GITHUB_TOKEN / GITLAB_TOKEN). The verified branch '${sanitizedBranch}' was pushed to remote, but PR creation requires valid platform credentials.`,
+            error: `Pull request creation blocked: deliveryMode is 'pull_request', but no API token was provided (apiToken / GITHUB_TOKEN / GITLAB_TOKEN). The verified branch '${sanitizedBranch}' was published to remote, but PR creation requires valid platform credentials.`,
           };
         }
 
@@ -643,22 +895,50 @@ export class GitDeliveryService {
 
             if (!prRes.ok) {
               const errBody = await prRes.text();
-              return {
-                success: false,
-                blocked: true,
-                branchName: sanitizedBranch,
-                commitHash,
-                error: `GitHub PR creation failed (HTTP ${prRes.status}): ${errBody}`,
-              };
-            }
+              // Idempotent recovery if PR already exists
+              if (prRes.status === 422 || errBody.toLowerCase().includes('already exists')) {
+                try {
+                  const searchRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls?head=${owner}:${sanitizedBranch}&state=open`, {
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Accept': 'application/vnd.github+json',
+                      'User-Agent': 'Aegis-Orchestrator',
+                    },
+                  });
+                  if (searchRes.ok) {
+                    const searchData = (await searchRes.json()) as any[];
+                    if (Array.isArray(searchData) && searchData.length > 0) {
+                      prUrl = searchData[0].html_url;
+                      prNumber = searchData[0].number;
+                      prCreated = true;
+                    }
+                  }
+                } catch {}
+              }
 
-            const prData = await prRes.json() as any;
-            prUrl = prData.html_url;
-            prNumber = prData.number;
+              if (!prCreated) {
+                return {
+                  success: false,
+                  blocked: true,
+                  branchPublished: true,
+                  prCreated: false,
+                  branchName: sanitizedBranch,
+                  commitHash,
+                  error: `GitHub PR creation failed (HTTP ${prRes.status}): ${errBody}`,
+                };
+              }
+            } else {
+              const prData = (await prRes.json()) as any;
+              prUrl = prData.html_url;
+              prNumber = prData.number;
+              prCreated = true;
+            }
           } catch (fetchErr: any) {
             return {
               success: false,
               blocked: true,
+              branchPublished: true,
+              prCreated: false,
               branchName: sanitizedBranch,
               commitHash,
               error: `GitHub PR request failed: ${fetchErr.message}`,
@@ -683,22 +963,45 @@ export class GitDeliveryService {
 
             if (!mrRes.ok) {
               const errBody = await mrRes.text();
-              return {
-                success: false,
-                blocked: true,
-                branchName: sanitizedBranch,
-                commitHash,
-                error: `GitLab MR creation failed (HTTP ${mrRes.status}): ${errBody}`,
-              };
-            }
+              if (mrRes.status === 409 || errBody.toLowerCase().includes('already exists')) {
+                try {
+                  const searchRes = await fetch(`https://gitlab.com/api/v4/projects/${projectPath}/merge_requests?source_branch=${sanitizedBranch}&state=opened`, {
+                    headers: { 'PRIVATE-TOKEN': token },
+                  });
+                  if (searchRes.ok) {
+                    const mrList = (await searchRes.json()) as any[];
+                    if (Array.isArray(mrList) && mrList.length > 0) {
+                      prUrl = mrList[0].web_url;
+                      prNumber = mrList[0].iid;
+                      prCreated = true;
+                    }
+                  }
+                } catch {}
+              }
 
-            const mrData = await mrRes.json() as any;
-            prUrl = mrData.web_url;
-            prNumber = mrData.iid;
+              if (!prCreated) {
+                return {
+                  success: false,
+                  blocked: true,
+                  branchPublished: true,
+                  prCreated: false,
+                  branchName: sanitizedBranch,
+                  commitHash,
+                  error: `GitLab MR creation failed (HTTP ${mrRes.status}): ${errBody}`,
+                };
+              }
+            } else {
+              const mrData = (await mrRes.json()) as any;
+              prUrl = mrData.web_url;
+              prNumber = mrData.iid;
+              prCreated = true;
+            }
           } catch (fetchErr: any) {
             return {
               success: false,
               blocked: true,
+              branchPublished: true,
+              prCreated: false,
               branchName: sanitizedBranch,
               commitHash,
               error: `GitLab MR request failed: ${fetchErr.message}`,
@@ -708,6 +1011,8 @@ export class GitDeliveryService {
           return {
             success: false,
             blocked: true,
+            branchPublished: true,
+            prCreated: false,
             branchName: sanitizedBranch,
             commitHash,
             error: `Pull request creation is unsupported on remote '${repoUrl}'. Only GitHub and GitLab remotes support automated pull requests. Use deliveryMode 'branch_push' to publish branches without PR creation.`,
@@ -724,6 +1029,8 @@ export class GitDeliveryService {
 
       return {
         success: true,
+        branchPublished: true,
+        prCreated,
         branchName: sanitizedBranch,
         commitHash,
         prUrl,

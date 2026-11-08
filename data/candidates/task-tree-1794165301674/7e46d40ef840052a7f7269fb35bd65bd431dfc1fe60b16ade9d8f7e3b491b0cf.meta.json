@@ -1,0 +1,8 @@
+{
+  "taskId": "task-tree-1794165301674",
+  "taskKey": "TREE-1",
+  "candidateHash": "7e46d40ef840052a7f7269fb35bd65bd431dfc1fe60b16ade9d8f7e3b491b0cf",
+  "acceptedAt": "2026-11-08T19:15:01.803Z",
+  "baseCommit": "62205fe8b19a1bbe506386b04e045358f2d96574",
+  "requirementsVersion": 1
+}

@@ -25,8 +25,9 @@ export class StorageEngine {
   private db: DatabaseSync;
   private static instance: StorageEngine | null = null;
 
-  constructor(dbPath: string = DB_PATH) {
-    this.db = new DatabaseSync(dbPath);
+  constructor(dbPath?: string) {
+    const targetPath = dbPath || process.env.AEGIS_DB_PATH || path.resolve(DATA_DIR, 'aegis.db');
+    this.db = new DatabaseSync(targetPath);
     this.initSchema();
   }
 
@@ -34,6 +35,17 @@ export class StorageEngine {
     if (!StorageEngine.instance) {
       StorageEngine.instance = new StorageEngine(dbPath);
     }
+    return StorageEngine.instance;
+  }
+
+  public static resetInstance(dbPath?: string): StorageEngine {
+    if (StorageEngine.instance) {
+      try {
+        StorageEngine.instance.db.close();
+      } catch {}
+      StorageEngine.instance = null;
+    }
+    StorageEngine.instance = new StorageEngine(dbPath);
     return StorageEngine.instance;
   }
 
@@ -793,4 +805,15 @@ export class StorageEngine {
   }
 }
 
-export const storage = StorageEngine.getInstance();
+export const storage: StorageEngine = new Proxy({} as StorageEngine, {
+  get(_target, prop) {
+    const inst = StorageEngine.getInstance();
+    const val = (inst as any)[prop];
+    return typeof val === 'function' ? val.bind(inst) : val;
+  },
+  set(_target, prop, value) {
+    const inst = StorageEngine.getInstance();
+    (inst as any)[prop] = value;
+    return true;
+  },
+});

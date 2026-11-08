@@ -52,35 +52,55 @@ export function computeWorkspaceTreeHash(workspacePath: string): string {
     entries.sort((a, b) => a.name.localeCompare(b.name));
 
     for (const entry of entries) {
-      if (entry.name === '.git' || entry.name === 'node_modules' || entry.name === 'dist' || entry.name === '.sandbox_scratch') continue;
+      if (
+        entry.name === '.git' ||
+        entry.name === 'node_modules' ||
+        entry.name === 'dist' ||
+        entry.name === '.sandbox_scratch' ||
+        entry.name === 'candidate_metadata.json' ||
+        entry.name === '.aegis_metadata.json'
+      ) {
+        continue;
+      }
+
       const full = path.join(dir, entry.name);
       const rel = path.relative(workspacePath, full);
 
+      if (entry.isSocket() || entry.isFIFO() || entry.isCharacterDevice() || entry.isBlockDevice()) {
+        throw new Error(`Unsupported file type in candidate workspace at: ${rel}`);
+      }
+
       if (entry.isSymbolicLink()) {
         try {
-          const lstats = fs.lstatSync(full);
           const linkTarget = fs.readlinkSync(full);
           hash.update(rel);
           hash.update('\0symlink\0');
-          hash.update((lstats.mode & 0o777).toString(8));
+          hash.update('0120000');
           hash.update('\0');
           hash.update(linkTarget);
           hash.update('\0');
-        } catch {}
+        } catch (e: any) {
+          throw new Error(`Failed to read symlink ${rel}: ${e.message}`);
+        }
       } else if (entry.isDirectory()) {
         walk(full);
       } else if (entry.isFile()) {
         try {
           const stats = fs.statSync(full);
-          const content = fs.readFileSync(full);
+          const isExecutable = (stats.mode & 0o111) !== 0;
+          const gitMode = isExecutable ? '0100755' : '0100644';
+          const content = fs.readFileSync(full); // Raw binary buffer
+
           hash.update(rel);
           hash.update('\0file\0');
-          hash.update((stats.mode & 0o777).toString(8));
+          hash.update(gitMode);
           hash.update('\0');
           hash.update(String(stats.size));
           hash.update('\0');
           hash.update(content);
-        } catch {}
+        } catch (e: any) {
+          throw new Error(`Failed to read file ${rel}: ${e.message}`);
+        }
       }
     }
   };
@@ -272,31 +292,61 @@ export async function verifyTaskAcceptance(params: {
   // Store immutable accepted candidate snapshot upon acceptance
   if (allPassed) {
     try {
-      const candidateSnapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, candidateHash);
+      const taskCandidatesDir = path.resolve(process.cwd(), 'data/candidates', task.id);
+      const candidateSnapshotDir = path.join(taskCandidatesDir, candidateHash);
       if (!fs.existsSync(candidateSnapshotDir)) {
         fs.mkdirSync(candidateSnapshotDir, { recursive: true });
         fs.cpSync(workspacePath, candidateSnapshotDir, {
           recursive: true,
           filter: (src) => {
             const base = path.basename(src);
-            return base !== '.git' && base !== 'node_modules' && base !== '.sandbox_scratch';
+            return (
+              base !== '.git' &&
+              base !== 'node_modules' &&
+              base !== 'dist' &&
+              base !== '.sandbox_scratch' &&
+              base !== '.aegis_metadata.json' &&
+              base !== 'candidate_metadata.json'
+            );
           },
         });
-        fs.writeFileSync(
-          path.join(candidateSnapshotDir, 'candidate_metadata.json'),
-          JSON.stringify({
-            taskId: task.id,
-            taskKey: task.key,
-            candidateHash,
-            acceptedAt: new Date().toISOString(),
-            baseCommit: baseCommit || null,
-            requirementsVersion: task.requirementsVersion || 1,
-          }, null, 2),
-          'utf8'
-        );
       }
-    } catch (snapshotErr) {
+
+      // Recompute digest of snapshot to guarantee fidelity and immutability
+      const snapshotDigest = computeWorkspaceTreeHash(candidateSnapshotDir);
+      if (snapshotDigest !== candidateHash) {
+        throw new Error(`Snapshot verification failed: digest mismatch (${snapshotDigest} != ${candidateHash})`);
+      }
+
+      // Store metadata outside candidate snapshot tree so the tree remains pure
+      const metaPath = path.join(taskCandidatesDir, `${candidateHash}.meta.json`);
+      fs.writeFileSync(
+        metaPath,
+        JSON.stringify({
+          taskId: task.id,
+          taskKey: task.key,
+          candidateHash,
+          acceptedAt: new Date().toISOString(),
+          baseCommit: baseCommit || null,
+          requirementsVersion: task.requirementsVersion || 1,
+        }, null, 2),
+        'utf8'
+      );
+    } catch (snapshotErr: any) {
       console.warn('Failed to snapshot accepted candidate:', snapshotErr);
+      allPassed = false;
+      storage.recordEvidence({
+        runId,
+        taskId: task.id,
+        criterionId: criteria[0]?.id || 'crit-snapshot',
+        baseCommit,
+        candidateHash,
+        verifierName: 'immutable_snapshot_verifier',
+        requirementsVersion: task.requirementsVersion || 1,
+        exitCode: 1,
+        outcome: 'failed',
+        failureReason: `Snapshot creation/verification failed: ${snapshotErr.message}`,
+      });
     }
   }
 

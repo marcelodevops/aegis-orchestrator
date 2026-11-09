@@ -1735,6 +1735,122 @@ async function executeSuite() {
     }
   });
 
+  // --- TEST 37: Absent verifier-version fails closed in delivery ---
+  await runTest('37. Absent verifier-version in evidence fails closed in Git delivery', async () => {
+    const taskId = `task-absver-${Date.now()}`;
+    const taskKey = `ABSVER-${Date.now().toString().slice(-4)}`;
+
+    coordinator.updateState({
+      tasks: [
+        {
+          id: taskId,
+          key: taskKey,
+          title: 'Absent Verifier Version Task',
+          status: 'in_progress',
+          priority: 'medium',
+          assignedAgentId: 'agent-dev',
+          estimatedHours: 2,
+          spentHours: 0,
+          dependencies: [],
+          subtasks: [{ id: `crit-absver-1`, title: 'Must export answer', verificationMethod: 'trusted_test' }],
+        } as any,
+      ],
+    });
+
+    storage.insertCriterion({
+      id: `crit-absver-1`,
+      taskId,
+      title: 'Must export answer',
+      verificationMethod: 'trusted_test',
+      status: 'passed',
+    });
+
+    const snapDir = path.resolve(process.cwd(), 'data/candidates', taskId, 'temp-snap');
+    fs.mkdirSync(snapDir, { recursive: true });
+    fs.writeFileSync(path.join(snapDir, 'index.js'), 'module.exports = { answer: 100 };\n');
+    const digest = computeCanonicalCandidateDigest(snapDir);
+    const finalSnapDir = path.resolve(process.cwd(), 'data/candidates', taskId, digest);
+    fs.renameSync(snapDir, finalSnapDir);
+
+    const taskCurrent = storage.getTaskById(taskId);
+    storage.updateTaskWithRevision(taskId, taskCurrent.version, {
+      acceptedCandidateHash: digest,
+      acceptedBaseCommit: '1234567890abcdef1234567890abcdef12345678',
+    });
+
+    // Directly insert evidence with verifier_version = NULL
+    const evId = `ev-absver-${Date.now()}`;
+    (storage as any).db.prepare(`
+      INSERT INTO evidence (
+        id, run_id, task_id, criterion_id, base_commit, candidate_hash,
+        verifier_name, verifier_version, requirements_version, exit_code, outcome, recorded_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      evId, null, taskId, `crit-absver-1`, '1234567890abcdef1234567890abcdef12345678', digest,
+      'test_verifier', null, 1, 0, 'passed', new Date().toISOString()
+    );
+
+    try {
+      const delivRes = await GitDeliveryService.deliverToBranch(taskId, {
+        repoPath: testTempDir,
+        branchName: 'aegis/absver-test',
+        commitMessage: 'Test absent verifier version',
+      });
+
+      assert.strictEqual(delivRes.success, false, 'Delivery must be rejected when verifier_version is absent');
+      assert.ok(delivRes.error?.includes('verifier version mismatch'), `Error must mention verifier version: ${delivRes.error}`);
+    } finally {
+      if (fs.existsSync(finalSnapDir)) fs.rmSync(path.dirname(finalSnapDir), { recursive: true, force: true });
+    }
+  });
+
+  // --- TEST 38: Unified coordinator quality gates strictly reject legacy unverified paths ---
+  await runTest('38. Coordinator quality gates strictly reject legacy unverified tasks (missing snapshot or absent evidence)', () => {
+    const taskId = `task-legacy-block-${Date.now()}`;
+    const taskKey = `LGCY-${Date.now().toString().slice(-4)}`;
+
+    // Create a task that has subtasks marked completed: true, but NO acceptedCandidateHash
+    coordinator.updateState({
+      tasks: [
+        {
+          id: taskId,
+          key: taskKey,
+          title: 'Legacy Bypass Task',
+          status: 'in_progress',
+          priority: 'high',
+          assignedAgentId: 'agent-dev',
+          estimatedHours: 4,
+          spentHours: 0,
+          dependencies: [],
+          subtasks: [
+            { id: `crit-lgcy-1`, title: 'Worker marked completed', completed: true },
+          ],
+        } as any,
+      ],
+    });
+
+    storage.insertCriterion({
+      id: `crit-lgcy-1`,
+      taskId,
+      title: 'Worker marked completed',
+      verificationMethod: 'trusted_test',
+      status: 'pending',
+    });
+
+    // Quality gate check directly
+    const taskInCoord = coordinator.getState().tasks.find((t) => t.id === taskId);
+    assert.ok(taskInCoord);
+    const vRes = coordinator.verifyTaskQualityGates(taskInCoord);
+    assert.strictEqual(vRes.passed, false, 'Quality gates must fail closed without accepted candidate hash');
+    const critCheck = vRes.checks.find((c) => c.rule === 'Acceptance Criteria Certified in Ledger');
+    assert.strictEqual(critCheck?.passed, false);
+    assert.ok(critCheck?.detail.includes('no accepted candidate digest'));
+
+    // Transition directly to done must fail
+    const doneAttempt = coordinator.transitionTaskStatus(taskId, 'done');
+    assert.strictEqual(doneAttempt.success, false, 'Transition to done must be rejected');
+  });
+
   // Cleanup
   try {
     fs.rmSync(testTempDir, { recursive: true, force: true });
@@ -1750,7 +1866,7 @@ async function executeSuite() {
     }
   } catch {}
 
-  console.log(`\n=== ALL 36 CRITICAL PIPELINE TESTS PASSED CLEANLY: ${passedTests}/${totalTests} ===\n`);
+  console.log(`\n=== ALL 38 CRITICAL PIPELINE TESTS PASSED CLEANLY: ${passedTests}/${totalTests} ===\n`);
 }
 
 executeSuite().catch((err) => {

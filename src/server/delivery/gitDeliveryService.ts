@@ -299,11 +299,11 @@ export class GitDeliveryService {
         };
       }
       const expectedVerifierVersion = crit.verificationSpec?.expectedVerifierVersion || crit.verificationSpec?.verifierVersion || '1.0.0';
-      if (critEv.verifier_version && critEv.verifier_version !== expectedVerifierVersion) {
+      if (!critEv.verifier_version || critEv.verifier_version !== expectedVerifierVersion) {
         return {
           success: false,
           branchName: options.branchName,
-          error: `Delivery rejected: Evidence for criterion "${crit.title}" verifier version mismatch (${critEv.verifier_version} != ${expectedVerifierVersion}). Re-verification required.`,
+          error: `Delivery rejected: Evidence for criterion "${crit.title}" verifier version mismatch (${critEv.verifier_version || 'absent'} != ${expectedVerifierVersion}). Re-verification required.`,
         };
       }
     }
@@ -684,14 +684,14 @@ export class GitDeliveryService {
         };
       }
       const expectedVerifierVersion = crit.verificationSpec?.expectedVerifierVersion || crit.verificationSpec?.verifierVersion || '1.0.0';
-      if (critEv.verifier_version && critEv.verifier_version !== expectedVerifierVersion) {
+      if (!critEv.verifier_version || critEv.verifier_version !== expectedVerifierVersion) {
         return {
           success: false,
           blocked: true,
           branchPublished: false,
           prCreated: false,
           branchName: sanitizedBranch,
-          error: `Delivery blocked: Evidence for criterion "${crit.title}" verifier version mismatch (${critEv.verifier_version} != ${expectedVerifierVersion}). Re-verification required.`,
+          error: `Delivery blocked: Evidence for criterion "${crit.title}" verifier version mismatch (${critEv.verifier_version || 'absent'} != ${expectedVerifierVersion}). Re-verification required.`,
         };
       }
     }

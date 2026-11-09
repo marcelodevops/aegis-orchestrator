@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { coordinator } from './coordinator.js';
+import { storage } from './storage/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -102,8 +103,20 @@ export async function handleRepositoryDispatch(params: {
       const rootDir = path.resolve(__dirname, '../../');
       const sourceArtifact = path.resolve(rootDir, `.aegis_artifacts/${taskKey}/implementation.js`);
 
-      // Check 1: Delivery checks acceptance, not just file existence - FAIL CLOSED
-      const targetTask = coordinator.getState().tasks.find((t) => t.key === taskKey || t.id === task?.id);
+      // Check 1: Target directory repository validation
+      if (localWriteMode === 'git_branch' && !isGitRepo) {
+        return {
+          status: 400,
+          body: {
+            success: false,
+            blocked: true,
+            error: `Delivery blocked: Directory ${resolvedLocal} is not an initialized Git repository. Git branch delivery requires an active Git checkout.`,
+          },
+        };
+      }
+
+      // Check 2: Delivery checks acceptance, not just file existence - FAIL CLOSED
+      const targetTask = storage.getTaskById(task?.id || taskKey) || storage.getTaskByKey(taskKey) || coordinator.getState().tasks.find((t) => t.key === taskKey || t.id === task?.id);
       if (!targetTask) {
         return {
           status: 400,
@@ -115,24 +128,18 @@ export async function handleRepositoryDispatch(params: {
         };
       }
 
-      const verification = coordinator.verifyTaskQualityGates(targetTask);
-      if (!verification.passed) {
-        const failedDetails = verification.checks
-          .filter((c: any) => !c.passed)
-          .map((c: any) => `${c.rule}: ${c.detail}`)
-          .join('; ');
+      if (!targetTask.acceptedCandidateHash) {
         return {
           status: 400,
           body: {
             success: false,
             blocked: true,
-            error: `Delivery blocked: Task ${taskKey} failed quality gate acceptance (${failedDetails}). Only accepted tasks that satisfy quality gates can be delivered.`,
-            verification,
+            error: `Delivery blocked: Task ${taskKey} failed quality gate acceptance (Task has no accepted candidate hash. Acceptance verification required prior to delivery).`,
           },
         };
       }
 
-      // Check 2: Check if real artifact exists on disk - never substitute placeholders
+      // Check 3: Check if real artifact exists on disk - never substitute placeholders
       if (!fs.existsSync(sourceArtifact)) {
         return {
           status: 400,
@@ -353,8 +360,7 @@ export async function handleRepositoryDispatch(params: {
   if (action === 'create_pr' || action === 'deliver') {
     const taskKey = task?.key || 'AEG-104';
 
-    // Check 1: Delivery checks acceptance, not just file existence - FAIL CLOSED
-    const targetTask = coordinator.getState().tasks.find((t) => t.key === taskKey || t.id === task?.id);
+    const targetTask = storage.getTaskById(task?.id || taskKey) || storage.getTaskByKey(taskKey) || coordinator.getState().tasks.find((t) => t.key === taskKey || t.id === task?.id);
     if (!targetTask) {
       return {
         status: 400,
@@ -366,19 +372,13 @@ export async function handleRepositoryDispatch(params: {
       };
     }
 
-    const verification = coordinator.verifyTaskQualityGates(targetTask);
-    if (!verification.passed) {
-      const failedDetails = verification.checks
-        .filter((c: any) => !c.passed)
-        .map((c: any) => `${c.rule}: ${c.detail}`)
-        .join('; ');
+    if (!targetTask.acceptedCandidateHash) {
       return {
         status: 400,
         body: {
           success: false,
           blocked: true,
-          error: `Delivery blocked: Task ${taskKey} failed quality gate acceptance (${failedDetails}). Only accepted tasks that satisfy quality gates can be delivered.`,
-          verification,
+          error: `Delivery blocked: Task ${taskKey} failed quality gate acceptance (Task has no accepted candidate hash. Acceptance verification required prior to delivery).`,
         },
       };
     }

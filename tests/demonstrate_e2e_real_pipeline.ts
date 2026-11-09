@@ -19,25 +19,29 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { StorageEngine, storage } from '../src/server/storage/db.js';
-import { coordinator } from '../src/server/coordinator.js';
-import { verifyTaskAcceptance, computeCanonicalCandidateDigest } from '../src/server/verification/acceptanceEngine.js';
-import { GeminiWorkerAdapter } from '../src/server/worker/realWorkerAdapter.js';
-import { GitDeliveryService } from '../src/server/delivery/gitDeliveryService.js';
-import { isUnshareSupported, isNodePermissionSupported } from '../src/server/execution/sandboxRuntime.js';
 
 export async function runRealModelDemonstration() {
   console.log('\n================================================================');
   console.log('   AEGIS ORCHESTRATOR: REAL MODEL-BACKED E2E EVALUATION');
   console.log('================================================================\n');
 
-  // 1. Isolated temporary database to protect production data/aegis.db
+  // 1. Isolated temporary database and state to protect production data/aegis.db
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-e2e-eval-'));
   const tempDbPath = path.join(tempRoot, 'eval_aegis.db');
   const tempStatePath = path.join(tempRoot, 'eval_state.json');
   process.env.AEGIS_DB_PATH = tempDbPath;
   process.env.AEGIS_STATE_PATH = tempStatePath;
+
+  // Dynamically import application modules AFTER environment variables are configured
+  const { StorageEngine, storage } = await import('../src/server/storage/db.js');
+  const { coordinator } = await import('../src/server/coordinator.js');
+  const { verifyTaskAcceptance, computeCanonicalCandidateDigest } = await import('../src/server/verification/acceptanceEngine.js');
+  const { GeminiWorkerAdapter } = await import('../src/server/worker/realWorkerAdapter.js');
+  const { GitDeliveryService } = await import('../src/server/delivery/gitDeliveryService.js');
+  const { isUnshareSupported, isNodePermissionSupported } = await import('../src/server/execution/sandboxRuntime.js');
+
   StorageEngine.resetInstance(tempDbPath);
+  coordinator.resetState(tempStatePath);
 
   // 2. Explicit credential discovery (process.env only; no /proc scraping)
   const apiKey = process.env.GEMINI_API_KEY;
@@ -420,7 +424,12 @@ ${currentDiagnostics}`,
     } catch {}
     delete process.env.AEGIS_DB_PATH;
     delete process.env.AEGIS_STATE_PATH;
-    StorageEngine.resetInstance();
+    try {
+      const { StorageEngine } = await import('../src/server/storage/db.js');
+      StorageEngine.resetInstance();
+      const { coordinator } = await import('../src/server/coordinator.js');
+      coordinator.resetState();
+    } catch {}
   }
 }
 

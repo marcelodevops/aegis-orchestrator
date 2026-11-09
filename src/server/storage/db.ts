@@ -272,6 +272,10 @@ export class StorageEngine {
     return this.deserializeTask(row);
   }
 
+  public getTaskByKey(key: string): any | null {
+    return this.getTaskById(key);
+  }
+
   public getAllTasks(): any[] {
     const stmt = this.db.prepare('SELECT * FROM tasks ORDER BY created_at ASC');
     const rows = stmt.all() as any[];
@@ -398,9 +402,15 @@ export class StorageEngine {
         merged.lastAgentComment || '',
         merged.jiraSynced ? 1 : 0,
         merged.slackNotified ? 1 : 0,
-        merged.requirementsVersion ?? current.requirementsVersion ?? 1,
-        merged.acceptedCandidateHash ?? current.acceptedCandidateHash ?? null,
-        merged.acceptedBaseCommit ?? current.acceptedBaseCommit ?? null,
+        'requirementsVersion' in updates
+          ? (updates.requirementsVersion ?? current.requirementsVersion ?? 1)
+          : (current.requirementsVersion ?? 1),
+        'acceptedCandidateHash' in updates
+          ? (updates.acceptedCandidateHash ?? null)
+          : (current.acceptedCandidateHash ?? null),
+        'acceptedBaseCommit' in updates
+          ? (updates.acceptedBaseCommit ?? null)
+          : (current.acceptedBaseCommit ?? null),
         nextVersion,
         now,
         current.id,

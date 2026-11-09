@@ -298,6 +298,14 @@ export class GitDeliveryService {
           error: `Delivery rejected: Evidence for criterion "${crit.title}" base commit mismatch (${critEv.base_commit} != ${task.acceptedBaseCommit}).`,
         };
       }
+      const expectedVerifierVersion = crit.verificationSpec?.expectedVerifierVersion || crit.verificationSpec?.verifierVersion || '1.0.0';
+      if (critEv.verifier_version && critEv.verifier_version !== expectedVerifierVersion) {
+        return {
+          success: false,
+          branchName: options.branchName,
+          error: `Delivery rejected: Evidence for criterion "${crit.title}" verifier version mismatch (${critEv.verifier_version} != ${expectedVerifierVersion}). Re-verification required.`,
+        };
+      }
     }
 
     // Sanitize branch name
@@ -592,6 +600,17 @@ export class GitDeliveryService {
       };
     }
 
+    if (!task.acceptedBaseCommit) {
+      return {
+        success: false,
+        blocked: true,
+        branchPublished: false,
+        prCreated: false,
+        branchName: sanitizedBranch,
+        error: `Delivery blocked: Task ${task.key} has no accepted base commit recorded. Remote delivery requires a verified base commit to prevent base drift.`,
+      };
+    }
+
     // 1. Deliver files strictly from server-owned candidate snapshot (NO workspace fallback)
     const snapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, task.acceptedCandidateHash);
     if (!fs.existsSync(snapshotDir)) {
@@ -664,6 +683,17 @@ export class GitDeliveryService {
           error: `Delivery blocked: Evidence for criterion "${crit.title}" has base commit mismatch (${critEv.base_commit} != ${task.acceptedBaseCommit}).`,
         };
       }
+      const expectedVerifierVersion = crit.verificationSpec?.expectedVerifierVersion || crit.verificationSpec?.verifierVersion || '1.0.0';
+      if (critEv.verifier_version && critEv.verifier_version !== expectedVerifierVersion) {
+        return {
+          success: false,
+          blocked: true,
+          branchPublished: false,
+          prCreated: false,
+          branchName: sanitizedBranch,
+          error: `Delivery blocked: Evidence for criterion "${crit.title}" verifier version mismatch (${critEv.verifier_version} != ${expectedVerifierVersion}). Re-verification required.`,
+        };
+      }
     }
 
     const tempRemoteWork = path.join(os.tmpdir(), `aegis-remote-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`);
@@ -677,26 +707,57 @@ export class GitDeliveryService {
         authenticatedUrl = repoUrl.replace('https://', `https://${apiToken}@`);
       }
 
-      // 4. Validate remote base drift before publication
+      // 4. Validate remote base drift before publication (fail closed)
       const lsRemoteBase = await runIsolatedProcess({
         command: 'git',
         args: ['ls-remote', '--heads', authenticatedUrl],
         cwd: tempRemoteWork,
       });
 
-      if (lsRemoteBase.exitCode === 0 && lsRemoteBase.stdout.trim().length > 0) {
-        const match = lsRemoteBase.stdout.match(new RegExp(`^([a-f0-9]{40})\\s+refs/heads/${defaultBranch}`, 'm'));
-        const remoteBaseCommit = match ? match[1] : null;
-        if (remoteBaseCommit && task.acceptedBaseCommit && remoteBaseCommit !== task.acceptedBaseCommit) {
-          return {
-            success: false,
-            blocked: true,
-            branchPublished: false,
-            prCreated: false,
-            branchName: sanitizedBranch,
-            error: `Delivery blocked: Remote base drift detected. Remote ${defaultBranch} HEAD (${remoteBaseCommit.slice(0, 8)}) does not match accepted base commit (${task.acceptedBaseCommit.slice(0, 8)}). Re-verification against latest remote base is required.`,
-          };
-        }
+      if (lsRemoteBase.exitCode !== 0) {
+        return {
+          success: false,
+          blocked: true,
+          branchPublished: false,
+          prCreated: false,
+          branchName: sanitizedBranch,
+          error: `Delivery blocked: Failed to query remote base repository references: ${lsRemoteBase.stderr || lsRemoteBase.stdout || 'git ls-remote failed'}.`,
+        };
+      }
+
+      if (!lsRemoteBase.stdout || lsRemoteBase.stdout.trim().length === 0) {
+        return {
+          success: false,
+          blocked: true,
+          branchPublished: false,
+          prCreated: false,
+          branchName: sanitizedBranch,
+          error: `Delivery blocked: Remote repository has no heads or default branch.`,
+        };
+      }
+
+      const match = lsRemoteBase.stdout.match(new RegExp(`^([a-f0-9]{40})\\s+refs/heads/${defaultBranch}`, 'm'));
+      const remoteBaseCommit = match ? match[1] : null;
+      if (!remoteBaseCommit) {
+        return {
+          success: false,
+          blocked: true,
+          branchPublished: false,
+          prCreated: false,
+          branchName: sanitizedBranch,
+          error: `Delivery blocked: Remote base branch 'refs/heads/${defaultBranch}' does not exist on remote repository.`,
+        };
+      }
+
+      if (remoteBaseCommit !== task.acceptedBaseCommit) {
+        return {
+          success: false,
+          blocked: true,
+          branchPublished: false,
+          prCreated: false,
+          branchName: sanitizedBranch,
+          error: `Delivery blocked: Remote base drift detected. Remote ${defaultBranch} HEAD (${remoteBaseCommit.slice(0, 8)}) does not match accepted base commit (${task.acceptedBaseCommit.slice(0, 8)}). Re-verification against latest remote base is required.`,
+        };
       }
 
       // 5. Remote branch publication & retryability check
@@ -741,7 +802,7 @@ export class GitDeliveryService {
       }
 
       if (!alreadyPublished) {
-        // Clone default base branch
+        // Clone default base branch (fail closed without fallback clone)
         const cloneRes = await runIsolatedProcess({
           command: 'git',
           args: ['clone', '--depth', '1', '-b', defaultBranch, authenticatedUrl, tempRemoteWork],
@@ -749,21 +810,14 @@ export class GitDeliveryService {
         });
 
         if (cloneRes.exitCode !== 0) {
-          // If defaultBranch fails, try bare clone without branch
-          const fallbackClone = await runIsolatedProcess({
-            command: 'git',
-            args: ['clone', '--depth', '1', authenticatedUrl, tempRemoteWork],
-            cwd: path.dirname(tempRemoteWork),
-          });
-          if (fallbackClone.exitCode !== 0) {
-            return {
-              success: false,
-              blocked: true,
-              branchPublished: false,
-              prCreated: false,
-              error: `Failed to connect to remote repository: ${fallbackClone.stderr || fallbackClone.stdout}`,
-            };
-          }
+          return {
+            success: false,
+            blocked: true,
+            branchPublished: false,
+            prCreated: false,
+            branchName: sanitizedBranch,
+            error: `Delivery blocked: Failed to clone remote branch '${defaultBranch}': ${cloneRes.stderr || cloneRes.stdout}`,
+          };
         }
 
         // Create new delivery branch

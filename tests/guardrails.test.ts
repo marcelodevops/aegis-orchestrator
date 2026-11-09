@@ -263,17 +263,16 @@ async function executeSuite() {
       storage.updateTaskWithRevision(aeg104Task.id, storage.getTaskById(aeg104Task.id).version, {
         acceptedCandidateHash: realCandidateHash,
       });
-      storage.recordEvidence({
-        taskId: aeg104Task.id,
-        candidateHash: realCandidateHash,
-        verifierName: 'unit_test_verifier',
-        requirementsVersion: 1,
-        outcome: 'passed',
-      });
-      storage.updateCriterionStatus('st-10', 'passed');
-      storage.updateCriterionStatus('st-11', 'passed');
-      storage.updateCriterionStatus('st-12', 'passed');
-      storage.updateCriterionStatus('st-fake', 'passed');
+      for (const crit of storage.getCriteriaForTask(aeg104Task.id)) {
+        storage.recordEvidence({
+          taskId: aeg104Task.id,
+          criterionId: crit.id,
+          candidateHash: realCandidateHash,
+          verifierName: 'unit_test_verifier',
+          requirementsVersion: 1,
+          outcome: 'passed',
+        });
+      }
 
       const res = await handleRepositoryDispatch({
         action: 'deliver',

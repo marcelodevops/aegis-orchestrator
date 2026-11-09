@@ -34,7 +34,9 @@ export async function runRealModelDemonstration() {
   // 1. Isolated temporary database to protect production data/aegis.db
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-e2e-eval-'));
   const tempDbPath = path.join(tempRoot, 'eval_aegis.db');
+  const tempStatePath = path.join(tempRoot, 'eval_state.json');
   process.env.AEGIS_DB_PATH = tempDbPath;
+  process.env.AEGIS_STATE_PATH = tempStatePath;
   StorageEngine.resetInstance(tempDbPath);
 
   // 2. Explicit credential discovery (process.env only; no /proc scraping)
@@ -134,18 +136,23 @@ module.exports = { TokenBucket };
       },
     ];
 
-    storage.insertTask({
-      id: taskId,
-      key: taskKey,
-      title: 'Fix Token Bucket elapsed-time replenishment and capacity enforcement',
-      description: 'The TokenBucket rate limiter fails to calculate elapsed time during refill() and fails to cap at max capacity.',
-      status: 'todo',
-      priority: 'high',
-      assignedAgentId: 'agent-dev',
-      estimatedHours: 4,
-      spentHours: 0,
-      dependencies: [],
-      subtasks: taskSubtasks,
+    coordinator.updateState({
+      tasks: [
+        {
+          id: taskId,
+          key: taskKey,
+          title: 'Fix Token Bucket elapsed-time replenishment and capacity enforcement',
+          description: 'The TokenBucket rate limiter fails to calculate elapsed time during refill() and fails to cap at max capacity.',
+          status: 'todo',
+          priority: 'high',
+          assignedAgentId: 'agent-dev',
+          estimatedHours: 4,
+          spentHours: 0,
+          dependencies: [],
+          subtasks: taskSubtasks,
+          deliverables: [],
+        } as any,
+      ],
     });
 
     for (const st of taskSubtasks) {
@@ -158,7 +165,6 @@ module.exports = { TokenBucket };
       });
     }
 
-    coordinator.getState().tasks.push(storage.getTaskById(taskId));
     console.log(`✓ Registered task ${taskKey} (${taskId}) with 3 explicit criteria in SQLite ledger.`);
 
     // 5. Define Trusted Server-Owned Acceptance Suite (stored outside workspace)
@@ -340,11 +346,7 @@ ${currentDiagnostics}`,
 
     // 9. Actual Application Lifecycle Transition via Coordinator
     console.log('\n[STAGE 6] Executing authoritative lifecycle status transition via coordinator...');
-    // Copy implementation to workspace directory expected by coordinator artifacts check
-    const wsTarget = path.resolve(process.cwd(), 'workspace', taskKey.replace(/[^a-zA-Z0-9_-]/g, '_'));
-    fs.mkdirSync(wsTarget, { recursive: true });
-    fs.cpSync(path.join(workspaceDir, 'src/tokenBucket.js'), path.join(wsTarget, 'implementation.js'));
-    fs.cpSync(trustedSpecPath, path.join(wsTarget, 'spec.test.cjs'));
+    // Quality gates natively recognize immutable candidate snapshot and SQLite evidence ledger
 
     const reviewTransition = coordinator.transitionTaskStatus(taskId, 'review');
     assert.strictEqual(reviewTransition.success, true, `Transition to review must succeed: ${reviewTransition.error}`);
@@ -417,6 +419,7 @@ ${currentDiagnostics}`,
       if (fs.existsSync(wsTarget)) fs.rmSync(wsTarget, { recursive: true, force: true });
     } catch {}
     delete process.env.AEGIS_DB_PATH;
+    delete process.env.AEGIS_STATE_PATH;
     StorageEngine.resetInstance();
   }
 }
@@ -426,6 +429,9 @@ if (process.argv[1]?.endsWith('demonstrate_e2e_real_pipeline.ts')) {
   runRealModelDemonstration()
     .then((result) => {
       console.log('E2E Demonstration result:', JSON.stringify(result, null, 2));
+      if (result.status !== 'success') {
+        process.exit(result.status === 'blocked' ? 2 : 1);
+      }
       process.exit(0);
     })
     .catch((err) => {

@@ -58,7 +58,7 @@
     {
       "id": "task-102",
       "key": "AEG-102",
-      "title": "Updated Without Version",
+      "title": "Build Interactive Kanban Board with Live Agent Execution Tags",
       "description": "Construct high-performance five-column Kanban layout featuring column filters, real-time agent presence pulses, and one-click transitions.",
       "epicId": "epic-kanban",
       "status": "in_progress",
@@ -81,7 +81,7 @@
       "lastAgentComment": "Lyra UI: Added glowing pulse states for executing agents. Completing deliverable viewer now.",
       "jiraSynced": true,
       "slackNotified": true,
-      "version": 2,
+      "version": 1,
       "requirementsVersion": 1,
       "subtasks": [
         {
@@ -110,7 +110,7 @@
         }
       ],
       "createdAt": "2026-11-07T02:07:52.559Z",
-      "lastUpdated": "2026-11-08T05:20:54.765Z"
+      "lastUpdated": "2026-11-07T02:07:52.559Z"
     },
     {
       "id": "task-103",
@@ -193,9 +193,9 @@
       "lastAgentComment": "Nexus-7: Ready to initiate balancing algorithm once task-101 dependencies clear.",
       "jiraSynced": true,
       "slackNotified": false,
-      "version": 24,
+      "version": 21,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "e0fd6746cc858a590eb33d8eb586fb3df8d421b9248da03059ea6fea7afa81d9",
+      "acceptedCandidateHash": "93ad8ff1513df99072ae18f3d7f417b572edfa0707773ec6bb6c3b6f014d0422",
       "subtasks": [
         {
           "id": "st-10",
@@ -203,7 +203,7 @@
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": null
+          "evidenceId": "ev-1794246194364-be0w"
         },
         {
           "id": "st-11",
@@ -211,7 +211,7 @@
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": null
+          "evidenceId": "ev-1794246194364-01zg"
         },
         {
           "id": "st-12",
@@ -219,7 +219,7 @@
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": null
+          "evidenceId": "ev-1794246194364-ki56"
         },
         {
           "id": "st-fake",
@@ -227,11 +227,11 @@
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": null
+          "evidenceId": "ev-1794246194364-iq0z"
         }
       ],
       "createdAt": "2026-11-07T02:07:52.560Z",
-      "lastUpdated": "2026-11-08T15:33:01.096Z"
+      "lastUpdated": "2026-11-09T17:43:14.363Z"
     },
     {
       "id": "task-105",
@@ -3516,8 +3516,8 @@
       "lastUpdated": "2026-11-08T04:57:18.150Z"
     },
     {
-      "id": "task-unv-1794115254746",
-      "key": "AEG-UNV-4746",
+      "id": "task-unv-1794165541150",
+      "key": "AEG-UNV-1151",
       "title": "Unverified task without tests",
       "description": "",
       "epicId": "epic-core",
@@ -3536,20 +3536,20 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-unv-1794115254746",
+          "id": "crit-unv-1794165541151",
           "title": "Must have explicit test command",
           "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794115254750-muyd"
+          "evidenceId": "ev-1794165541154-epq1"
         }
       ],
-      "createdAt": "2026-11-08T05:20:54.746Z",
-      "lastUpdated": "2026-11-08T05:20:54.751Z"
+      "createdAt": "2026-11-08T19:19:01.151Z",
+      "lastUpdated": "2026-11-08T19:19:01.155Z"
     },
     {
-      "id": "task-forged-1794115254751",
-      "key": "AEG-FORGE-4751",
+      "id": "task-forged-1794165541155",
+      "key": "AEG-FORGE-1155",
       "title": "Forged completion test",
       "description": "",
       "epicId": "epic-core",
@@ -3568,7 +3568,7 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-forged-1794115254751",
+          "id": "crit-forged-1794165541155",
           "title": "Attempted forge",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -3576,12 +3576,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T05:20:54.751Z",
-      "lastUpdated": "2026-11-08T05:20:54.751Z"
+      "createdAt": "2026-11-08T19:19:01.155Z",
+      "lastUpdated": "2026-11-08T19:19:01.155Z"
     },
     {
-      "id": "task-outcome-1794115254753",
-      "key": "AEG-FAIL-4754",
+      "id": "task-outcome-1794165541158",
+      "key": "AEG-FAIL-1158",
       "title": "Failed worker task",
       "description": "Tests status propagation",
       "epicId": "epic-core",
@@ -3600,7 +3600,7 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-f-1794115254754",
+          "id": "crit-f-1794165541158",
           "title": "Must pass",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -3608,108 +3608,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T05:20:54.754Z",
-      "lastUpdated": "2026-11-08T05:20:54.756Z"
+      "createdAt": "2026-11-08T19:19:01.158Z",
+      "lastUpdated": "2026-11-08T19:19:01.160Z"
     },
     {
-      "id": "task-unv-1794115269541",
-      "key": "AEG-UNV-9541",
-      "title": "Unverified task without tests",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-unv-1794115269541",
-          "title": "Must have explicit test command",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794115269544-8cvu"
-        }
-      ],
-      "createdAt": "2026-11-08T05:21:09.541Z",
-      "lastUpdated": "2026-11-08T05:21:09.545Z"
-    },
-    {
-      "id": "task-forged-1794115269546",
-      "key": "AEG-FORGE-9546",
-      "title": "Forged completion test",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-forged-1794115269546",
-          "title": "Attempted forge",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T05:21:09.546Z",
-      "lastUpdated": "2026-11-08T05:21:09.546Z"
-    },
-    {
-      "id": "task-outcome-1794115269548",
-      "key": "AEG-FAIL-9549",
-      "title": "Failed worker task",
-      "description": "Tests status propagation",
-      "epicId": "epic-core",
-      "status": "blocked",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "Worker execution ended with failed: Execution failed: Model generation timed out or crashed",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-f-1794115269549",
-          "title": "Must pass",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T05:21:09.549Z",
-      "lastUpdated": "2026-11-08T05:21:09.551Z"
-    },
-    {
-      "id": "task-dep-1794115269626",
-      "key": "AEG-DEP-9626",
+      "id": "task-dep-1794165541290",
+      "key": "AEG-DEP-1290",
       "title": "Prerequisite task",
       "description": "",
       "epicId": "epic-core",
@@ -3727,12 +3631,12 @@
       "version": 1,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T05:21:09.626Z",
-      "lastUpdated": "2026-11-08T05:21:09.626Z"
+      "createdAt": "2026-11-08T19:19:01.290Z",
+      "lastUpdated": "2026-11-08T19:19:01.290Z"
     },
     {
-      "id": "task-main-1794115269626",
-      "key": "AEG-MAIN-9627",
+      "id": "task-main-1794165541290",
+      "key": "AEG-MAIN-1291",
       "title": "Dependent task",
       "description": "",
       "epicId": "epic-core",
@@ -3742,7 +3646,7 @@
       "estimatedHours": 0,
       "spentHours": 0,
       "dependencies": [
-        "task-dep-1794115269626"
+        "task-dep-1794165541290"
       ],
       "tags": [],
       "deliverables": [],
@@ -3752,156 +3656,12 @@
       "version": 1,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T05:21:09.627Z",
-      "lastUpdated": "2026-11-08T05:21:09.627Z"
+      "createdAt": "2026-11-08T19:19:01.291Z",
+      "lastUpdated": "2026-11-08T19:19:01.291Z"
     },
     {
-      "id": "task-unv-1794115326261",
-      "key": "AEG-UNV-6261",
-      "title": "Unverified task without tests",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-unv-1794115326261",
-          "title": "Must have explicit test command",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794115326265-xklf"
-        }
-      ],
-      "createdAt": "2026-11-08T05:22:06.261Z",
-      "lastUpdated": "2026-11-08T05:22:06.265Z"
-    },
-    {
-      "id": "task-forged-1794115326266",
-      "key": "AEG-FORGE-6266",
-      "title": "Forged completion test",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-forged-1794115326266",
-          "title": "Attempted forge",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T05:22:06.266Z",
-      "lastUpdated": "2026-11-08T05:22:06.266Z"
-    },
-    {
-      "id": "task-outcome-1794115326268",
-      "key": "AEG-FAIL-6268",
-      "title": "Failed worker task",
-      "description": "Tests status propagation",
-      "epicId": "epic-core",
-      "status": "blocked",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "Worker execution ended with failed: Execution failed: Model generation timed out or crashed",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-f-1794115326268",
-          "title": "Must pass",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T05:22:06.268Z",
-      "lastUpdated": "2026-11-08T05:22:06.270Z"
-    },
-    {
-      "id": "task-dep-1794115326345",
-      "key": "AEG-DEP-6345",
-      "title": "Prerequisite task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T05:22:06.345Z",
-      "lastUpdated": "2026-11-08T05:22:06.345Z"
-    },
-    {
-      "id": "task-main-1794115326345",
-      "key": "AEG-MAIN-6346",
-      "title": "Dependent task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "todo",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [
-        "task-dep-1794115326345"
-      ],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T05:22:06.346Z",
-      "lastUpdated": "2026-11-08T05:22:06.346Z"
-    },
-    {
-      "id": "task-req-1794115328474",
-      "key": "AEG-REQ-8474",
+      "id": "task-req-1794165543414",
+      "key": "AEG-REQ-3414",
       "title": "Requirements test",
       "description": "",
       "epicId": "epic-core",
@@ -3920,25 +3680,25 @@
       "requirementsVersion": 2,
       "subtasks": [
         {
-          "id": "crit-r-1794115328474",
+          "id": "crit-r-1794165543414",
           "title": "Spec test",
           "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {
             "command": "node",
             "args": [
-              "/tmp/aegis-auth-pipe-1nMs6m/req-workspace/spec.test.js"
+              "/tmp/aegis-auth-pipe-MGvU4U/req-workspace/spec.test.js"
             ]
           },
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T05:22:08.474Z",
-      "lastUpdated": "2026-11-08T05:22:08.610Z"
+      "createdAt": "2026-11-08T19:19:03.414Z",
+      "lastUpdated": "2026-11-08T19:19:03.549Z"
     },
     {
-      "id": "task-tamper-1794115328676",
-      "key": "AEG-TAMPER-8676",
+      "id": "task-tamper-1794165543602",
+      "key": "AEG-TAMPER-3602",
       "title": "Tamper test",
       "description": "",
       "epicId": "epic-core",
@@ -3958,7 +3718,7 @@
       "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
       "subtasks": [
         {
-          "id": "crit-t-1794115328676",
+          "id": "crit-t-1794165543602",
           "title": "Validated criterion",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -3966,12 +3726,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T05:22:08.676Z",
-      "lastUpdated": "2026-11-08T05:22:08.676Z"
+      "createdAt": "2026-11-08T19:19:03.602Z",
+      "lastUpdated": "2026-11-08T19:19:03.602Z"
     },
     {
-      "id": "task-conflict-1794115328804",
-      "key": "AEG-CONF-8805",
+      "id": "task-conflict-1794165543730",
+      "key": "AEG-CONF-3730",
       "title": "Branch conflict task",
       "description": "",
       "epicId": "epic-core",
@@ -3988,23 +3748,23 @@
       "slackNotified": false,
       "version": 1,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "e02def359eb56b0ea26bb38f512d4aa9ef0a94807850491f4dbc45f70473ffb5",
+      "acceptedCandidateHash": "7d4ac6c3a8d3cace8911d7a76aae6f1fd5918026367a6a1907eda7dfadba6135",
       "subtasks": [
         {
-          "id": "c-conf-1794115328804",
+          "id": "c-conf-1794165543730",
           "title": "Passing test",
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794115328806-95d1"
+          "evidenceId": "ev-1794165543732-svxh"
         }
       ],
-      "createdAt": "2026-11-08T05:22:08.805Z",
-      "lastUpdated": "2026-11-08T05:22:08.805Z"
+      "createdAt": "2026-11-08T19:19:03.730Z",
+      "lastUpdated": "2026-11-08T19:19:03.730Z"
     },
     {
-      "id": "task-inter-1794115328849",
-      "key": "AEG-INTR-8849",
+      "id": "task-inter-1794165543787",
+      "key": "AEG-INTR-3787",
       "title": "Interrupted task",
       "description": "",
       "epicId": "epic-core",
@@ -4022,12 +3782,12 @@
       "version": 2,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T05:22:08.849Z",
-      "lastUpdated": "2026-11-08T05:22:08.851Z"
+      "createdAt": "2026-11-08T19:19:03.787Z",
+      "lastUpdated": "2026-11-08T19:19:03.789Z"
     },
     {
-      "id": "task-indep-1794115329087",
-      "key": "AEG-INDEP-9087",
+      "id": "task-indep-1794165544030",
+      "key": "AEG-INDEP-4031",
       "title": "Independent check task",
       "description": "",
       "epicId": "epic-core",
@@ -4045,12 +3805,12 @@
       "version": 2,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T05:22:09.087Z",
-      "lastUpdated": "2026-11-08T05:22:09.265Z"
+      "createdAt": "2026-11-08T19:19:04.031Z",
+      "lastUpdated": "2026-11-08T19:19:04.198Z"
     },
     {
-      "id": "task-rem-1794115329267",
-      "key": "AEG-REM-9267",
+      "id": "task-rem-1794165544200",
+      "key": "AEG-REM-4200",
       "title": "Remote delivery task",
       "description": "",
       "epicId": "epic-core",
@@ -4067,14 +3827,14 @@
       "slackNotified": false,
       "version": 1,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "fa6460b0aa72c916417750d57708f149db4498fbb6eccb9319807b8f8ee8fc35",
+      "acceptedCandidateHash": "764fb730ed3e43b02d57e34376e1ed201502e50f9c7fed74f435f2efc8bfcc23",
       "subtasks": [],
-      "createdAt": "2026-11-08T05:22:09.267Z",
-      "lastUpdated": "2026-11-08T05:22:09.267Z"
+      "createdAt": "2026-11-08T19:19:04.200Z",
+      "lastUpdated": "2026-11-08T19:19:04.200Z"
     },
     {
-      "id": "task-unv-1794115345734",
-      "key": "AEG-UNV-5734",
+      "id": "task-unv-1794165570334",
+      "key": "AEG-UNV-0334",
       "title": "Unverified task without tests",
       "description": "",
       "epicId": "epic-core",
@@ -4093,20 +3853,20 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-unv-1794115345734",
+          "id": "crit-unv-1794165570334",
           "title": "Must have explicit test command",
           "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794115345737-uy19"
+          "evidenceId": "ev-1794165570337-a5fq"
         }
       ],
-      "createdAt": "2026-11-08T05:22:25.734Z",
-      "lastUpdated": "2026-11-08T05:22:25.738Z"
+      "createdAt": "2026-11-08T19:19:30.334Z",
+      "lastUpdated": "2026-11-08T19:19:30.338Z"
     },
     {
-      "id": "task-forged-1794115345738",
-      "key": "AEG-FORGE-5738",
+      "id": "task-forged-1794165570338",
+      "key": "AEG-FORGE-0338",
       "title": "Forged completion test",
       "description": "",
       "epicId": "epic-core",
@@ -4125,7 +3885,7 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-forged-1794115345738",
+          "id": "crit-forged-1794165570338",
           "title": "Attempted forge",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -4133,12 +3893,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T05:22:25.738Z",
-      "lastUpdated": "2026-11-08T05:22:25.738Z"
+      "createdAt": "2026-11-08T19:19:30.338Z",
+      "lastUpdated": "2026-11-08T19:19:30.338Z"
     },
     {
-      "id": "task-outcome-1794115345741",
-      "key": "AEG-FAIL-5741",
+      "id": "task-outcome-1794165570341",
+      "key": "AEG-FAIL-0341",
       "title": "Failed worker task",
       "description": "Tests status propagation",
       "epicId": "epic-core",
@@ -4157,7 +3917,7 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-f-1794115345741",
+          "id": "crit-f-1794165570341",
           "title": "Must pass",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -4165,12 +3925,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T05:22:25.741Z",
-      "lastUpdated": "2026-11-08T05:22:25.743Z"
+      "createdAt": "2026-11-08T19:19:30.341Z",
+      "lastUpdated": "2026-11-08T19:19:30.343Z"
     },
     {
-      "id": "task-dep-1794115345823",
-      "key": "AEG-DEP-5823",
+      "id": "task-dep-1794165570457",
+      "key": "AEG-DEP-0457",
       "title": "Prerequisite task",
       "description": "",
       "epicId": "epic-core",
@@ -4188,12 +3948,12 @@
       "version": 1,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T05:22:25.823Z",
-      "lastUpdated": "2026-11-08T05:22:25.823Z"
+      "createdAt": "2026-11-08T19:19:30.457Z",
+      "lastUpdated": "2026-11-08T19:19:30.457Z"
     },
     {
-      "id": "task-main-1794115345823",
-      "key": "AEG-MAIN-5824",
+      "id": "task-main-1794165570457",
+      "key": "AEG-MAIN-0458",
       "title": "Dependent task",
       "description": "",
       "epicId": "epic-core",
@@ -4203,7 +3963,7 @@
       "estimatedHours": 0,
       "spentHours": 0,
       "dependencies": [
-        "task-dep-1794115345823"
+        "task-dep-1794165570457"
       ],
       "tags": [],
       "deliverables": [],
@@ -4213,12 +3973,12 @@
       "version": 1,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T05:22:25.824Z",
-      "lastUpdated": "2026-11-08T05:22:25.824Z"
+      "createdAt": "2026-11-08T19:19:30.458Z",
+      "lastUpdated": "2026-11-08T19:19:30.458Z"
     },
     {
-      "id": "task-req-1794115347978",
-      "key": "AEG-REQ-7978",
+      "id": "task-req-1794165572603",
+      "key": "AEG-REQ-2603",
       "title": "Requirements test",
       "description": "",
       "epicId": "epic-core",
@@ -4237,25 +3997,25 @@
       "requirementsVersion": 2,
       "subtasks": [
         {
-          "id": "crit-r-1794115347978",
+          "id": "crit-r-1794165572603",
           "title": "Spec test",
           "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {
             "command": "node",
             "args": [
-              "/tmp/aegis-auth-pipe-5MpGUY/req-workspace/spec.test.js"
+              "/tmp/aegis-auth-pipe-JW11dH/req-workspace/spec.test.js"
             ]
           },
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T05:22:27.978Z",
-      "lastUpdated": "2026-11-08T05:22:28.130Z"
+      "createdAt": "2026-11-08T19:19:32.603Z",
+      "lastUpdated": "2026-11-08T19:19:32.754Z"
     },
     {
-      "id": "task-tamper-1794115348187",
-      "key": "AEG-TAMPER-8187",
+      "id": "task-tamper-1794165572806",
+      "key": "AEG-TAMPER-2807",
       "title": "Tamper test",
       "description": "",
       "epicId": "epic-core",
@@ -4275,7 +4035,7 @@
       "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
       "subtasks": [
         {
-          "id": "crit-t-1794115348187",
+          "id": "crit-t-1794165572807",
           "title": "Validated criterion",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -4283,12 +4043,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T05:22:28.187Z",
-      "lastUpdated": "2026-11-08T05:22:28.187Z"
+      "createdAt": "2026-11-08T19:19:32.807Z",
+      "lastUpdated": "2026-11-08T19:19:32.807Z"
     },
     {
-      "id": "task-conflict-1794115348355",
-      "key": "AEG-CONF-8356",
+      "id": "task-conflict-1794165572951",
+      "key": "AEG-CONF-2951",
       "title": "Branch conflict task",
       "description": "",
       "epicId": "epic-core",
@@ -4305,23 +4065,23 @@
       "slackNotified": false,
       "version": 1,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "e02def359eb56b0ea26bb38f512d4aa9ef0a94807850491f4dbc45f70473ffb5",
+      "acceptedCandidateHash": "7d4ac6c3a8d3cace8911d7a76aae6f1fd5918026367a6a1907eda7dfadba6135",
       "subtasks": [
         {
-          "id": "c-conf-1794115348355",
+          "id": "c-conf-1794165572951",
           "title": "Passing test",
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794115348357-8khf"
+          "evidenceId": "ev-1794165572953-1yk9"
         }
       ],
-      "createdAt": "2026-11-08T05:22:28.356Z",
-      "lastUpdated": "2026-11-08T05:22:28.356Z"
+      "createdAt": "2026-11-08T19:19:32.951Z",
+      "lastUpdated": "2026-11-08T19:19:32.951Z"
     },
     {
-      "id": "task-inter-1794115348399",
-      "key": "AEG-INTR-8399",
+      "id": "task-inter-1794165572991",
+      "key": "AEG-INTR-2991",
       "title": "Interrupted task",
       "description": "",
       "epicId": "epic-core",
@@ -4339,12 +4099,12 @@
       "version": 2,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T05:22:28.399Z",
-      "lastUpdated": "2026-11-08T05:22:28.401Z"
+      "createdAt": "2026-11-08T19:19:32.991Z",
+      "lastUpdated": "2026-11-08T19:19:32.993Z"
     },
     {
-      "id": "task-indep-1794115348656",
-      "key": "AEG-INDEP-8657",
+      "id": "task-indep-1794165573258",
+      "key": "AEG-INDEP-3258",
       "title": "Independent check task",
       "description": "",
       "epicId": "epic-core",
@@ -4362,12 +4122,12 @@
       "version": 2,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T05:22:28.657Z",
-      "lastUpdated": "2026-11-08T05:22:28.813Z"
+      "createdAt": "2026-11-08T19:19:33.258Z",
+      "lastUpdated": "2026-11-08T19:19:33.447Z"
     },
     {
-      "id": "task-rem-1794115348815",
-      "key": "AEG-REM-8815",
+      "id": "task-rem-1794165573448",
+      "key": "AEG-REM-3449",
       "title": "Remote delivery task",
       "description": "",
       "epicId": "epic-core",
@@ -4384,39 +4144,14 @@
       "slackNotified": false,
       "version": 1,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "fa6460b0aa72c916417750d57708f149db4498fbb6eccb9319807b8f8ee8fc35",
+      "acceptedCandidateHash": "764fb730ed3e43b02d57e34376e1ed201502e50f9c7fed74f435f2efc8bfcc23",
       "subtasks": [],
-      "createdAt": "2026-11-08T05:22:28.815Z",
-      "lastUpdated": "2026-11-08T05:22:28.815Z"
+      "createdAt": "2026-11-08T19:19:33.449Z",
+      "lastUpdated": "2026-11-08T19:19:33.449Z"
     },
     {
-      "id": "task-conc-1794148450424",
-      "key": "AEG-CONC-1794148450424",
-      "title": "Concurrency Updated Title 1",
-      "description": "Testing optimistic locking",
-      "epicId": "epic-core",
-      "status": "todo",
-      "priority": "high",
-      "assignedAgentId": "agent-arch",
-      "estimatedHours": 5,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [
-        "concurrency"
-      ],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T14:34:10.424Z",
-      "lastUpdated": "2026-11-08T14:34:10.426Z"
-    },
-    {
-      "id": "task-unv-1794148453058",
-      "key": "AEG-UNV-3059",
+      "id": "task-unv-1794245348101",
+      "key": "AEG-UNV-8101",
       "title": "Unverified task without tests",
       "description": "",
       "epicId": "epic-core",
@@ -4435,20 +4170,20 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-unv-1794148453059",
+          "id": "crit-unv-1794245348101",
           "title": "Must have explicit test command",
           "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794148453063-s6ym"
+          "evidenceId": "ev-1794245348105-kmuz"
         }
       ],
-      "createdAt": "2026-11-08T14:34:13.059Z",
-      "lastUpdated": "2026-11-08T14:34:13.064Z"
+      "createdAt": "2026-11-09T17:29:08.101Z",
+      "lastUpdated": "2026-11-09T17:29:08.106Z"
     },
     {
-      "id": "task-forged-1794148453064",
-      "key": "AEG-FORGE-3064",
+      "id": "task-forged-1794245348106",
+      "key": "AEG-FORGE-8106",
       "title": "Forged completion test",
       "description": "",
       "epicId": "epic-core",
@@ -4467,7 +4202,7 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-forged-1794148453064",
+          "id": "crit-forged-1794245348106",
           "title": "Attempted forge",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -4475,12 +4210,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T14:34:13.064Z",
-      "lastUpdated": "2026-11-08T14:34:13.064Z"
+      "createdAt": "2026-11-09T17:29:08.106Z",
+      "lastUpdated": "2026-11-09T17:29:08.106Z"
     },
     {
-      "id": "task-outcome-1794148453067",
-      "key": "AEG-FAIL-3067",
+      "id": "task-outcome-1794245348108",
+      "key": "AEG-FAIL-8109",
       "title": "Failed worker task",
       "description": "Tests status propagation",
       "epicId": "epic-core",
@@ -4499,7 +4234,7 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-f-1794148453067",
+          "id": "crit-f-1794245348109",
           "title": "Must pass",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -4507,12 +4242,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T14:34:13.067Z",
-      "lastUpdated": "2026-11-08T14:34:13.071Z"
+      "createdAt": "2026-11-09T17:29:08.109Z",
+      "lastUpdated": "2026-11-09T17:29:08.111Z"
     },
     {
-      "id": "task-dep-1794148453188",
-      "key": "AEG-DEP-3188",
+      "id": "task-dep-1794245348196",
+      "key": "AEG-DEP-8196",
       "title": "Prerequisite task",
       "description": "",
       "epicId": "epic-core",
@@ -4530,12 +4265,12 @@
       "version": 1,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T14:34:13.188Z",
-      "lastUpdated": "2026-11-08T14:34:13.188Z"
+      "createdAt": "2026-11-09T17:29:08.196Z",
+      "lastUpdated": "2026-11-09T17:29:08.196Z"
     },
     {
-      "id": "task-main-1794148453188",
-      "key": "AEG-MAIN-3190",
+      "id": "task-main-1794245348196",
+      "key": "AEG-MAIN-8197",
       "title": "Dependent task",
       "description": "",
       "epicId": "epic-core",
@@ -4545,7 +4280,7 @@
       "estimatedHours": 0,
       "spentHours": 0,
       "dependencies": [
-        "task-dep-1794148453188"
+        "task-dep-1794245348196"
       ],
       "tags": [],
       "deliverables": [],
@@ -4555,12 +4290,12 @@
       "version": 1,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T14:34:13.190Z",
-      "lastUpdated": "2026-11-08T14:34:13.190Z"
+      "createdAt": "2026-11-09T17:29:08.197Z",
+      "lastUpdated": "2026-11-09T17:29:08.197Z"
     },
     {
-      "id": "task-req-1794148455336",
-      "key": "AEG-REQ-5337",
+      "id": "task-req-1794245350381",
+      "key": "AEG-REQ-0381",
       "title": "Requirements test",
       "description": "",
       "epicId": "epic-core",
@@ -4579,25 +4314,25 @@
       "requirementsVersion": 2,
       "subtasks": [
         {
-          "id": "crit-r-1794148455337",
+          "id": "crit-r-1794245350381",
           "title": "Spec test",
           "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {
             "command": "node",
             "args": [
-              "/tmp/aegis-auth-pipe-oRlMli/req-workspace/spec.test.js"
+              "/tmp/aegis-auth-pipe-sOL19V/req-workspace/spec.test.js"
             ]
           },
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T14:34:15.337Z",
-      "lastUpdated": "2026-11-08T14:34:15.480Z"
+      "createdAt": "2026-11-09T17:29:10.381Z",
+      "lastUpdated": "2026-11-09T17:29:10.546Z"
     },
     {
-      "id": "task-tamper-1794148455532",
-      "key": "AEG-TAMPER-5532",
+      "id": "task-tamper-1794245350666",
+      "key": "AEG-TAMPER-0666",
       "title": "Tamper test",
       "description": "",
       "epicId": "epic-core",
@@ -4617,7 +4352,7 @@
       "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
       "subtasks": [
         {
-          "id": "crit-t-1794148455532",
+          "id": "crit-t-1794245350666",
           "title": "Validated criterion",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -4625,12 +4360,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T14:34:15.532Z",
-      "lastUpdated": "2026-11-08T14:34:15.532Z"
+      "createdAt": "2026-11-09T17:29:10.666Z",
+      "lastUpdated": "2026-11-09T17:29:10.666Z"
     },
     {
-      "id": "task-conflict-1794148455703",
-      "key": "AEG-CONF-5704",
+      "id": "task-conflict-1794245350784",
+      "key": "AEG-CONF-0784",
       "title": "Branch conflict task",
       "description": "",
       "epicId": "epic-core",
@@ -4647,23 +4382,23 @@
       "slackNotified": false,
       "version": 1,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "e02def359eb56b0ea26bb38f512d4aa9ef0a94807850491f4dbc45f70473ffb5",
+      "acceptedCandidateHash": "7d4ac6c3a8d3cace8911d7a76aae6f1fd5918026367a6a1907eda7dfadba6135",
       "subtasks": [
         {
-          "id": "c-conf-1794148455703",
+          "id": "c-conf-1794245350784",
           "title": "Passing test",
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794148455705-fowm"
+          "evidenceId": "ev-1794245350786-18tm"
         }
       ],
-      "createdAt": "2026-11-08T14:34:15.704Z",
-      "lastUpdated": "2026-11-08T14:34:15.704Z"
+      "createdAt": "2026-11-09T17:29:10.784Z",
+      "lastUpdated": "2026-11-09T17:29:10.784Z"
     },
     {
-      "id": "task-inter-1794148455746",
-      "key": "AEG-INTR-5746",
+      "id": "task-inter-1794245350826",
+      "key": "AEG-INTR-0826",
       "title": "Interrupted task",
       "description": "",
       "epicId": "epic-core",
@@ -4681,12 +4416,12 @@
       "version": 2,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T14:34:15.746Z",
-      "lastUpdated": "2026-11-08T14:34:15.749Z"
+      "createdAt": "2026-11-09T17:29:10.826Z",
+      "lastUpdated": "2026-11-09T17:29:10.828Z"
     },
     {
-      "id": "task-indep-1794148456007",
-      "key": "AEG-INDEP-6008",
+      "id": "task-indep-1794245351108",
+      "key": "AEG-INDEP-1108",
       "title": "Independent check task",
       "description": "",
       "epicId": "epic-core",
@@ -4704,12 +4439,12 @@
       "version": 2,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T14:34:16.008Z",
-      "lastUpdated": "2026-11-08T14:34:16.200Z"
+      "createdAt": "2026-11-09T17:29:11.108Z",
+      "lastUpdated": "2026-11-09T17:29:11.294Z"
     },
     {
-      "id": "task-rem-1794148456201",
-      "key": "AEG-REM-6202",
+      "id": "task-rem-1794245351295",
+      "key": "AEG-REM-1296",
       "title": "Remote delivery task",
       "description": "",
       "epicId": "epic-core",
@@ -4726,21 +4461,974 @@
       "slackNotified": false,
       "version": 1,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "fa6460b0aa72c916417750d57708f149db4498fbb6eccb9319807b8f8ee8fc35",
+      "acceptedCandidateHash": "764fb730ed3e43b02d57e34376e1ed201502e50f9c7fed74f435f2efc8bfcc23",
       "subtasks": [],
-      "createdAt": "2026-11-08T14:34:16.202Z",
-      "lastUpdated": "2026-11-08T14:34:16.202Z"
+      "createdAt": "2026-11-09T17:29:11.296Z",
+      "lastUpdated": "2026-11-09T17:29:11.296Z"
     },
     {
-      "id": "task-tb-1794148581278",
-      "key": "AEG-TB-1278",
-      "title": "Fix Token Bucket elapsed-time replenishment and capacity enforcement",
-      "description": "The TokenBucket rate limiter fails to calculate elapsed time during refill() and fails to cap at max capacity.",
+      "id": "task-unv-1794245672526",
+      "key": "AEG-UNV-2526",
+      "title": "Unverified task without tests",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-unv-1794245672526",
+          "title": "Must have explicit test command",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794245672529-prnw"
+        }
+      ],
+      "createdAt": "2026-11-09T17:34:32.526Z",
+      "lastUpdated": "2026-11-09T17:34:32.529Z"
+    },
+    {
+      "id": "task-forged-1794245672530",
+      "key": "AEG-FORGE-2530",
+      "title": "Forged completion test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-forged-1794245672530",
+          "title": "Attempted forge",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:34:32.530Z",
+      "lastUpdated": "2026-11-09T17:34:32.530Z"
+    },
+    {
+      "id": "task-outcome-1794245672532",
+      "key": "AEG-FAIL-2532",
+      "title": "Failed worker task",
+      "description": "Tests status propagation",
+      "epicId": "epic-core",
+      "status": "blocked",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Worker execution ended with failed: Execution failed: Model generation timed out or crashed",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-f-1794245672532",
+          "title": "Must pass",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:34:32.532Z",
+      "lastUpdated": "2026-11-09T17:34:32.534Z"
+    },
+    {
+      "id": "task-dep-1794245672615",
+      "key": "AEG-DEP-2615",
+      "title": "Prerequisite task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:34:32.615Z",
+      "lastUpdated": "2026-11-09T17:34:32.615Z"
+    },
+    {
+      "id": "task-main-1794245672615",
+      "key": "AEG-MAIN-2617",
+      "title": "Dependent task",
+      "description": "",
       "epicId": "epic-core",
       "status": "todo",
-      "priority": "high",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [
+        "task-dep-1794245672615"
+      ],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:34:32.617Z",
+      "lastUpdated": "2026-11-09T17:34:32.617Z"
+    },
+    {
+      "id": "task-req-1794245674748",
+      "key": "AEG-REQ-4748",
+      "title": "Requirements test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Acceptance invalidated: Product specification updated with new constraints",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 3,
+      "requirementsVersion": 2,
+      "subtasks": [
+        {
+          "id": "crit-r-1794245674748",
+          "title": "Spec test",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {
+            "command": "node",
+            "args": [
+              "/tmp/aegis-auth-pipe-Qq3caw/req-workspace/spec.test.js"
+            ]
+          },
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:34:34.748Z",
+      "lastUpdated": "2026-11-09T17:34:34.923Z"
+    },
+    {
+      "id": "task-tamper-1794245674977",
+      "key": "AEG-TAMPER-4977",
+      "title": "Tamper test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+      "subtasks": [
+        {
+          "id": "crit-t-1794245674977",
+          "title": "Validated criterion",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:34:34.977Z",
+      "lastUpdated": "2026-11-09T17:34:34.977Z"
+    },
+    {
+      "id": "task-conflict-1794245675107",
+      "key": "AEG-CONF-5108",
+      "title": "Branch conflict task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "7d4ac6c3a8d3cace8911d7a76aae6f1fd5918026367a6a1907eda7dfadba6135",
+      "subtasks": [
+        {
+          "id": "c-conf-1794245675107",
+          "title": "Passing test",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794245675109-eog5"
+        }
+      ],
+      "createdAt": "2026-11-09T17:34:35.108Z",
+      "lastUpdated": "2026-11-09T17:34:35.108Z"
+    },
+    {
+      "id": "task-inter-1794245675148",
+      "key": "AEG-INTR-5148",
+      "title": "Interrupted task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "blocked",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Execution interrupted by server restart",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:34:35.148Z",
+      "lastUpdated": "2026-11-09T17:34:35.150Z"
+    },
+    {
+      "id": "task-indep-1794245675396",
+      "key": "AEG-INDEP-5396",
+      "title": "Independent check task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:34:35.396Z",
+      "lastUpdated": "2026-11-09T17:34:35.588Z"
+    },
+    {
+      "id": "task-rem-1794245675590",
+      "key": "AEG-REM-5590",
+      "title": "Remote delivery task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "764fb730ed3e43b02d57e34376e1ed201502e50f9c7fed74f435f2efc8bfcc23",
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:34:35.590Z",
+      "lastUpdated": "2026-11-09T17:34:35.590Z"
+    },
+    {
+      "id": "task-unv-1794245752773",
+      "key": "AEG-UNV-2773",
+      "title": "Unverified task without tests",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-unv-1794245752773",
+          "title": "Must have explicit test command",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794245752777-v6id"
+        }
+      ],
+      "createdAt": "2026-11-09T17:35:52.773Z",
+      "lastUpdated": "2026-11-09T17:35:52.778Z"
+    },
+    {
+      "id": "task-forged-1794245752779",
+      "key": "AEG-FORGE-2779",
+      "title": "Forged completion test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-forged-1794245752779",
+          "title": "Attempted forge",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:35:52.779Z",
+      "lastUpdated": "2026-11-09T17:35:52.779Z"
+    },
+    {
+      "id": "task-outcome-1794245752782",
+      "key": "AEG-FAIL-2782",
+      "title": "Failed worker task",
+      "description": "Tests status propagation",
+      "epicId": "epic-core",
+      "status": "blocked",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Worker execution ended with failed: Execution failed: Model generation timed out or crashed",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-f-1794245752782",
+          "title": "Must pass",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:35:52.782Z",
+      "lastUpdated": "2026-11-09T17:35:52.785Z"
+    },
+    {
+      "id": "task-dep-1794245752884",
+      "key": "AEG-DEP-2884",
+      "title": "Prerequisite task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:35:52.884Z",
+      "lastUpdated": "2026-11-09T17:35:52.884Z"
+    },
+    {
+      "id": "task-main-1794245752884",
+      "key": "AEG-MAIN-2888",
+      "title": "Dependent task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "todo",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [
+        "task-dep-1794245752884"
+      ],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:35:52.888Z",
+      "lastUpdated": "2026-11-09T17:35:52.888Z"
+    },
+    {
+      "id": "task-req-1794245755090",
+      "key": "AEG-REQ-5090",
+      "title": "Requirements test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Acceptance invalidated: Product specification updated with new constraints",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 3,
+      "requirementsVersion": 2,
+      "subtasks": [
+        {
+          "id": "crit-r-1794245755090",
+          "title": "Spec test",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {
+            "command": "node",
+            "args": [
+              "/tmp/aegis-auth-pipe-4slyFQ/req-workspace/spec.test.js"
+            ]
+          },
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:35:55.090Z",
+      "lastUpdated": "2026-11-09T17:35:55.254Z"
+    },
+    {
+      "id": "task-tamper-1794245755312",
+      "key": "AEG-TAMPER-5312",
+      "title": "Tamper test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+      "subtasks": [
+        {
+          "id": "crit-t-1794245755312",
+          "title": "Validated criterion",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:35:55.312Z",
+      "lastUpdated": "2026-11-09T17:35:55.312Z"
+    },
+    {
+      "id": "task-conflict-1794245755434",
+      "key": "AEG-CONF-5434",
+      "title": "Branch conflict task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "7d4ac6c3a8d3cace8911d7a76aae6f1fd5918026367a6a1907eda7dfadba6135",
+      "subtasks": [
+        {
+          "id": "c-conf-1794245755434",
+          "title": "Passing test",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794245755436-r9yy"
+        }
+      ],
+      "createdAt": "2026-11-09T17:35:55.434Z",
+      "lastUpdated": "2026-11-09T17:35:55.434Z"
+    },
+    {
+      "id": "task-inter-1794245755476",
+      "key": "AEG-INTR-5476",
+      "title": "Interrupted task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "blocked",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Execution interrupted by server restart",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:35:55.476Z",
+      "lastUpdated": "2026-11-09T17:35:55.478Z"
+    },
+    {
+      "id": "task-indep-1794245755719",
+      "key": "AEG-INDEP-5720",
+      "title": "Independent check task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:35:55.720Z",
+      "lastUpdated": "2026-11-09T17:35:55.932Z"
+    },
+    {
+      "id": "task-rem-1794245755934",
+      "key": "AEG-REM-5934",
+      "title": "Remote delivery task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "764fb730ed3e43b02d57e34376e1ed201502e50f9c7fed74f435f2efc8bfcc23",
+      "acceptedBaseCommit": "efbd54cc74f9a155e0e0b2344325080544a4869f",
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:35:55.934Z",
+      "lastUpdated": "2026-11-09T17:35:56.021Z"
+    },
+    {
+      "id": "task-unv-1794245793258",
+      "key": "AEG-UNV-3258",
+      "title": "Unverified task without tests",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-unv-1794245793258",
+          "title": "Must have explicit test command",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794245793261-13qi"
+        }
+      ],
+      "createdAt": "2026-11-09T17:36:33.258Z",
+      "lastUpdated": "2026-11-09T17:36:33.262Z"
+    },
+    {
+      "id": "task-forged-1794245793262",
+      "key": "AEG-FORGE-3262",
+      "title": "Forged completion test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-forged-1794245793262",
+          "title": "Attempted forge",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:36:33.262Z",
+      "lastUpdated": "2026-11-09T17:36:33.262Z"
+    },
+    {
+      "id": "task-outcome-1794245793264",
+      "key": "AEG-FAIL-3265",
+      "title": "Failed worker task",
+      "description": "Tests status propagation",
+      "epicId": "epic-core",
+      "status": "blocked",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Worker execution ended with failed: Execution failed: Model generation timed out or crashed",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-f-1794245793265",
+          "title": "Must pass",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:36:33.265Z",
+      "lastUpdated": "2026-11-09T17:36:33.267Z"
+    },
+    {
+      "id": "task-dep-1794245793393",
+      "key": "AEG-DEP-3393",
+      "title": "Prerequisite task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:36:33.393Z",
+      "lastUpdated": "2026-11-09T17:36:33.393Z"
+    },
+    {
+      "id": "task-main-1794245793393",
+      "key": "AEG-MAIN-3395",
+      "title": "Dependent task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "todo",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [
+        "task-dep-1794245793393"
+      ],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:36:33.395Z",
+      "lastUpdated": "2026-11-09T17:36:33.395Z"
+    },
+    {
+      "id": "task-req-1794245795530",
+      "key": "AEG-REQ-5531",
+      "title": "Requirements test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Acceptance invalidated: Product specification updated with new constraints",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 3,
+      "requirementsVersion": 2,
+      "subtasks": [
+        {
+          "id": "crit-r-1794245795531",
+          "title": "Spec test",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {
+            "command": "node",
+            "args": [
+              "/tmp/aegis-auth-pipe-ai9hVc/req-workspace/spec.test.js"
+            ]
+          },
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:36:35.531Z",
+      "lastUpdated": "2026-11-09T17:36:35.683Z"
+    },
+    {
+      "id": "task-tamper-1794245795735",
+      "key": "AEG-TAMPER-5735",
+      "title": "Tamper test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+      "subtasks": [
+        {
+          "id": "crit-t-1794245795735",
+          "title": "Validated criterion",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:36:35.735Z",
+      "lastUpdated": "2026-11-09T17:36:35.735Z"
+    },
+    {
+      "id": "task-conflict-1794245795859",
+      "key": "AEG-CONF-5859",
+      "title": "Branch conflict task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "7d4ac6c3a8d3cace8911d7a76aae6f1fd5918026367a6a1907eda7dfadba6135",
+      "subtasks": [
+        {
+          "id": "c-conf-1794245795859",
+          "title": "Passing test",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794245795860-75w6"
+        }
+      ],
+      "createdAt": "2026-11-09T17:36:35.859Z",
+      "lastUpdated": "2026-11-09T17:36:35.859Z"
+    },
+    {
+      "id": "task-inter-1794245795904",
+      "key": "AEG-INTR-5904",
+      "title": "Interrupted task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "blocked",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Execution interrupted by server restart",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:36:35.904Z",
+      "lastUpdated": "2026-11-09T17:36:35.906Z"
+    },
+    {
+      "id": "task-indep-1794245796140",
+      "key": "AEG-INDEP-6141",
+      "title": "Independent check task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:36:36.141Z",
+      "lastUpdated": "2026-11-09T17:36:36.324Z"
+    },
+    {
+      "id": "task-rem-1794245796326",
+      "key": "AEG-REM-6326",
+      "title": "Remote delivery task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "764fb730ed3e43b02d57e34376e1ed201502e50f9c7fed74f435f2efc8bfcc23",
+      "acceptedBaseCommit": "dc61dc56a1957a86ae5679b0bae3545d6ce9834f",
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:36:36.326Z",
+      "lastUpdated": "2026-11-09T17:36:36.445Z"
+    },
+    {
+      "id": "task-unified-1794245798866",
+      "key": "UNIF-1",
+      "title": "Unified Lifecycle Task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
       "assignedAgentId": "agent-dev",
-      "estimatedHours": 4,
+      "estimatedHours": 2,
       "spentHours": 0,
       "dependencies": [],
       "tags": [],
@@ -4750,132 +5438,15 @@
       "slackNotified": false,
       "version": 2,
       "requirementsVersion": 1,
+      "acceptedCandidateHash": "8e457a00e5461a827cb4cf17604242b884cc8a061d52b87e2b522c12288d10e1",
+      "acceptedBaseCommit": "1234567890abcdef1234567890abcdef12345678",
       "subtasks": [],
-      "createdAt": "2026-11-08T14:36:21.378Z",
-      "lastUpdated": "2026-11-08T14:36:21.417Z"
+      "createdAt": "2026-11-09T17:36:38.866Z",
+      "lastUpdated": "2026-11-09T17:36:38.883Z"
     },
     {
-      "id": "task-tb-1794148609918",
-      "key": "AEG-TB-9918",
-      "title": "Fix Token Bucket elapsed-time replenishment and capacity enforcement",
-      "description": "The TokenBucket rate limiter fails to calculate elapsed time during refill() and fails to cap at max capacity.",
-      "epicId": "epic-core",
-      "status": "todo",
-      "priority": "high",
-      "assignedAgentId": "agent-dev",
-      "estimatedHours": 4,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 3,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T14:36:50.003Z",
-      "lastUpdated": "2026-11-08T14:37:07.458Z"
-    },
-    {
-      "id": "task-tb-1794148810817",
-      "key": "AEG-TB-0817",
-      "title": "Fix Token Bucket elapsed-time replenishment and capacity enforcement",
-      "description": "The TokenBucket rate limiter fails to calculate elapsed time during refill() and fails to cap at max capacity.",
-      "epicId": "epic-core",
-      "status": "todo",
-      "priority": "high",
-      "assignedAgentId": "agent-dev",
-      "estimatedHours": 4,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T14:40:11.031Z",
-      "lastUpdated": "2026-11-08T14:40:11.555Z"
-    },
-    {
-      "id": "task-tb-1794148990688",
-      "key": "AEG-TB-0688",
-      "title": "Fix Token Bucket elapsed-time replenishment and capacity enforcement",
-      "description": "The TokenBucket rate limiter fails to calculate elapsed time during refill() and fails to cap at max capacity.",
-      "epicId": "epic-core",
-      "status": "todo",
-      "priority": "high",
-      "assignedAgentId": "agent-dev",
-      "estimatedHours": 4,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 3,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T14:43:10.778Z",
-      "lastUpdated": "2026-11-08T14:43:23.467Z"
-    },
-    {
-      "id": "task-tb-1794149054934",
-      "key": "AEG-TB-4934",
-      "title": "Fix Token Bucket elapsed-time replenishment and capacity enforcement",
-      "description": "The TokenBucket rate limiter fails to calculate elapsed time during refill() and fails to cap at max capacity.",
-      "epicId": "epic-core",
-      "status": "done",
-      "priority": "high",
-      "assignedAgentId": "agent-dev",
-      "estimatedHours": 4,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "Verified by independent quality gate (Candidate digest: 2bd05398)",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 4,
-      "requirementsVersion": 1,
-      "acceptedCandidateHash": "2bd05398cfbc00a1e6209341744e9e3a77b5cf55db612d52439442ec41e98202",
-      "acceptedBaseCommit": "cde2c7fd6864cdbb48cd4d52e232b95014c5f99e",
-      "subtasks": [],
-      "createdAt": "2026-11-08T14:44:15.029Z",
-      "lastUpdated": "2026-11-08T14:45:05.405Z"
-    },
-    {
-      "id": "task-conc-1794149141833",
-      "key": "AEG-CONC-1794149141833",
-      "title": "Concurrency Updated Title 1",
-      "description": "Testing optimistic locking",
-      "epicId": "epic-core",
-      "status": "todo",
-      "priority": "high",
-      "assignedAgentId": "agent-arch",
-      "estimatedHours": 5,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [
-        "concurrency"
-      ],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T14:45:41.833Z",
-      "lastUpdated": "2026-11-08T14:45:41.836Z"
-    },
-    {
-      "id": "task-unv-1794149147308",
-      "key": "AEG-UNV-7308",
+      "id": "task-unv-1794246005127",
+      "key": "AEG-UNV-5128",
       "title": "Unverified task without tests",
       "description": "",
       "epicId": "epic-core",
@@ -4894,20 +5465,20 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-unv-1794149147308",
+          "id": "crit-unv-1794246005128",
           "title": "Must have explicit test command",
           "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794149147311-bphv"
+          "evidenceId": "ev-1794246005131-f9qs"
         }
       ],
-      "createdAt": "2026-11-08T14:45:47.308Z",
-      "lastUpdated": "2026-11-08T14:45:47.312Z"
+      "createdAt": "2026-11-09T17:40:05.128Z",
+      "lastUpdated": "2026-11-09T17:40:05.132Z"
     },
     {
-      "id": "task-forged-1794149147312",
-      "key": "AEG-FORGE-7312",
+      "id": "task-forged-1794246005132",
+      "key": "AEG-FORGE-5132",
       "title": "Forged completion test",
       "description": "",
       "epicId": "epic-core",
@@ -4926,7 +5497,7 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-forged-1794149147312",
+          "id": "crit-forged-1794246005132",
           "title": "Attempted forge",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -4934,12 +5505,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T14:45:47.312Z",
-      "lastUpdated": "2026-11-08T14:45:47.312Z"
+      "createdAt": "2026-11-09T17:40:05.132Z",
+      "lastUpdated": "2026-11-09T17:40:05.132Z"
     },
     {
-      "id": "task-outcome-1794149147315",
-      "key": "AEG-FAIL-7315",
+      "id": "task-outcome-1794246005135",
+      "key": "AEG-FAIL-5135",
       "title": "Failed worker task",
       "description": "Tests status propagation",
       "epicId": "epic-core",
@@ -4958,7 +5529,7 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-f-1794149147315",
+          "id": "crit-f-1794246005135",
           "title": "Must pass",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -4966,12 +5537,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T14:45:47.315Z",
-      "lastUpdated": "2026-11-08T14:45:47.317Z"
+      "createdAt": "2026-11-09T17:40:05.135Z",
+      "lastUpdated": "2026-11-09T17:40:05.137Z"
     },
     {
-      "id": "task-dep-1794149147419",
-      "key": "AEG-DEP-7419",
+      "id": "task-dep-1794246005239",
+      "key": "AEG-DEP-5239",
       "title": "Prerequisite task",
       "description": "",
       "epicId": "epic-core",
@@ -4989,12 +5560,12 @@
       "version": 1,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T14:45:47.419Z",
-      "lastUpdated": "2026-11-08T14:45:47.419Z"
+      "createdAt": "2026-11-09T17:40:05.239Z",
+      "lastUpdated": "2026-11-09T17:40:05.239Z"
     },
     {
-      "id": "task-main-1794149147419",
-      "key": "AEG-MAIN-7420",
+      "id": "task-main-1794246005239",
+      "key": "AEG-MAIN-5240",
       "title": "Dependent task",
       "description": "",
       "epicId": "epic-core",
@@ -5004,7 +5575,7 @@
       "estimatedHours": 0,
       "spentHours": 0,
       "dependencies": [
-        "task-dep-1794149147419"
+        "task-dep-1794246005239"
       ],
       "tags": [],
       "deliverables": [],
@@ -5014,12 +5585,12 @@
       "version": 1,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T14:45:47.420Z",
-      "lastUpdated": "2026-11-08T14:45:47.420Z"
+      "createdAt": "2026-11-09T17:40:05.240Z",
+      "lastUpdated": "2026-11-09T17:40:05.240Z"
     },
     {
-      "id": "task-req-1794149149530",
-      "key": "AEG-REQ-9530",
+      "id": "task-req-1794246007360",
+      "key": "AEG-REQ-7361",
       "title": "Requirements test",
       "description": "",
       "epicId": "epic-core",
@@ -5038,25 +5609,25 @@
       "requirementsVersion": 2,
       "subtasks": [
         {
-          "id": "crit-r-1794149149530",
+          "id": "crit-r-1794246007361",
           "title": "Spec test",
           "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {
             "command": "node",
             "args": [
-              "/tmp/aegis-auth-pipe-3Vp1E0/req-workspace/spec.test.js"
+              "/tmp/aegis-auth-pipe-bN9jM1/req-workspace/spec.test.js"
             ]
           },
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T14:45:49.530Z",
-      "lastUpdated": "2026-11-08T14:45:49.691Z"
+      "createdAt": "2026-11-09T17:40:07.361Z",
+      "lastUpdated": "2026-11-09T17:40:07.525Z"
     },
     {
-      "id": "task-tamper-1794149149745",
-      "key": "AEG-TAMPER-9745",
+      "id": "task-tamper-1794246007576",
+      "key": "AEG-TAMPER-7576",
       "title": "Tamper test",
       "description": "",
       "epicId": "epic-core",
@@ -5076,7 +5647,7 @@
       "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
       "subtasks": [
         {
-          "id": "crit-t-1794149149745",
+          "id": "crit-t-1794246007576",
           "title": "Validated criterion",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -5084,12 +5655,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T14:45:49.745Z",
-      "lastUpdated": "2026-11-08T14:45:49.745Z"
+      "createdAt": "2026-11-09T17:40:07.576Z",
+      "lastUpdated": "2026-11-09T17:40:07.576Z"
     },
     {
-      "id": "task-conflict-1794149149878",
-      "key": "AEG-CONF-9879",
+      "id": "task-conflict-1794246007706",
+      "key": "AEG-CONF-7706",
       "title": "Branch conflict task",
       "description": "",
       "epicId": "epic-core",
@@ -5106,23 +5677,23 @@
       "slackNotified": false,
       "version": 1,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "e02def359eb56b0ea26bb38f512d4aa9ef0a94807850491f4dbc45f70473ffb5",
+      "acceptedCandidateHash": "7d4ac6c3a8d3cace8911d7a76aae6f1fd5918026367a6a1907eda7dfadba6135",
       "subtasks": [
         {
-          "id": "c-conf-1794149149878",
+          "id": "c-conf-1794246007706",
           "title": "Passing test",
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794149149880-3fkt"
+          "evidenceId": "ev-1794246007708-kbyj"
         }
       ],
-      "createdAt": "2026-11-08T14:45:49.879Z",
-      "lastUpdated": "2026-11-08T14:45:49.879Z"
+      "createdAt": "2026-11-09T17:40:07.706Z",
+      "lastUpdated": "2026-11-09T17:40:07.706Z"
     },
     {
-      "id": "task-inter-1794149149926",
-      "key": "AEG-INTR-9926",
+      "id": "task-inter-1794246007744",
+      "key": "AEG-INTR-7744",
       "title": "Interrupted task",
       "description": "",
       "epicId": "epic-core",
@@ -5140,12 +5711,12 @@
       "version": 2,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T14:45:49.926Z",
-      "lastUpdated": "2026-11-08T14:45:49.928Z"
+      "createdAt": "2026-11-09T17:40:07.744Z",
+      "lastUpdated": "2026-11-09T17:40:07.746Z"
     },
     {
-      "id": "task-indep-1794149150153",
-      "key": "AEG-INDEP-0154",
+      "id": "task-indep-1794246007972",
+      "key": "AEG-INDEP-7973",
       "title": "Independent check task",
       "description": "",
       "epicId": "epic-core",
@@ -5163,12 +5734,12 @@
       "version": 2,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T14:45:50.154Z",
-      "lastUpdated": "2026-11-08T14:45:50.314Z"
+      "createdAt": "2026-11-09T17:40:07.973Z",
+      "lastUpdated": "2026-11-09T17:40:08.155Z"
     },
     {
-      "id": "task-rem-1794149150315",
-      "key": "AEG-REM-0315",
+      "id": "task-rem-1794246008157",
+      "key": "AEG-REM-8158",
       "title": "Remote delivery task",
       "description": "",
       "epicId": "epic-core",
@@ -5183,1013 +5754,731 @@
       "lastAgentComment": "",
       "jiraSynced": false,
       "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "acceptedCandidateHash": "fa6460b0aa72c916417750d57708f149db4498fbb6eccb9319807b8f8ee8fc35",
-      "subtasks": [],
-      "createdAt": "2026-11-08T14:45:50.315Z",
-      "lastUpdated": "2026-11-08T14:45:50.315Z"
-    },
-    {
-      "id": "task-unv-1794149204150",
-      "key": "AEG-UNV-4150",
-      "title": "Unverified task without tests",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
       "version": 2,
       "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-unv-1794149204150",
-          "title": "Must have explicit test command",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794149204154-shkn"
-        }
-      ],
-      "createdAt": "2026-11-08T14:46:44.150Z",
-      "lastUpdated": "2026-11-08T14:46:44.155Z"
+      "acceptedCandidateHash": "764fb730ed3e43b02d57e34376e1ed201502e50f9c7fed74f435f2efc8bfcc23",
+      "acceptedBaseCommit": "4c0749a5f287e0c3cf6d9d38d4cfb6aaf0e72a90",
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:40:08.158Z",
+      "lastUpdated": "2026-11-09T17:40:08.286Z"
     },
     {
-      "id": "task-forged-1794149204156",
-      "key": "AEG-FORGE-4156",
-      "title": "Forged completion test",
+      "id": "task-test-dbg-1",
+      "key": "DBG-1",
+      "title": "Test",
       "description": "",
       "epicId": "epic-core",
       "status": "in_progress",
       "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-forged-1794149204156",
-          "title": "Attempted forge",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T14:46:44.156Z",
-      "lastUpdated": "2026-11-08T14:46:44.156Z"
-    },
-    {
-      "id": "task-outcome-1794149204158",
-      "key": "AEG-FAIL-4158",
-      "title": "Failed worker task",
-      "description": "Tests status propagation",
-      "epicId": "epic-core",
-      "status": "blocked",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "Worker execution ended with failed: Execution failed: Model generation timed out or crashed",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-f-1794149204158",
-          "title": "Must pass",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T14:46:44.158Z",
-      "lastUpdated": "2026-11-08T14:46:44.161Z"
-    },
-    {
-      "id": "task-dep-1794149204256",
-      "key": "AEG-DEP-4256",
-      "title": "Prerequisite task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T14:46:44.256Z",
-      "lastUpdated": "2026-11-08T14:46:44.256Z"
-    },
-    {
-      "id": "task-main-1794149204256",
-      "key": "AEG-MAIN-4257",
-      "title": "Dependent task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "todo",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [
-        "task-dep-1794149204256"
-      ],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T14:46:44.257Z",
-      "lastUpdated": "2026-11-08T14:46:44.257Z"
-    },
-    {
-      "id": "task-req-1794149206434",
-      "key": "AEG-REQ-6434",
-      "title": "Requirements test",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "Acceptance invalidated: Product specification updated with new constraints",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 3,
-      "requirementsVersion": 2,
-      "subtasks": [
-        {
-          "id": "crit-r-1794149206434",
-          "title": "Spec test",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {
-            "command": "node",
-            "args": [
-              "/tmp/aegis-auth-pipe-rYqoRd/req-workspace/spec.test.js"
-            ]
-          },
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T14:46:46.434Z",
-      "lastUpdated": "2026-11-08T14:46:46.583Z"
-    },
-    {
-      "id": "task-tamper-1794149206640",
-      "key": "AEG-TAMPER-6640",
-      "title": "Tamper test",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "review",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
-      "subtasks": [
-        {
-          "id": "crit-t-1794149206640",
-          "title": "Validated criterion",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T14:46:46.640Z",
-      "lastUpdated": "2026-11-08T14:46:46.640Z"
-    },
-    {
-      "id": "task-conflict-1794149206771",
-      "key": "AEG-CONF-6772",
-      "title": "Branch conflict task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "review",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "acceptedCandidateHash": "e02def359eb56b0ea26bb38f512d4aa9ef0a94807850491f4dbc45f70473ffb5",
-      "subtasks": [
-        {
-          "id": "c-conf-1794149206771",
-          "title": "Passing test",
-          "completed": true,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794149206773-r4xo"
-        }
-      ],
-      "createdAt": "2026-11-08T14:46:46.772Z",
-      "lastUpdated": "2026-11-08T14:46:46.772Z"
-    },
-    {
-      "id": "task-inter-1794149206820",
-      "key": "AEG-INTR-6820",
-      "title": "Interrupted task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "blocked",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "Execution interrupted by server restart",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T14:46:46.820Z",
-      "lastUpdated": "2026-11-08T14:46:46.823Z"
-    },
-    {
-      "id": "task-indep-1794149207097",
-      "key": "AEG-INDEP-7098",
-      "title": "Independent check task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T14:46:47.098Z",
-      "lastUpdated": "2026-11-08T14:46:47.264Z"
-    },
-    {
-      "id": "task-rem-1794149207265",
-      "key": "AEG-REM-7266",
-      "title": "Remote delivery task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "review",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "acceptedCandidateHash": "fa6460b0aa72c916417750d57708f149db4498fbb6eccb9319807b8f8ee8fc35",
-      "subtasks": [],
-      "createdAt": "2026-11-08T14:46:47.266Z",
-      "lastUpdated": "2026-11-08T14:46:47.266Z"
-    },
-    {
-      "id": "task-unv-1794151660639",
-      "key": "AEG-UNV-0639",
-      "title": "Unverified task without tests",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-unv-1794151660639",
-          "title": "Must have explicit test command",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794151660642-btmf"
-        }
-      ],
-      "createdAt": "2026-11-08T15:27:40.639Z",
-      "lastUpdated": "2026-11-08T15:27:40.643Z"
-    },
-    {
-      "id": "task-forged-1794151660644",
-      "key": "AEG-FORGE-0644",
-      "title": "Forged completion test",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-forged-1794151660644",
-          "title": "Attempted forge",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T15:27:40.644Z",
-      "lastUpdated": "2026-11-08T15:27:40.644Z"
-    },
-    {
-      "id": "task-outcome-1794151660646",
-      "key": "AEG-FAIL-0647",
-      "title": "Failed worker task",
-      "description": "Tests status propagation",
-      "epicId": "epic-core",
-      "status": "blocked",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "Worker execution ended with failed: Execution failed: Model generation timed out or crashed",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-f-1794151660647",
-          "title": "Must pass",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T15:27:40.647Z",
-      "lastUpdated": "2026-11-08T15:27:40.649Z"
-    },
-    {
-      "id": "task-dep-1794151660752",
-      "key": "AEG-DEP-0752",
-      "title": "Prerequisite task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:27:40.752Z",
-      "lastUpdated": "2026-11-08T15:27:40.752Z"
-    },
-    {
-      "id": "task-main-1794151660752",
-      "key": "AEG-MAIN-0753",
-      "title": "Dependent task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "todo",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [
-        "task-dep-1794151660752"
-      ],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:27:40.753Z",
-      "lastUpdated": "2026-11-08T15:27:40.753Z"
-    },
-    {
-      "id": "task-req-1794151662861",
-      "key": "AEG-REQ-2861",
-      "title": "Requirements test",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "Acceptance invalidated: Product specification updated with new constraints",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 3,
-      "requirementsVersion": 2,
-      "subtasks": [
-        {
-          "id": "crit-r-1794151662861",
-          "title": "Spec test",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {
-            "command": "node",
-            "args": [
-              "/tmp/aegis-auth-pipe-tIior4/req-workspace/spec.test.js"
-            ]
-          },
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T15:27:42.861Z",
-      "lastUpdated": "2026-11-08T15:27:43.007Z"
-    },
-    {
-      "id": "task-tamper-1794151663062",
-      "key": "AEG-TAMPER-3062",
-      "title": "Tamper test",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "review",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
-      "subtasks": [
-        {
-          "id": "crit-t-1794151663062",
-          "title": "Validated criterion",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T15:27:43.062Z",
-      "lastUpdated": "2026-11-08T15:27:43.062Z"
-    },
-    {
-      "id": "task-conflict-1794151663211",
-      "key": "AEG-CONF-3212",
-      "title": "Branch conflict task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "review",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "acceptedCandidateHash": "f50c50077fce14f2bef804d5b6131230d6717d548a2f2bae7d029086ad1fe88f",
-      "subtasks": [
-        {
-          "id": "c-conf-1794151663211",
-          "title": "Passing test",
-          "completed": true,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794151663213-0rb8"
-        }
-      ],
-      "createdAt": "2026-11-08T15:27:43.212Z",
-      "lastUpdated": "2026-11-08T15:27:43.212Z"
-    },
-    {
-      "id": "task-inter-1794151663254",
-      "key": "AEG-INTR-3254",
-      "title": "Interrupted task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "blocked",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "Execution interrupted by server restart",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:27:43.254Z",
-      "lastUpdated": "2026-11-08T15:27:43.256Z"
-    },
-    {
-      "id": "task-indep-1794151663503",
-      "key": "AEG-INDEP-3503",
-      "title": "Independent check task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:27:43.503Z",
-      "lastUpdated": "2026-11-08T15:27:43.682Z"
-    },
-    {
-      "id": "task-rem-1794151663683",
-      "key": "AEG-REM-3684",
-      "title": "Remote delivery task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "review",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "acceptedCandidateHash": "b4dba62600e461961acf3fbd55d7d575b7eeaee9ef5877620da199e86229a95a",
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:27:43.684Z",
-      "lastUpdated": "2026-11-08T15:27:43.684Z"
-    },
-    {
-      "id": "task-conc-1794151888145",
-      "key": "AEG-CONC-1794151888145",
-      "title": "Concurrency Updated Title 1",
-      "description": "Testing optimistic locking",
-      "epicId": "epic-core",
-      "status": "todo",
-      "priority": "high",
-      "assignedAgentId": "agent-arch",
-      "estimatedHours": 5,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [
-        "concurrency"
-      ],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:31:28.145Z",
-      "lastUpdated": "2026-11-08T15:31:28.147Z"
-    },
-    {
-      "id": "task-unv-1794151894520",
-      "key": "AEG-UNV-4520",
-      "title": "Unverified task without tests",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-unv-1794151894520",
-          "title": "Must have explicit test command",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794151894524-ewcg"
-        }
-      ],
-      "createdAt": "2026-11-08T15:31:34.520Z",
-      "lastUpdated": "2026-11-08T15:31:34.525Z"
-    },
-    {
-      "id": "task-forged-1794151894526",
-      "key": "AEG-FORGE-4526",
-      "title": "Forged completion test",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-forged-1794151894526",
-          "title": "Attempted forge",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T15:31:34.526Z",
-      "lastUpdated": "2026-11-08T15:31:34.526Z"
-    },
-    {
-      "id": "task-outcome-1794151894529",
-      "key": "AEG-FAIL-4529",
-      "title": "Failed worker task",
-      "description": "Tests status propagation",
-      "epicId": "epic-core",
-      "status": "blocked",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "Worker execution ended with failed: Execution failed: Model generation timed out or crashed",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [
-        {
-          "id": "crit-f-1794151894529",
-          "title": "Must pass",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T15:31:34.529Z",
-      "lastUpdated": "2026-11-08T15:31:34.531Z"
-    },
-    {
-      "id": "task-dep-1794151894639",
-      "key": "AEG-DEP-4639",
-      "title": "Prerequisite task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:31:34.639Z",
-      "lastUpdated": "2026-11-08T15:31:34.639Z"
-    },
-    {
-      "id": "task-main-1794151894639",
-      "key": "AEG-MAIN-4642",
-      "title": "Dependent task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "todo",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [
-        "task-dep-1794151894639"
-      ],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:31:34.642Z",
-      "lastUpdated": "2026-11-08T15:31:34.642Z"
-    },
-    {
-      "id": "task-req-1794151896835",
-      "key": "AEG-REQ-6836",
-      "title": "Requirements test",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "Acceptance invalidated: Product specification updated with new constraints",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 3,
-      "requirementsVersion": 2,
-      "subtasks": [
-        {
-          "id": "crit-r-1794151896836",
-          "title": "Spec test",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {
-            "command": "node",
-            "args": [
-              "/tmp/aegis-auth-pipe-UBo5HT/req-workspace/spec.test.js"
-            ]
-          },
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T15:31:36.836Z",
-      "lastUpdated": "2026-11-08T15:31:36.984Z"
-    },
-    {
-      "id": "task-tamper-1794151897037",
-      "key": "AEG-TAMPER-7038",
-      "title": "Tamper test",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "review",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
-      "subtasks": [
-        {
-          "id": "crit-t-1794151897038",
-          "title": "Validated criterion",
-          "completed": false,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": null
-        }
-      ],
-      "createdAt": "2026-11-08T15:31:37.038Z",
-      "lastUpdated": "2026-11-08T15:31:37.038Z"
-    },
-    {
-      "id": "task-conflict-1794151897174",
-      "key": "AEG-CONF-7174",
-      "title": "Branch conflict task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "review",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "acceptedCandidateHash": "f50c50077fce14f2bef804d5b6131230d6717d548a2f2bae7d029086ad1fe88f",
-      "subtasks": [
-        {
-          "id": "c-conf-1794151897174",
-          "title": "Passing test",
-          "completed": true,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794151897176-0ygu"
-        }
-      ],
-      "createdAt": "2026-11-08T15:31:37.174Z",
-      "lastUpdated": "2026-11-08T15:31:37.174Z"
-    },
-    {
-      "id": "task-inter-1794151897216",
-      "key": "AEG-INTR-7216",
-      "title": "Interrupted task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "blocked",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "Execution interrupted by server restart",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:31:37.216Z",
-      "lastUpdated": "2026-11-08T15:31:37.217Z"
-    },
-    {
-      "id": "task-indep-1794151897426",
-      "key": "AEG-INDEP-7426",
-      "title": "Independent check task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "in_progress",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:31:37.426Z",
-      "lastUpdated": "2026-11-08T15:31:37.591Z"
-    },
-    {
-      "id": "task-rem-1794151897593",
-      "key": "AEG-REM-7594",
-      "title": "Remote delivery task",
-      "description": "",
-      "epicId": "epic-core",
-      "status": "review",
-      "priority": "medium",
-      "assignedAgentId": null,
-      "estimatedHours": 0,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 1,
-      "requirementsVersion": 1,
-      "acceptedCandidateHash": "b4dba62600e461961acf3fbd55d7d575b7eeaee9ef5877620da199e86229a95a",
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:31:37.594Z",
-      "lastUpdated": "2026-11-08T15:31:37.594Z"
-    },
-    {
-      "id": "task-tb-1794151908302",
-      "key": "AEG-TB-8302",
-      "title": "Fix Token Bucket elapsed-time replenishment and capacity enforcement",
-      "description": "The TokenBucket rate limiter fails to calculate elapsed time during refill() and fails to cap at max capacity.",
-      "epicId": "epic-core",
-      "status": "done",
-      "priority": "high",
       "assignedAgentId": "agent-dev",
-      "estimatedHours": 4,
+      "estimatedHours": 0,
       "spentHours": 0,
       "dependencies": [],
       "tags": [],
       "deliverables": [],
-      "lastAgentComment": "Verified by independent quality gate (Candidate digest: 2d4197df)",
+      "lastAgentComment": "",
       "jiraSynced": false,
       "slackNotified": false,
-      "version": 5,
+      "version": 1,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "2d4197dff6f9cf7b6ac0188a1f5b2ecdb942483fa38affb12fc0cbcc859d19d0",
-      "acceptedBaseCommit": "4c6717ea003666a6ba424153fc5195244009149d",
+      "subtasks": [
+        {
+          "id": "crit-dbg-1",
+          "title": "C1",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:40:58.344Z",
+      "lastUpdated": "2026-11-09T17:40:58.344Z"
+    },
+    {
+      "id": "task-unv-1794246087882",
+      "key": "AEG-UNV-7882",
+      "title": "Unverified task without tests",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-unv-1794246087882",
+          "title": "Must have explicit test command",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246087886-nz7u"
+        }
+      ],
+      "createdAt": "2026-11-09T17:41:27.883Z",
+      "lastUpdated": "2026-11-09T17:41:27.887Z"
+    },
+    {
+      "id": "task-forged-1794246087888",
+      "key": "AEG-FORGE-7888",
+      "title": "Forged completion test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-forged-1794246087888",
+          "title": "Attempted forge",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:41:27.888Z",
+      "lastUpdated": "2026-11-09T17:41:27.888Z"
+    },
+    {
+      "id": "task-outcome-1794246087890",
+      "key": "AEG-FAIL-7890",
+      "title": "Failed worker task",
+      "description": "Tests status propagation",
+      "epicId": "epic-core",
+      "status": "blocked",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Worker execution ended with failed: Execution failed: Model generation timed out or crashed",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-f-1794246087891",
+          "title": "Must pass",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:41:27.891Z",
+      "lastUpdated": "2026-11-09T17:41:27.893Z"
+    },
+    {
+      "id": "task-dep-1794246087995",
+      "key": "AEG-DEP-7995",
+      "title": "Prerequisite task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T15:31:48.394Z",
-      "lastUpdated": "2026-11-08T15:32:00.445Z"
+      "createdAt": "2026-11-09T17:41:27.995Z",
+      "lastUpdated": "2026-11-09T17:41:27.995Z"
+    },
+    {
+      "id": "task-main-1794246087995",
+      "key": "AEG-MAIN-7996",
+      "title": "Dependent task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "todo",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [
+        "task-dep-1794246087995"
+      ],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:41:27.996Z",
+      "lastUpdated": "2026-11-09T17:41:27.996Z"
+    },
+    {
+      "id": "task-req-1794246090154",
+      "key": "AEG-REQ-0154",
+      "title": "Requirements test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Acceptance invalidated: Product specification updated with new constraints",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 3,
+      "requirementsVersion": 2,
+      "subtasks": [
+        {
+          "id": "crit-r-1794246090154",
+          "title": "Spec test",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {
+            "command": "node",
+            "args": [
+              "/tmp/aegis-auth-pipe-BnipTh/req-workspace/spec.test.js"
+            ]
+          },
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:41:30.154Z",
+      "lastUpdated": "2026-11-09T17:41:30.312Z"
+    },
+    {
+      "id": "task-tamper-1794246090366",
+      "key": "AEG-TAMPER-0366",
+      "title": "Tamper test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+      "subtasks": [
+        {
+          "id": "crit-t-1794246090366",
+          "title": "Validated criterion",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:41:30.366Z",
+      "lastUpdated": "2026-11-09T17:41:30.366Z"
+    },
+    {
+      "id": "task-conflict-1794246090490",
+      "key": "AEG-CONF-0490",
+      "title": "Branch conflict task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "7d4ac6c3a8d3cace8911d7a76aae6f1fd5918026367a6a1907eda7dfadba6135",
+      "subtasks": [
+        {
+          "id": "c-conf-1794246090490",
+          "title": "Passing test",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246090492-09fm"
+        }
+      ],
+      "createdAt": "2026-11-09T17:41:30.490Z",
+      "lastUpdated": "2026-11-09T17:41:30.490Z"
+    },
+    {
+      "id": "task-inter-1794246090530",
+      "key": "AEG-INTR-0530",
+      "title": "Interrupted task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "blocked",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Execution interrupted by server restart",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:41:30.530Z",
+      "lastUpdated": "2026-11-09T17:41:30.532Z"
+    },
+    {
+      "id": "task-indep-1794246090774",
+      "key": "AEG-INDEP-0774",
+      "title": "Independent check task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:41:30.774Z",
+      "lastUpdated": "2026-11-09T17:41:30.973Z"
+    },
+    {
+      "id": "task-rem-1794246090975",
+      "key": "AEG-REM-0975",
+      "title": "Remote delivery task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "764fb730ed3e43b02d57e34376e1ed201502e50f9c7fed74f435f2efc8bfcc23",
+      "acceptedBaseCommit": "90bdbd5f19ad163804b8a3fb76bc7c1d77def9d9",
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:41:30.975Z",
+      "lastUpdated": "2026-11-09T17:41:31.115Z"
+    },
+    {
+      "id": "task-unified-1794246093495",
+      "key": "UNIF-3495",
+      "title": "Unified Lifecycle Task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": "agent-dev",
+      "estimatedHours": 2,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "8e457a00e5461a827cb4cf17604242b884cc8a061d52b87e2b522c12288d10e1",
+      "acceptedBaseCommit": "1234567890abcdef1234567890abcdef12345678",
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:41:33.496Z",
+      "lastUpdated": "2026-11-09T17:41:33.512Z"
+    },
+    {
+      "id": "task-unv-1794246177317",
+      "key": "AEG-UNV-7318",
+      "title": "Unverified task without tests",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-unv-1794246177318",
+          "title": "Must have explicit test command",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246177320-9fa0"
+        }
+      ],
+      "createdAt": "2026-11-09T17:42:57.318Z",
+      "lastUpdated": "2026-11-09T17:42:57.321Z"
+    },
+    {
+      "id": "task-forged-1794246177322",
+      "key": "AEG-FORGE-7322",
+      "title": "Forged completion test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-forged-1794246177322",
+          "title": "Attempted forge",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:42:57.322Z",
+      "lastUpdated": "2026-11-09T17:42:57.322Z"
+    },
+    {
+      "id": "task-outcome-1794246177324",
+      "key": "AEG-FAIL-7324",
+      "title": "Failed worker task",
+      "description": "Tests status propagation",
+      "epicId": "epic-core",
+      "status": "blocked",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Worker execution ended with failed: Execution failed: Model generation timed out or crashed",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-f-1794246177324",
+          "title": "Must pass",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:42:57.324Z",
+      "lastUpdated": "2026-11-09T17:42:57.326Z"
+    },
+    {
+      "id": "task-dep-1794246177432",
+      "key": "AEG-DEP-7432",
+      "title": "Prerequisite task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:42:57.432Z",
+      "lastUpdated": "2026-11-09T17:42:57.432Z"
+    },
+    {
+      "id": "task-main-1794246177432",
+      "key": "AEG-MAIN-7433",
+      "title": "Dependent task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "todo",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [
+        "task-dep-1794246177432"
+      ],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:42:57.433Z",
+      "lastUpdated": "2026-11-09T17:42:57.433Z"
+    },
+    {
+      "id": "task-req-1794246179561",
+      "key": "AEG-REQ-9562",
+      "title": "Requirements test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Acceptance invalidated: Product specification updated with new constraints",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 3,
+      "requirementsVersion": 2,
+      "subtasks": [
+        {
+          "id": "crit-r-1794246179562",
+          "title": "Spec test",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {
+            "command": "node",
+            "args": [
+              "/tmp/aegis-auth-pipe-3rsG3I/req-workspace/spec.test.js"
+            ]
+          },
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:42:59.562Z",
+      "lastUpdated": "2026-11-09T17:42:59.717Z"
+    },
+    {
+      "id": "task-tamper-1794246179765",
+      "key": "AEG-TAMPER-9765",
+      "title": "Tamper test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+      "subtasks": [
+        {
+          "id": "crit-t-1794246179765",
+          "title": "Validated criterion",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": null
+        }
+      ],
+      "createdAt": "2026-11-09T17:42:59.765Z",
+      "lastUpdated": "2026-11-09T17:42:59.765Z"
+    },
+    {
+      "id": "task-conflict-1794246179882",
+      "key": "AEG-CONF-9883",
+      "title": "Branch conflict task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 1,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "7d4ac6c3a8d3cace8911d7a76aae6f1fd5918026367a6a1907eda7dfadba6135",
+      "subtasks": [
+        {
+          "id": "c-conf-1794246179882",
+          "title": "Passing test",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246179884-0vyi"
+        }
+      ],
+      "createdAt": "2026-11-09T17:42:59.883Z",
+      "lastUpdated": "2026-11-09T17:42:59.883Z"
+    },
+    {
+      "id": "task-inter-1794246179920",
+      "key": "AEG-INTR-9920",
+      "title": "Interrupted task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "blocked",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Execution interrupted by server restart",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:42:59.920Z",
+      "lastUpdated": "2026-11-09T17:42:59.922Z"
+    },
+    {
+      "id": "task-indep-1794246180172",
+      "key": "AEG-INDEP-0172",
+      "title": "Independent check task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:43:00.172Z",
+      "lastUpdated": "2026-11-09T17:43:00.348Z"
+    },
+    {
+      "id": "task-rem-1794246180350",
+      "key": "AEG-REM-0351",
+      "title": "Remote delivery task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "review",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "764fb730ed3e43b02d57e34376e1ed201502e50f9c7fed74f435f2efc8bfcc23",
+      "acceptedBaseCommit": "383484bc8809cb584fdc8d0caad26c8c481cc5b1",
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:43:00.351Z",
+      "lastUpdated": "2026-11-09T17:43:00.469Z"
+    },
+    {
+      "id": "task-unified-1794246182722",
+      "key": "UNIF-2722",
+      "title": "Unified Lifecycle Task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": "agent-dev",
+      "estimatedHours": 2,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "8e457a00e5461a827cb4cf17604242b884cc8a061d52b87e2b522c12288d10e1",
+      "acceptedBaseCommit": "1234567890abcdef1234567890abcdef12345678",
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:43:02.723Z",
+      "lastUpdated": "2026-11-09T17:43:02.743Z"
     },
     {
       "id": "task-106",
@@ -6219,7 +6508,7 @@
       "slackNotified": false,
       "version": 3,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "13daea07607169cc58b3bd355911d7237df7d5f5eac4911f721fcf05233c1b65",
+      "acceptedCandidateHash": "197493b5d4aa246e12d2dcd0ac5961a89cde6405d36d19661adabcc2d70feb0f",
       "subtasks": [
         {
           "id": "st-16",
@@ -6227,7 +6516,7 @@
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794151979837-nkk1"
+          "evidenceId": "ev-1794246193435-pmci"
         },
         {
           "id": "st-17",
@@ -6235,7 +6524,7 @@
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794151979997-grc4"
+          "evidenceId": "ev-1794246193569-2r4p"
         },
         {
           "id": "st-18",
@@ -6243,40 +6532,15 @@
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794151980155-q56o"
+          "evidenceId": "ev-1794246193708-99z6"
         }
       ],
-      "createdAt": "2026-11-08T15:32:58.609Z",
-      "lastUpdated": "2026-11-08T15:33:00.156Z"
+      "createdAt": "2026-11-09T17:43:12.227Z",
+      "lastUpdated": "2026-11-09T17:43:13.711Z"
     },
     {
-      "id": "task-conc-1794151994557",
-      "key": "AEG-CONC-1794151994557",
-      "title": "Concurrency Updated Title 1",
-      "description": "Testing optimistic locking",
-      "epicId": "epic-core",
-      "status": "todo",
-      "priority": "high",
-      "assignedAgentId": "agent-arch",
-      "estimatedHours": 5,
-      "spentHours": 0,
-      "dependencies": [],
-      "tags": [
-        "concurrency"
-      ],
-      "deliverables": [],
-      "lastAgentComment": "",
-      "jiraSynced": false,
-      "slackNotified": false,
-      "version": 2,
-      "requirementsVersion": 1,
-      "subtasks": [],
-      "createdAt": "2026-11-08T15:33:14.557Z",
-      "lastUpdated": "2026-11-08T15:33:14.559Z"
-    },
-    {
-      "id": "task-unv-1794152001227",
-      "key": "AEG-UNV-1227",
+      "id": "task-unv-1794246270271",
+      "key": "AEG-UNV-0271",
       "title": "Unverified task without tests",
       "description": "",
       "epicId": "epic-core",
@@ -6295,20 +6559,20 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-unv-1794152001227",
+          "id": "crit-unv-1794246270271",
           "title": "Must have explicit test command",
           "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794152001230-6sju"
+          "evidenceId": "ev-1794246270274-4vwx"
         }
       ],
-      "createdAt": "2026-11-08T15:33:21.227Z",
-      "lastUpdated": "2026-11-08T15:33:21.231Z"
+      "createdAt": "2026-11-09T17:44:30.271Z",
+      "lastUpdated": "2026-11-09T17:44:30.275Z"
     },
     {
-      "id": "task-forged-1794152001232",
-      "key": "AEG-FORGE-1232",
+      "id": "task-forged-1794246270275",
+      "key": "AEG-FORGE-0275",
       "title": "Forged completion test",
       "description": "",
       "epicId": "epic-core",
@@ -6327,7 +6591,7 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-forged-1794152001232",
+          "id": "crit-forged-1794246270275",
           "title": "Attempted forge",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -6335,12 +6599,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T15:33:21.232Z",
-      "lastUpdated": "2026-11-08T15:33:21.232Z"
+      "createdAt": "2026-11-09T17:44:30.275Z",
+      "lastUpdated": "2026-11-09T17:44:30.275Z"
     },
     {
-      "id": "task-outcome-1794152001234",
-      "key": "AEG-FAIL-1234",
+      "id": "task-outcome-1794246270278",
+      "key": "AEG-FAIL-0278",
       "title": "Failed worker task",
       "description": "Tests status propagation",
       "epicId": "epic-core",
@@ -6359,7 +6623,7 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-f-1794152001234",
+          "id": "crit-f-1794246270278",
           "title": "Must pass",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -6367,12 +6631,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T15:33:21.234Z",
-      "lastUpdated": "2026-11-08T15:33:21.236Z"
+      "createdAt": "2026-11-09T17:44:30.278Z",
+      "lastUpdated": "2026-11-09T17:44:30.280Z"
     },
     {
-      "id": "task-dep-1794152001346",
-      "key": "AEG-DEP-1346",
+      "id": "task-dep-1794246270392",
+      "key": "AEG-DEP-0392",
       "title": "Prerequisite task",
       "description": "",
       "epicId": "epic-core",
@@ -6390,12 +6654,12 @@
       "version": 1,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T15:33:21.346Z",
-      "lastUpdated": "2026-11-08T15:33:21.346Z"
+      "createdAt": "2026-11-09T17:44:30.392Z",
+      "lastUpdated": "2026-11-09T17:44:30.392Z"
     },
     {
-      "id": "task-main-1794152001346",
-      "key": "AEG-MAIN-1347",
+      "id": "task-main-1794246270392",
+      "key": "AEG-MAIN-0393",
       "title": "Dependent task",
       "description": "",
       "epicId": "epic-core",
@@ -6405,7 +6669,7 @@
       "estimatedHours": 0,
       "spentHours": 0,
       "dependencies": [
-        "task-dep-1794152001346"
+        "task-dep-1794246270392"
       ],
       "tags": [],
       "deliverables": [],
@@ -6415,12 +6679,12 @@
       "version": 1,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T15:33:21.347Z",
-      "lastUpdated": "2026-11-08T15:33:21.347Z"
+      "createdAt": "2026-11-09T17:44:30.393Z",
+      "lastUpdated": "2026-11-09T17:44:30.393Z"
     },
     {
-      "id": "task-req-1794152003491",
-      "key": "AEG-REQ-3491",
+      "id": "task-req-1794246272522",
+      "key": "AEG-REQ-2523",
       "title": "Requirements test",
       "description": "",
       "epicId": "epic-core",
@@ -6439,25 +6703,25 @@
       "requirementsVersion": 2,
       "subtasks": [
         {
-          "id": "crit-r-1794152003491",
+          "id": "crit-r-1794246272523",
           "title": "Spec test",
           "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {
             "command": "node",
             "args": [
-              "/tmp/aegis-auth-pipe-cvkewu/req-workspace/spec.test.js"
+              "/tmp/aegis-auth-pipe-1s5ZYh/req-workspace/spec.test.js"
             ]
           },
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T15:33:23.491Z",
-      "lastUpdated": "2026-11-08T15:33:23.630Z"
+      "createdAt": "2026-11-09T17:44:32.523Z",
+      "lastUpdated": "2026-11-09T17:44:32.660Z"
     },
     {
-      "id": "task-tamper-1794152003681",
-      "key": "AEG-TAMPER-3681",
+      "id": "task-tamper-1794246272727",
+      "key": "AEG-TAMPER-2727",
       "title": "Tamper test",
       "description": "",
       "epicId": "epic-core",
@@ -6477,7 +6741,7 @@
       "acceptedCandidateHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
       "subtasks": [
         {
-          "id": "crit-t-1794152003681",
+          "id": "crit-t-1794246272727",
           "title": "Validated criterion",
           "completed": false,
           "verificationMethod": "trusted_test",
@@ -6485,12 +6749,12 @@
           "evidenceId": null
         }
       ],
-      "createdAt": "2026-11-08T15:33:23.681Z",
-      "lastUpdated": "2026-11-08T15:33:23.681Z"
+      "createdAt": "2026-11-09T17:44:32.727Z",
+      "lastUpdated": "2026-11-09T17:44:32.727Z"
     },
     {
-      "id": "task-conflict-1794152003820",
-      "key": "AEG-CONF-3821",
+      "id": "task-conflict-1794246272846",
+      "key": "AEG-CONF-2846",
       "title": "Branch conflict task",
       "description": "",
       "epicId": "epic-core",
@@ -6507,23 +6771,23 @@
       "slackNotified": false,
       "version": 1,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "f50c50077fce14f2bef804d5b6131230d6717d548a2f2bae7d029086ad1fe88f",
+      "acceptedCandidateHash": "7d4ac6c3a8d3cace8911d7a76aae6f1fd5918026367a6a1907eda7dfadba6135",
       "subtasks": [
         {
-          "id": "c-conf-1794152003820",
+          "id": "c-conf-1794246272846",
           "title": "Passing test",
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794152003823-ggm2"
+          "evidenceId": "ev-1794246272848-yu2j"
         }
       ],
-      "createdAt": "2026-11-08T15:33:23.821Z",
-      "lastUpdated": "2026-11-08T15:33:23.821Z"
+      "createdAt": "2026-11-09T17:44:32.846Z",
+      "lastUpdated": "2026-11-09T17:44:32.846Z"
     },
     {
-      "id": "task-inter-1794152003865",
-      "key": "AEG-INTR-3865",
+      "id": "task-inter-1794246272882",
+      "key": "AEG-INTR-2883",
       "title": "Interrupted task",
       "description": "",
       "epicId": "epic-core",
@@ -6541,12 +6805,12 @@
       "version": 2,
       "requirementsVersion": 1,
       "subtasks": [],
-      "createdAt": "2026-11-08T15:33:23.865Z",
-      "lastUpdated": "2026-11-08T15:33:23.867Z"
+      "createdAt": "2026-11-09T17:44:32.883Z",
+      "lastUpdated": "2026-11-09T17:44:32.884Z"
     },
     {
-      "id": "task-indep-1794152004100",
-      "key": "AEG-INDEP-4100",
+      "id": "task-indep-1794246273109",
+      "key": "AEG-INDEP-3109",
       "title": "Independent check task",
       "description": "",
       "epicId": "epic-core",
@@ -6570,17 +6834,17 @@
           "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {
-            "trustedScriptPath": "/app/applet/data/trusted_suites/task-indep-1794152004100/crit-indep.test.cjs"
+            "trustedScriptPath": "/app/applet/data/trusted_suites/task-indep-1794246273109/crit-indep.test.cjs"
           },
-          "evidenceId": "ev-1794152004271-qk3e"
+          "evidenceId": "ev-1794246273270-jnxi"
         }
       ],
-      "createdAt": "2026-11-08T15:33:24.100Z",
-      "lastUpdated": "2026-11-08T15:33:24.271Z"
+      "createdAt": "2026-11-09T17:44:33.109Z",
+      "lastUpdated": "2026-11-09T17:44:33.271Z"
     },
     {
-      "id": "task-rem-1794152004273",
-      "key": "AEG-REM-4273",
+      "id": "task-rem-1794246273273",
+      "key": "AEG-REM-3273",
       "title": "Remote delivery task",
       "description": "",
       "epicId": "epic-core",
@@ -6595,9 +6859,10 @@
       "lastAgentComment": "",
       "jiraSynced": false,
       "slackNotified": false,
-      "version": 1,
+      "version": 2,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "b4dba62600e461961acf3fbd55d7d575b7eeaee9ef5877620da199e86229a95a",
+      "acceptedCandidateHash": "764fb730ed3e43b02d57e34376e1ed201502e50f9c7fed74f435f2efc8bfcc23",
+      "acceptedBaseCommit": "605f5f5fa1ee90749f9fa357320118ed58bb6677",
       "subtasks": [
         {
           "id": "c-rem",
@@ -6605,14 +6870,14 @@
           "completed": true,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794152004274-8hjd"
+          "evidenceId": "ev-1794246273407-hr3g"
         }
       ],
-      "createdAt": "2026-11-08T15:33:24.273Z",
-      "lastUpdated": "2026-11-08T15:33:24.273Z"
+      "createdAt": "2026-11-09T17:44:33.273Z",
+      "lastUpdated": "2026-11-09T17:44:33.406Z"
     },
     {
-      "id": "task-rogue-1794152004518",
+      "id": "task-rogue-1794246273590",
       "key": "ROGUE-1",
       "title": "Untrusted Task",
       "description": "Attempting to pass via workspace test",
@@ -6632,19 +6897,19 @@
       "requirementsVersion": 1,
       "subtasks": [
         {
-          "id": "crit-rogue-1794152004518",
+          "id": "crit-rogue-1794246273590",
           "title": "Rogue criterion",
           "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794152004520-blbn"
+          "evidenceId": "ev-1794246273593-usgy"
         }
       ],
-      "createdAt": "2026-11-08T15:33:24.518Z",
-      "lastUpdated": "2026-11-08T15:33:24.521Z"
+      "createdAt": "2026-11-09T17:44:33.590Z",
+      "lastUpdated": "2026-11-09T17:44:33.593Z"
     },
     {
-      "id": "task-nosnap-1794152004522",
+      "id": "task-nosnap-1794246273594",
       "key": "NOSNAP-1",
       "title": "Task without snapshot",
       "description": "Snapshot was deleted or never stored",
@@ -6663,59 +6928,379 @@
       "version": 1,
       "requirementsVersion": 1,
       "acceptedCandidateHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "acceptedBaseCommit": "1234567890abcdef1234567890abcdef12345678",
       "subtasks": [],
-      "createdAt": "2026-11-08T15:33:24.522Z",
-      "lastUpdated": "2026-11-08T15:33:24.522Z"
+      "createdAt": "2026-11-09T17:44:33.594Z",
+      "lastUpdated": "2026-11-09T17:44:33.594Z"
     },
     {
-      "id": "task-tb-1794152013668",
-      "key": "AEG-TB-3668",
-      "title": "Fix Token Bucket elapsed-time replenishment and capacity enforcement",
-      "description": "The TokenBucket rate limiter fails to calculate elapsed time during refill() and fails to cap at max capacity.",
+      "id": "task-fail-model-1794246273596",
+      "key": "FAIL-MOD-1",
+      "title": "Failing Model Task",
+      "description": "Model produces broken code",
       "epicId": "epic-core",
-      "status": "done",
-      "priority": "high",
-      "assignedAgentId": "agent-dev",
-      "estimatedHours": 4,
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
       "spentHours": 0,
       "dependencies": [],
       "tags": [],
       "deliverables": [],
-      "lastAgentComment": "Verified by independent quality gate (Candidate digest: c9d2475e)",
+      "lastAgentComment": "",
       "jiraSynced": false,
       "slackNotified": false,
-      "version": 5,
+      "version": 2,
       "requirementsVersion": 1,
-      "acceptedCandidateHash": "c9d2475ec42d53a588d873ab90e69f5eeffd5e8ece75b8527c39a2e17e436e9e",
-      "acceptedBaseCommit": "cdc022346d8d55ef2380b268099d39f4f7360630",
       "subtasks": [
         {
-          "id": "crit-tb-1",
-          "title": "Calculate elapsed time in refill() and replenish tokens accurately",
-          "completed": true,
+          "id": "crit-fm-1",
+          "title": "Must export valid object",
+          "completed": false,
           "verificationMethod": "trusted_test",
           "verificationSpec": {},
-          "evidenceId": "ev-1794152025490-y1v4"
-        },
-        {
-          "id": "crit-tb-2",
-          "title": "Cap tokens at maximum capacity and handle fractional token refills",
-          "completed": true,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794152025646-gkdk"
-        },
-        {
-          "id": "crit-tb-3",
-          "title": "consume() consumes tokens and rejects requests when insufficient tokens remain",
-          "completed": true,
-          "verificationMethod": "trusted_test",
-          "verificationSpec": {},
-          "evidenceId": "ev-1794152025839-fgqk"
+          "evidenceId": "ev-1794246273730-h9ix"
         }
       ],
-      "createdAt": "2026-11-08T15:33:33.773Z",
-      "lastUpdated": "2026-11-08T15:33:45.841Z"
+      "createdAt": "2026-11-09T17:44:33.596Z",
+      "lastUpdated": "2026-11-09T17:44:33.731Z"
+    },
+    {
+      "id": "task-budget-1794246273732",
+      "key": "BUDGET-1",
+      "title": "Budget Exhaustion Test",
+      "description": "Task with exhausted attempts",
+      "epicId": "epic-core",
+      "status": "blocked",
+      "priority": "medium",
+      "assignedAgentId": "agent-dev",
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "Correction budget exhausted (1 attempts). Work is blocked pending resolution.",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 4,
+      "requirementsVersion": 1,
+      "subtasks": [
+        {
+          "id": "crit-bd-1",
+          "title": "Must return true",
+          "completed": false,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246273869-wkxf"
+        }
+      ],
+      "createdAt": "2026-11-09T17:44:33.732Z",
+      "lastUpdated": "2026-11-09T17:44:33.871Z"
+    },
+    {
+      "id": "task-tamper-1794246273872",
+      "key": "TAMPER-1",
+      "title": "Tamper Snapshot Test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "f68322274a9fe4061f8c7ade61294c4997c24b7cc3acda2d4c83df89ec51b074",
+      "acceptedBaseCommit": "1234567890abcdef1234567890abcdef12345678",
+      "subtasks": [
+        {
+          "id": "crit-tmp-1",
+          "title": "Must exist",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246274024-7ebr"
+        }
+      ],
+      "createdAt": "2026-11-09T17:44:33.872Z",
+      "lastUpdated": "2026-11-09T17:44:34.027Z"
+    },
+    {
+      "id": "task-stale-1794246274029",
+      "key": "STALE-1",
+      "title": "Stale Evidence Test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 3,
+      "requirementsVersion": 2,
+      "acceptedCandidateHash": "8b801669e6fd09a12a39304b709c471666deaef0756ef715abee9a180d7909f0",
+      "acceptedBaseCommit": "1234567890abcdef1234567890abcdef12345678",
+      "subtasks": [
+        {
+          "id": "crit-st-1",
+          "title": "Crit 1",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246274170-0xvl"
+        },
+        {
+          "id": "crit-st-2",
+          "title": "Crit 2",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246274309-kfgr"
+        }
+      ],
+      "createdAt": "2026-11-09T17:44:34.029Z",
+      "lastUpdated": "2026-11-09T17:44:34.311Z"
+    },
+    {
+      "id": "task-tree-1794246274427",
+      "key": "TREE-1",
+      "title": "Tree Equality Task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "7e46d40ef840052a7f7269fb35bd65bd431dfc1fe60b16ade9d8f7e3b491b0cf",
+      "acceptedBaseCommit": "ecbbeb1072dff295a0f9e83bb0b85e250e138d34",
+      "subtasks": [
+        {
+          "id": "crit-tr-1",
+          "title": "Crit 1",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246274566-9fw6"
+        }
+      ],
+      "createdAt": "2026-11-09T17:44:34.427Z",
+      "lastUpdated": "2026-11-09T17:44:34.568Z"
+    },
+    {
+      "id": "task-drift-1794246274817",
+      "key": "DRIFT-1",
+      "title": "Drift Test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "aa2238f21e52265261748cfdbfc78d0baabdfd7c42355bf01f2f42761f503070",
+      "acceptedBaseCommit": "42a52e6d40434a787c15a9d8ebfbe1de55e73538",
+      "subtasks": [
+        {
+          "id": "crit-df-1",
+          "title": "Crit 1",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246274951-nw7a"
+        }
+      ],
+      "createdAt": "2026-11-09T17:44:34.817Z",
+      "lastUpdated": "2026-11-09T17:44:34.953Z"
+    },
+    {
+      "id": "task-pr-retry-1794246275192",
+      "key": "PR-RETRY-1",
+      "title": "PR Retry Test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "19c7b928ec47971c5e435ff646d192cab748eda24781ec00af69d3a2c2d609aa",
+      "acceptedBaseCommit": "f88fedb902c04bb47cde43eaee1a82266c16d955",
+      "subtasks": [
+        {
+          "id": "crit-pr-1",
+          "title": "Crit 1",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246275333-39vg"
+        }
+      ],
+      "createdAt": "2026-11-09T17:44:35.192Z",
+      "lastUpdated": "2026-11-09T17:44:35.336Z"
+    },
+    {
+      "id": "task-clear-acceptance-1794246275615",
+      "key": "CLR-1",
+      "title": "Clear Acceptance Test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "subtasks": [],
+      "createdAt": "2026-11-09T17:44:35.615Z",
+      "lastUpdated": "2026-11-09T17:44:35.617Z"
+    },
+    {
+      "id": "task-remote-failclosed-1794246275617",
+      "key": "RFC-1",
+      "title": "Remote Fail Closed Test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 3,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "c6715a277841bf59f32de026e3023d9d38a5ae515c4b97020357788601326682",
+      "acceptedBaseCommit": "dddddddddddddddddddddddddddddddddddddddd",
+      "subtasks": [
+        {
+          "id": "crit-rfc-1",
+          "title": "Crit 1",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246275620-qoom"
+        }
+      ],
+      "createdAt": "2026-11-09T17:44:35.617Z",
+      "lastUpdated": "2026-11-09T17:44:35.631Z"
+    },
+    {
+      "id": "task-vver-1794246275648",
+      "key": "VVER-1",
+      "title": "Verifier Version Test",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignedAgentId": null,
+      "estimatedHours": 0,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "5d0c46a76c95278ef03bbefe4c544dd2c5a4868ab3c29d81de3e4c39e4c75a30",
+      "acceptedBaseCommit": "ffffffffffffffffffffffffffffffffffffffff",
+      "subtasks": [
+        {
+          "id": "crit-vver-1",
+          "title": "Crit VVER",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {
+            "verifierVersion": "2.0.0"
+          },
+          "evidenceId": "ev-1794246275651-ihwj"
+        }
+      ],
+      "createdAt": "2026-11-09T17:44:35.648Z",
+      "lastUpdated": "2026-11-09T17:44:35.650Z"
+    },
+    {
+      "id": "task-unified-1794246275652",
+      "key": "UNIF-5652",
+      "title": "Unified Lifecycle Task",
+      "description": "",
+      "epicId": "epic-core",
+      "status": "done",
+      "priority": "medium",
+      "assignedAgentId": "agent-dev",
+      "estimatedHours": 2,
+      "spentHours": 0,
+      "dependencies": [],
+      "tags": [],
+      "deliverables": [],
+      "lastAgentComment": "",
+      "jiraSynced": false,
+      "slackNotified": false,
+      "version": 2,
+      "requirementsVersion": 1,
+      "acceptedCandidateHash": "8e457a00e5461a827cb4cf17604242b884cc8a061d52b87e2b522c12288d10e1",
+      "acceptedBaseCommit": "1234567890abcdef1234567890abcdef12345678",
+      "subtasks": [
+        {
+          "id": "crit-unif-1",
+          "title": "Must export answer",
+          "completed": true,
+          "verificationMethod": "trusted_test",
+          "verificationSpec": {},
+          "evidenceId": "ev-1794246275674-arrs"
+        }
+      ],
+      "createdAt": "2026-11-09T17:44:35.653Z",
+      "lastUpdated": "Just now"
     }
   ],
   "agents": [
@@ -7130,5 +7715,5 @@
   ],
   "cycleCount": 12,
   "daemonRunning": false,
-  "lastUpdated": "2026-11-08T19:19:30.438Z"
+  "lastUpdated": "2026-11-09T17:44:35.819Z"
 }

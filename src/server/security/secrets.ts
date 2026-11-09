@@ -17,9 +17,8 @@ const SENSITIVE_KEY_PATTERNS = [
   /token/i,
   /secret/i,
   /password/i,
-  /key/i,
+  /(?:api|secret|private|access|auth|ssh|signing|encryption)[_-]?key/i,
   /credential/i,
-  /auth/i,
   /private/i,
   /webhook/i,
 ];
@@ -37,7 +36,9 @@ export function redactSensitiveConfig<T>(obj: T): T {
 
   const result: any = {};
   for (const [key, value] of Object.entries(obj)) {
-    const isSensitive = SENSITIVE_KEY_PATTERNS.some((pat) => pat.test(key));
+    // Never redact task or issue keys (e.g. AEG-101, taskKey)
+    const isTaskKey = key === 'key' || key === 'taskKey' || key === 'trialTaskKey';
+    const isSensitive = !isTaskKey && SENSITIVE_KEY_PATTERNS.some((pat) => pat.test(key));
     if (isSensitive && typeof value === 'string' && value.length > 0) {
       result[key] = REDACTED_MASK;
     } else if (typeof value === 'object') {

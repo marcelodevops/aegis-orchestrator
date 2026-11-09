@@ -1,8 +1,0 @@
-{
-  "taskId": "task-tb-1794152013668",
-  "taskKey": "AEG-TB-3668",
-  "candidateHash": "c9d2475ec42d53a588d873ab90e69f5eeffd5e8ece75b8527c39a2e17e436e9e",
-  "acceptedAt": "2026-11-08T15:33:45.324Z",
-  "baseCommit": "cdc022346d8d55ef2380b268099d39f4f7360630",
-  "requirementsVersion": 1
-}

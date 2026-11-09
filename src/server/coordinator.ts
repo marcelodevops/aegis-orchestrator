@@ -30,8 +30,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Server-authoritative storage paths
-const DATA_DIR = path.resolve(__dirname, '../../data');
-const STATE_FILE = path.resolve(DATA_DIR, 'aegis_state.json');
+const DATA_DIR = process.env.AEGIS_DATA_DIR || path.resolve(__dirname, '../../data');
+const STATE_FILE = process.env.AEGIS_STATE_PATH || path.resolve(DATA_DIR, 'aegis_state.json');
 const ARTIFACTS_DIR = path.resolve(__dirname, '../../.aegis_artifacts');
 
 export interface ServerState {
@@ -242,7 +242,7 @@ class CoordinatorEngine {
     verification?: VerificationResult;
     error?: string;
   } {
-    const task = this.state.tasks.find((t) => t.id === taskId || t.key === taskId);
+    const task = storage.getTaskById(taskId) || this.state.tasks.find((t) => t.id === taskId || t.key === taskId);
     if (!task) {
       return { success: false, error: `Task ${taskId} not found` };
     }
@@ -250,7 +250,7 @@ class CoordinatorEngine {
     // Guard 1: Cannot move to in_progress if upstream dependencies are incomplete
     if (targetStatus === 'in_progress') {
       const allTasks = this.state.tasks;
-      const uncompletedDeps = (task.dependencies || []).filter((depId) => {
+      const uncompletedDeps = (task.dependencies || []).filter((depId: string) => {
         const depTask = allTasks.find((t) => t.id === depId || t.key === depId);
         return !depTask || depTask.status !== 'done';
       });
@@ -262,7 +262,7 @@ class CoordinatorEngine {
       }
     }
 
-    // Guard 2: Cannot move to review without real code artifact produced by worker in workspace
+    // Guard 2: Cannot move to review without real code artifact produced by worker in workspace or candidate snapshot
     if (targetStatus === 'review') {
       const safeKey = task.key.replace(/[^a-zA-Z0-9_-]/g, '_');
       const workspaceImpl = path.resolve(process.cwd(), 'workspace', safeKey, 'implementation.js');
@@ -270,14 +270,18 @@ class CoordinatorEngine {
       const taskArtifactDir = path.resolve(ARTIFACTS_DIR, task.key);
       const codeFilePath = path.resolve(taskArtifactDir, 'implementation.js');
       const legacyPath = path.resolve(ARTIFACTS_DIR, `${task.key}_deliverable.md`);
+      const candidateSnapshotDir = task.acceptedCandidateHash
+        ? path.resolve(process.cwd(), 'data/candidates', task.id, task.acceptedCandidateHash)
+        : null;
       const hasArtifact = (fs.existsSync(workspaceImpl) && fs.statSync(workspaceImpl).size > 0) ||
                           (fs.existsSync(workspaceCjs) && fs.statSync(workspaceCjs).size > 0) ||
                           (fs.existsSync(codeFilePath) && fs.statSync(codeFilePath).size > 0) ||
-                          (fs.existsSync(legacyPath) && fs.statSync(legacyPath).size > 0);
+                          (fs.existsSync(legacyPath) && fs.statSync(legacyPath).size > 0) ||
+                          (candidateSnapshotDir !== null && fs.existsSync(candidateSnapshotDir));
       if (!hasArtifact) {
         return {
           success: false,
-          error: `Cannot transition ${task.key} to Review: No physical code artifact produced by worker in workspace.`,
+          error: `Cannot transition ${task.key} to Review: No physical code artifact produced by worker in workspace or candidate snapshot.`,
         };
       }
     }
@@ -338,20 +342,37 @@ class CoordinatorEngine {
     });
 
     // Check 2: Acceptance Criteria Subtasks Verified
+    const dbCriteria = storage.getCriteriaForTask(task.id);
     const subtasks = task.subtasks || [];
     const uncompletedSubtasks = subtasks.filter((st) => !st.completed);
+
+    let criteriaPassed = false;
+    let criteriaDetail = '';
+
+    if (task.acceptedCandidateHash && dbCriteria.length > 0) {
+      const candidateEvidence = storage.getEvidenceForCandidate(task.id, task.acceptedCandidateHash).filter((e: any) => e.outcome === 'passed');
+      const allDbPassed = dbCriteria.every((crit: any) => candidateEvidence.some((ev: any) => ev.criterion_id === crit.id));
+      criteriaPassed = allDbPassed && (subtasks.length === 0 || uncompletedSubtasks.length === 0);
+      criteriaDetail = criteriaPassed
+        ? `All ${dbCriteria.length} acceptance criteria independently verified in evidence ledger`
+        : `Acceptance criteria in evidence ledger incomplete or failing for candidate ${task.acceptedCandidateHash.slice(0, 10)}`;
+    } else {
+      criteriaPassed = subtasks.length > 0 && uncompletedSubtasks.length === 0;
+      criteriaDetail = subtasks.length === 0
+        ? 'No acceptance subtasks defined for this task'
+        : criteriaPassed
+        ? `All ${subtasks.length} acceptance criteria subtasks checked and passed`
+        : `${uncompletedSubtasks.length} of ${subtasks.length} subtask(s) still incomplete`;
+    }
+
     checks.push({
       rule: 'Acceptance Criteria Subtasks Verified',
-      passed: subtasks.length > 0 && uncompletedSubtasks.length === 0,
-      detail: subtasks.length === 0
-        ? 'No acceptance subtasks defined for this task'
-        : uncompletedSubtasks.length === 0
-        ? `All ${subtasks.length} acceptance criteria subtasks checked and passed`
-        : `${uncompletedSubtasks.length} of ${subtasks.length} subtask(s) still incomplete`,
+      passed: criteriaPassed,
+      detail: criteriaDetail,
     });
 
     // Check 3: Physical Disk Code Artifact Verification
-    // Artifact must exist on disk inside workspace/<taskKey>/ or .aegis_artifacts/<taskKey>/
+    // Artifact must exist on disk inside workspace/<taskKey>/, .aegis_artifacts/<taskKey>/, or data/candidates/<taskId>/
     const safeKey = task.key.replace(/[^a-zA-Z0-9_-]/g, '_');
     const workspaceImpl = path.resolve(process.cwd(), 'workspace', safeKey, 'implementation.js');
     const workspaceCjs = path.resolve(process.cwd(), 'workspace', safeKey, 'implementation.cjs');
@@ -360,14 +381,39 @@ class CoordinatorEngine {
     const legacyPath = path.resolve(ARTIFACTS_DIR, `${task.key}_deliverable.md`);
 
     let verifiedPath: string | null = null;
-    if (fs.existsSync(workspaceImpl) && fs.statSync(workspaceImpl).size > 0) {
-      verifiedPath = workspaceImpl;
-    } else if (fs.existsSync(workspaceCjs) && fs.statSync(workspaceCjs).size > 0) {
-      verifiedPath = workspaceCjs;
-    } else if (fs.existsSync(codeFilePath) && fs.statSync(codeFilePath).size > 0) {
-      verifiedPath = codeFilePath;
-    } else if (fs.existsSync(legacyPath) && fs.statSync(legacyPath).size > 0) {
-      verifiedPath = legacyPath;
+    if (task.acceptedCandidateHash) {
+      const candidateSnapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, task.acceptedCandidateHash);
+      if (fs.existsSync(candidateSnapshotDir)) {
+        const findCodeFile = (dir: string): string | null => {
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            const full = path.join(dir, entry.name);
+            if (entry.isDirectory() && entry.name !== '.git' && entry.name !== 'node_modules') {
+              const res = findCodeFile(full);
+              if (res) return res;
+            } else if (entry.isFile() && (entry.name.endsWith('.js') || entry.name.endsWith('.cjs') || entry.name.endsWith('.ts'))) {
+              return full;
+            }
+          }
+          return null;
+        };
+        const found = findCodeFile(candidateSnapshotDir);
+        if (found && fs.existsSync(found) && fs.statSync(found).size > 0) {
+          verifiedPath = found;
+        }
+      }
+    }
+
+    if (!verifiedPath) {
+      if (fs.existsSync(workspaceImpl) && fs.statSync(workspaceImpl).size > 0) {
+        verifiedPath = workspaceImpl;
+      } else if (fs.existsSync(workspaceCjs) && fs.statSync(workspaceCjs).size > 0) {
+        verifiedPath = workspaceCjs;
+      } else if (fs.existsSync(codeFilePath) && fs.statSync(codeFilePath).size > 0) {
+        verifiedPath = codeFilePath;
+      } else if (fs.existsSync(legacyPath) && fs.statSync(legacyPath).size > 0) {
+        verifiedPath = legacyPath;
+      }
     }
 
     checks.push({
@@ -375,7 +421,7 @@ class CoordinatorEngine {
       passed: verifiedPath !== null,
       detail: verifiedPath !== null
         ? `Physical artifact verified on disk at ${path.relative(process.cwd(), verifiedPath)} (${fs.statSync(verifiedPath).size} bytes)`
-        : `No physical code artifact found on disk in workspace/${safeKey}/ or .aegis_artifacts/${task.key}/`,
+        : `No physical code artifact found on disk in workspace/${safeKey}/ or .aegis_artifacts/${task.key}/ or candidate snapshots`,
     });
 
     // Check 4: Real Syntax & AST Compiler Verification via Isolated Subprocess
@@ -414,7 +460,7 @@ class CoordinatorEngine {
       detail: syntaxDetail,
     });
 
-    // Check 5: Automated Unit Test Suite via Isolated Subprocess
+    // Check 5: Automated Unit Test Suite via Isolated Subprocess or Immutable Evidence Ledger
     const wsCjs = path.resolve(process.cwd(), 'workspace', safeKey, 'spec.test.cjs');
     const wsJs = path.resolve(process.cwd(), 'workspace', safeKey, 'spec.test.js');
     const artCjs = path.resolve(taskArtifactDir, 'spec.test.cjs');
@@ -439,7 +485,21 @@ class CoordinatorEngine {
       computedSha256 = crypto.createHash('sha256').update(codeContent).digest('hex');
     }
 
-    if (testFilePath && fs.existsSync(testFilePath)) {
+    // Check independent evidence ledger first if candidate hash is recorded
+    const candidateEvidence = task.acceptedCandidateHash
+      ? storage.getEvidenceForCandidate(task.id, task.acceptedCandidateHash).filter((e: any) => e.outcome === 'passed')
+      : [];
+    const hasPassingCandidateEvidence = Boolean(
+      task.acceptedCandidateHash &&
+      dbCriteria.length > 0 &&
+      dbCriteria.every((crit: any) => candidateEvidence.some((ev: any) => ev.criterion_id === crit.id))
+    );
+
+    if (hasPassingCandidateEvidence && task.acceptedCandidateHash) {
+      testPassed = true;
+      testDetail = `All ${dbCriteria.length} acceptance criteria independently verified with cryptographic candidate digest (${task.acceptedCandidateHash.slice(0, 16)}...)`;
+      computedSha256 = task.acceptedCandidateHash;
+    } else if (testFilePath && fs.existsSync(testFilePath)) {
       try {
         const testRes = runInSandboxSync({
           command: 'node',

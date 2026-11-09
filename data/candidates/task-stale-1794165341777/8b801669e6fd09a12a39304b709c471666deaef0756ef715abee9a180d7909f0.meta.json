@@ -1,8 +1,0 @@
-{
-  "taskId": "task-stale-1794165341777",
-  "taskKey": "STALE-1",
-  "candidateHash": "8b801669e6fd09a12a39304b709c471666deaef0756ef715abee9a180d7909f0",
-  "acceptedAt": "2026-11-08T19:15:42.055Z",
-  "baseCommit": null,
-  "requirementsVersion": 1
-}

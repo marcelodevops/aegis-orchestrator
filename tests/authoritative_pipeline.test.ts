@@ -825,14 +825,33 @@ async function executeSuite() {
 
     // Seed bare remote with initial commit on main
     const seedDir = path.join(testTempDir, 'seed');
-    spawnSync('git', ['init', seedDir]);
+    spawnSync('git', ['init', '-b', 'main', seedDir]);
     spawnSync('git', ['config', 'user.name', 'Seed'], { cwd: seedDir });
     spawnSync('git', ['config', 'user.email', 'seed@example.com'], { cwd: seedDir });
     fs.writeFileSync(path.join(seedDir, 'README.md'), '# Seed\n');
     spawnSync('git', ['add', '.'], { cwd: seedDir });
     spawnSync('git', ['commit', '-m', 'Initial seed'], { cwd: seedDir });
     spawnSync('git', ['remote', 'add', 'origin', bareRemoteDir], { cwd: seedDir });
-    spawnSync('git', ['push', '-u', 'origin', 'main'], { cwd: seedDir });
+    const pushRes = spawnSync('git', ['push', '-u', 'origin', 'main'], { cwd: seedDir });
+    assert.strictEqual(pushRes.status, 0, `Seed push to bare remote must succeed: ${pushRes.stderr}`);
+
+    const headRes = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: seedDir, encoding: 'utf8' });
+    const seedBaseCommit = headRes.stdout.trim();
+    const curTask = storage.getTaskById(remTaskId);
+    storage.updateTaskWithRevision(remTaskId, curTask.version, {
+      acceptedBaseCommit: seedBaseCommit,
+    });
+
+    // Update evidence with baseCommit
+    storage.recordEvidence({
+      taskId: remTaskId,
+      criterionId: 'c-rem',
+      baseCommit: seedBaseCommit,
+      candidateHash: hash,
+      verifierName: 'verifier',
+      requirementsVersion: 1,
+      outcome: 'passed',
+    });
 
     const remoteDelivRes = await GitDeliveryService.deliverToRemote(remTaskId, {
       repoUrl: bareRemoteDir,
@@ -945,6 +964,7 @@ async function executeSuite() {
       spentHours: 0,
       dependencies: [],
       acceptedCandidateHash: fakeHash,
+      acceptedBaseCommit: '1234567890abcdef1234567890abcdef12345678',
       subtasks: [],
     });
 
@@ -1058,6 +1078,7 @@ async function executeSuite() {
         summary: 'attempted fix but failed',
         modifiedFiles: ['app.js'],
         turnsUsed: 1,
+        tokensUsed: 0,
         toolHistory: [],
       }),
     };
@@ -1107,7 +1128,11 @@ async function executeSuite() {
     fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `process.exit(0);`);
 
     // Legitimate acceptance creates snapshot
-    const acceptRes = await verifyTaskAcceptance({ taskId, workspacePath: ws });
+    const acceptRes = await verifyTaskAcceptance({
+      taskId,
+      baseCommit: '1234567890abcdef1234567890abcdef12345678',
+      workspacePath: ws,
+    });
     assert.strictEqual(acceptRes.allPassed, true);
     const originalHash = acceptRes.candidateHash;
 
@@ -1155,7 +1180,11 @@ async function executeSuite() {
     fs.mkdirSync(trustedDir, { recursive: true });
     fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `process.exit(0);`);
 
-    const acceptRes = await verifyTaskAcceptance({ taskId, workspacePath: ws });
+    const acceptRes = await verifyTaskAcceptance({
+      taskId,
+      baseCommit: '1234567890abcdef1234567890abcdef12345678',
+      workspacePath: ws,
+    });
     assert.strictEqual(acceptRes.allPassed, true);
 
     // Bump requirements_version on task to make evidence stale
@@ -1463,12 +1492,265 @@ async function executeSuite() {
     assert.strictEqual(storage.getTaskByKey('TEMP-1'), null);
   });
 
+  // --- TEST 33: Explicit null in updateTaskWithRevision clears acceptedCandidateHash and acceptedBaseCommit ---
+  await runTest('33. Explicit null in updateTaskWithRevision clears acceptedCandidateHash and acceptedBaseCommit', () => {
+    const taskId = `task-clear-acceptance-${Date.now()}`;
+    const initialHash = 'a'.repeat(64);
+    const initialBase = 'b'.repeat(40);
+
+    storage.insertTask({
+      id: taskId,
+      key: `CLR-1`,
+      title: 'Clear Acceptance Test',
+      status: 'review',
+      acceptedCandidateHash: initialHash,
+      acceptedBaseCommit: initialBase,
+      subtasks: [],
+    });
+
+    const inserted = storage.getTaskById(taskId);
+    assert.strictEqual(inserted.acceptedCandidateHash, initialHash);
+    assert.strictEqual(inserted.acceptedBaseCommit, initialBase);
+
+    // Update with revision passing explicit nulls
+    const updateRes = storage.updateTaskWithRevision(taskId, inserted.version, {
+      acceptedCandidateHash: null,
+      acceptedBaseCommit: null,
+      status: 'in_progress',
+    });
+
+    assert.strictEqual(updateRes.success, true);
+    const updated = storage.getTaskById(taskId);
+    assert.strictEqual(updated.acceptedCandidateHash, undefined, 'acceptedCandidateHash must be cleared (null/undefined)');
+    assert.strictEqual(updated.acceptedBaseCommit, undefined, 'acceptedBaseCommit must be cleared (null/undefined)');
+    assert.strictEqual(updated.status, 'in_progress');
+  });
+
+  // --- TEST 34: Remote delivery fails closed when accepted base commit is missing or remote branch is missing ---
+  await runTest('34. Remote delivery fails closed when acceptedBaseCommit is missing or remote branch is missing', async () => {
+    const taskId = `task-remote-failclosed-${Date.now()}`;
+    const hash = 'c'.repeat(64);
+
+    storage.insertTask({
+      id: taskId,
+      key: `RFC-1`,
+      title: 'Remote Fail Closed Test',
+      status: 'in_progress',
+      acceptedCandidateHash: hash,
+      // acceptedBaseCommit deliberately omitted!
+      subtasks: [{ id: `crit-rfc-1`, title: 'Crit 1', verificationMethod: 'trusted_test' }],
+    });
+    storage.insertCriterion({ id: `crit-rfc-1`, taskId, title: 'Crit 1', verificationMethod: 'trusted_test', status: 'pending' });
+
+    // Create candidate snapshot directory
+    const snapDir = path.resolve(process.cwd(), 'data/candidates', taskId, hash);
+    fs.mkdirSync(snapDir, { recursive: true });
+    fs.writeFileSync(path.join(snapDir, 'index.js'), 'console.log("hello");\n');
+    const computedHash = computeCanonicalCandidateDigest(snapDir);
+    const finalSnapDir = path.resolve(process.cwd(), 'data/candidates', taskId, computedHash);
+    fs.renameSync(snapDir, finalSnapDir);
+
+    // Update task with real computed hash
+    const taskCurrent = storage.getTaskById(taskId);
+    storage.updateTaskWithRevision(taskId, taskCurrent.version, {
+      acceptedCandidateHash: computedHash,
+    });
+
+    storage.recordEvidence({
+      taskId,
+      criterionId: `crit-rfc-1`,
+      candidateHash: computedHash,
+      verifierName: 'test_verifier',
+      outcome: 'passed',
+    });
+
+    try {
+      // 1. Missing acceptedBaseCommit must fail closed
+      const res1 = await GitDeliveryService.deliverToRemote(taskId, {
+        repoUrl: 'https://github.com/acme/repo.git',
+        branchName: 'aegis/rfc-test',
+        deliveryMode: 'branch_push',
+        apiToken: 'fake-token',
+      });
+      assert.strictEqual(res1.success, false);
+      assert.strictEqual(res1.blocked, true);
+      assert.ok(res1.error?.includes('accepted base commit'), `Error must mention missing accepted base commit: ${res1.error}`);
+
+      // Now set acceptedBaseCommit to dummy commit and test missing remote branch on real bare git repo
+      const bareRepo = path.join(testTempDir, `bare-empty-${Date.now()}.git`);
+      spawnSync('git', ['init', '--bare', bareRepo]);
+
+      const t2 = storage.getTaskById(taskId);
+      storage.updateTaskWithRevision(taskId, t2.version, {
+        acceptedBaseCommit: 'd'.repeat(40),
+      });
+
+      // Remote query to empty bare repo will fail because defaultBranch 'main' does not exist
+      const res2 = await GitDeliveryService.deliverToRemote(taskId, {
+        repoUrl: bareRepo,
+        branchName: 'aegis/rfc-test',
+        defaultBranch: 'main',
+        deliveryMode: 'branch_push',
+      });
+      assert.strictEqual(res2.success, false);
+      assert.strictEqual(res2.blocked, true);
+      assert.ok(
+        res2.error?.includes('no heads') || res2.error?.includes('does not exist'),
+        `Error must report missing remote branch: ${res2.error}`
+      );
+    } finally {
+      if (fs.existsSync(finalSnapDir)) fs.rmSync(path.dirname(finalSnapDir), { recursive: true, force: true });
+    }
+  });
+
+  // --- TEST 35: Verifier version mismatch blocks delivery ---
+  await runTest('35. Verifier version mismatch blocks delivery', async () => {
+    const taskId = `task-vver-${Date.now()}`;
+    const hash = 'e'.repeat(64);
+    const baseCommit = 'f'.repeat(40);
+
+    storage.insertTask({
+      id: taskId,
+      key: `VVER-1`,
+      title: 'Verifier Version Test',
+      status: 'in_progress',
+      acceptedCandidateHash: hash,
+      acceptedBaseCommit: baseCommit,
+      subtasks: [],
+    });
+
+    // Insert criterion with expected verifierVersion '2.0.0'
+    storage.insertCriterion({
+      id: `crit-vver-1`,
+      taskId,
+      title: 'Crit VVER',
+      verificationMethod: 'trusted_test',
+      verificationSpec: { verifierVersion: '2.0.0' },
+      status: 'pending',
+    });
+
+    // Create candidate snapshot directory
+    const snapDir = path.resolve(process.cwd(), 'data/candidates', taskId, hash);
+    fs.mkdirSync(snapDir, { recursive: true });
+    fs.writeFileSync(path.join(snapDir, 'file.js'), 'export const a = 1;\n');
+    const realHash = computeCanonicalCandidateDigest(snapDir);
+    const finalSnapDir = path.resolve(process.cwd(), 'data/candidates', taskId, realHash);
+    fs.renameSync(snapDir, finalSnapDir);
+
+    const taskCurrent = storage.getTaskById(taskId);
+    storage.updateTaskWithRevision(taskId, taskCurrent.version, {
+      acceptedCandidateHash: realHash,
+      acceptedBaseCommit: baseCommit,
+    });
+
+    // Record evidence with default verifierVersion '1.0.0' (mismatched with expected '2.0.0')
+    storage.recordEvidence({
+      taskId,
+      criterionId: `crit-vver-1`,
+      baseCommit,
+      candidateHash: realHash,
+      verifierName: 'suite_v1',
+      verifierVersion: '1.0.0', // Mismatch!
+      outcome: 'passed',
+    });
+
+    try {
+      const delivRes = await GitDeliveryService.deliverToBranch(taskId, {
+        repoPath: testTempDir,
+        branchName: 'aegis/vver-test',
+        commitMessage: 'Test verifier version',
+      });
+
+      assert.strictEqual(delivRes.success, false);
+      assert.ok(delivRes.error?.includes('verifier version mismatch'), `Error must report verifier version mismatch: ${delivRes.error}`);
+    } finally {
+      if (fs.existsSync(finalSnapDir)) fs.rmSync(path.dirname(finalSnapDir), { recursive: true, force: true });
+    }
+  });
+
+  // --- TEST 36: Candidate snapshots and evidence ledger satisfy coordinator quality gates ---
+  await runTest('36. Candidate snapshots and evidence ledger satisfy coordinator quality gates natively', () => {
+    const taskId = `task-unified-${Date.now()}`;
+    const taskKey = `UNIF-${Date.now().toString().slice(-4)}`;
+
+    coordinator.updateState({
+      tasks: [
+        {
+          id: taskId,
+          key: taskKey,
+          title: 'Unified Lifecycle Task',
+          status: 'in_progress',
+          priority: 'medium',
+          assignedAgentId: 'agent-dev',
+          estimatedHours: 2,
+          spentHours: 0,
+          dependencies: [],
+          subtasks: [{ id: `crit-unif-1`, title: 'Must export answer', verificationMethod: 'trusted_test' }],
+        } as any,
+      ],
+    });
+
+    storage.insertCriterion({
+      id: `crit-unif-1`,
+      taskId,
+      title: 'Must export answer',
+      verificationMethod: 'trusted_test',
+      status: 'pending',
+    });
+
+    // Candidate snapshot
+    const snapDir = path.resolve(process.cwd(), 'data/candidates', taskId, 'snap-hash-1234');
+    fs.mkdirSync(snapDir, { recursive: true });
+    fs.writeFileSync(path.join(snapDir, 'index.js'), 'module.exports = { answer: 42 };\n');
+    const digest = computeCanonicalCandidateDigest(snapDir);
+    const finalSnapDir = path.resolve(process.cwd(), 'data/candidates', taskId, digest);
+    fs.renameSync(snapDir, finalSnapDir);
+
+    const taskCurrent = storage.getTaskById(taskId);
+    storage.updateTaskWithRevision(taskId, taskCurrent.version, {
+      acceptedCandidateHash: digest,
+      acceptedBaseCommit: '1234567890abcdef1234567890abcdef12345678',
+    });
+
+    storage.recordEvidence({
+      taskId,
+      criterionId: `crit-unif-1`,
+      baseCommit: '1234567890abcdef1234567890abcdef12345678',
+      candidateHash: digest,
+      verifierName: 'trusted_check',
+      verifierVersion: '1.0.0',
+      outcome: 'passed',
+    });
+
+    try {
+      // Transition to review and done via coordinator directly (NO workspace/<taskKey>/ copy!)
+      const revRes = coordinator.transitionTaskStatus(taskId, 'review');
+      assert.strictEqual(revRes.success, true, `Transition to review must succeed: ${revRes.error}`);
+
+      const doneRes = coordinator.transitionTaskStatus(taskId, 'done');
+      assert.strictEqual(doneRes.success, true, `Transition to done must succeed: ${doneRes.error}`);
+      assert.strictEqual(doneRes.task?.status, 'done');
+    } finally {
+      if (fs.existsSync(finalSnapDir)) fs.rmSync(path.dirname(finalSnapDir), { recursive: true, force: true });
+    }
+  });
+
   // Cleanup
   try {
     fs.rmSync(testTempDir, { recursive: true, force: true });
+    for (const dir of ['data/candidates', 'data/trusted_suites']) {
+      const fullDir = path.resolve(process.cwd(), dir);
+      if (fs.existsSync(fullDir)) {
+        for (const item of fs.readdirSync(fullDir)) {
+          if (item.startsWith('task-')) {
+            fs.rmSync(path.join(fullDir, item), { recursive: true, force: true });
+          }
+        }
+      }
+    }
   } catch {}
 
-  console.log(`\n=== ALL 32 CRITICAL PIPELINE TESTS PASSED CLEANLY: ${passedTests}/${totalTests} ===\n`);
+  console.log(`\n=== ALL 36 CRITICAL PIPELINE TESTS PASSED CLEANLY: ${passedTests}/${totalTests} ===\n`);
 }
 
 executeSuite().catch((err) => {

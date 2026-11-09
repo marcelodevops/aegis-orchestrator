@@ -21,6 +21,7 @@ import { runIsolatedProcess } from '../execution/isolatedProcess.js';
 import { assertPathContained } from '../execution/pathContainment.js';
 import { storage } from '../storage/db.js';
 import { computeCanonicalCandidateDigest } from '../verification/acceptanceEngine.js';
+import { getAegisDataDir } from '../coordinator.js';
 
 export interface GitDeliveryOptions {
   repoPath: string;
@@ -187,7 +188,7 @@ export class GitDeliveryService {
 
     // Recompute canonical candidate digest from actual contents and metadata
     let verifiedFilesToCommit: Array<{ relPath: string; content: string }> = [];
-    const snapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, task.acceptedCandidateHash);
+    const snapshotDir = path.resolve(getAegisDataDir(), 'candidates', task.id, task.acceptedCandidateHash);
 
     if (options.filesToCommit && options.filesToCommit.length > 0) {
       const tempStaging = path.join(os.tmpdir(), `aegis-stage-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`);
@@ -612,7 +613,7 @@ export class GitDeliveryService {
     }
 
     // 1. Deliver files strictly from server-owned candidate snapshot (NO workspace fallback)
-    const snapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, task.acceptedCandidateHash);
+    const snapshotDir = path.resolve(getAegisDataDir(), 'candidates', task.id, task.acceptedCandidateHash);
     if (!fs.existsSync(snapshotDir)) {
       return {
         success: false,

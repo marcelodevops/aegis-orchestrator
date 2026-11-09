@@ -12,6 +12,7 @@ import path from 'path';
 import { storage } from '../storage/db.js';
 import { runInSandbox } from '../execution/sandboxRuntime.js';
 import { assertPathContained } from '../execution/pathContainment.js';
+import { getAegisDataDir } from '../coordinator.js';
 
 export interface CriterionVerificationSpec {
   command?: string;
@@ -206,10 +207,11 @@ export async function verifyTaskAcceptance(params: {
       const trustedReadPaths: string[] = [];
 
       // Check for server-owned trusted suite outside workspace
-      const serverTrustedById = path.resolve(process.cwd(), 'data/trusted_suites', task.id, `${crit.id}.test.cjs`);
-      const serverTrustedByKey = path.resolve(process.cwd(), 'data/trusted_suites', task.key, `${crit.id}.test.cjs`);
-      const serverIdSuite = path.resolve(process.cwd(), 'data/trusted_suites', task.id, 'spec.test.cjs');
-      const serverKeySuite = path.resolve(process.cwd(), 'data/trusted_suites', task.key, 'spec.test.cjs');
+      const trustedSuitesRoot = path.resolve(getAegisDataDir(), 'trusted_suites');
+      const serverTrustedById = path.resolve(trustedSuitesRoot, task.id, `${crit.id}.test.cjs`);
+      const serverTrustedByKey = path.resolve(trustedSuitesRoot, task.key, `${crit.id}.test.cjs`);
+      const serverIdSuite = path.resolve(trustedSuitesRoot, task.id, 'spec.test.cjs');
+      const serverKeySuite = path.resolve(trustedSuitesRoot, task.key, 'spec.test.cjs');
 
       if (spec.trustedScriptPath && fs.existsSync(spec.trustedScriptPath)) {
         args = [spec.trustedScriptPath, crit.id];
@@ -292,7 +294,8 @@ export async function verifyTaskAcceptance(params: {
   // Store immutable accepted candidate snapshot upon acceptance
   if (allPassed) {
     try {
-      const taskCandidatesDir = path.resolve(process.cwd(), 'data/candidates', task.id);
+      const candidatesRoot = path.resolve(getAegisDataDir(), 'candidates');
+      const taskCandidatesDir = path.resolve(candidatesRoot, task.id);
       const candidateSnapshotDir = path.join(taskCandidatesDir, candidateHash);
       if (!fs.existsSync(candidateSnapshotDir)) {
         fs.mkdirSync(candidateSnapshotDir, { recursive: true });

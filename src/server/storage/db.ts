@@ -14,19 +14,28 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATA_DIR = path.resolve(__dirname, '../../../data');
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+export function getDataDir(): string {
+  const dir = process.env.AEGIS_DATA_DIR || path.resolve(__dirname, '../../../data');
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  return dir;
 }
 
-const DB_PATH = process.env.AEGIS_DB_PATH || path.resolve(DATA_DIR, 'aegis.db');
+export function getDbPath(): string {
+  return process.env.AEGIS_DB_PATH || path.resolve(getDataDir(), 'aegis.db');
+}
 
 export class StorageEngine {
   private db: DatabaseSync;
   private static instance: StorageEngine | null = null;
 
   constructor(dbPath?: string) {
-    const targetPath = dbPath || process.env.AEGIS_DB_PATH || path.resolve(DATA_DIR, 'aegis.db');
+    const targetPath = dbPath || getDbPath();
+    const targetDir = path.dirname(targetPath);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
     this.db = new DatabaseSync(targetPath);
     this.initSchema();
   }

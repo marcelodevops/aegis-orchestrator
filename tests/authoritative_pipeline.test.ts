@@ -43,7 +43,7 @@ import {
 } from '../src/server/execution/sandboxRuntime.js';
 import { CodingWorker } from '../src/server/codingWorker.js';
 import { getOrGenerateAuthToken } from '../src/server/security/auth.js';
-import { coordinator } from '../src/server/coordinator.js';
+import { coordinator, getAegisDataDir } from '../src/server/coordinator.js';
 
 let passedTests = 0;
 let totalTests = 0;
@@ -64,6 +64,19 @@ async function executeSuite() {
   console.log('\n=== RUNNING 22 CRITICAL AUTHORITATIVE PIPELINE REGRESSION TESTS ===\n');
 
   const testTempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-auth-pipe-'));
+  const testDataDir = path.join(testTempDir, 'data');
+  const testDbPath = path.join(testDataDir, 'aegis_test.db');
+  const testStatePath = path.join(testDataDir, 'aegis_state.json');
+
+  // Enforce isolated storage and state roots for the entire test suite
+  process.env.AEGIS_DATA_DIR = testDataDir;
+  process.env.AEGIS_DB_PATH = testDbPath;
+  process.env.AEGIS_STATE_PATH = testStatePath;
+
+  fs.mkdirSync(testDataDir, { recursive: true });
+  StorageEngine.resetInstance(testDbPath);
+  coordinator.resetState(testStatePath);
+
   const authToken = getOrGenerateAuthToken();
 
   // --- TEST 1: Real HTTP unauthenticated mutation rejection (HTTP 401) ---
@@ -733,7 +746,7 @@ async function executeSuite() {
     fs.writeFileSync(path.join(wsDir, 'spec.test.cjs'), 'process.exit(0);');
 
     // Server-owned trusted test script outside the worker workspace
-    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', indepTaskId);
+    const trustedDir = path.resolve(getAegisDataDir(), 'trusted_suites', indepTaskId);
     fs.mkdirSync(trustedDir, { recursive: true });
     const trustedScript = path.join(trustedDir, 'crit-indep.test.cjs');
     fs.writeFileSync(trustedScript, `
@@ -819,7 +832,7 @@ async function executeSuite() {
     spawnSync('git', ['init', '--bare', bareRemoteDir]);
 
     // Snapshot candidate to server candidates store
-    const candDir = path.resolve(process.cwd(), 'data/candidates', remTaskId, hash);
+    const candDir = path.resolve(getAegisDataDir(), 'candidates', remTaskId, hash);
     fs.mkdirSync(candDir, { recursive: true });
     fs.writeFileSync(path.join(candDir, 'implementation.js'), 'module.exports = { rem: true };\n');
 
@@ -1019,7 +1032,7 @@ async function executeSuite() {
     });
 
     // Install server-owned spec that requires module.exports to be an object with foo
-    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    const trustedDir = path.resolve(getAegisDataDir(), 'trusted_suites', taskId);
     fs.mkdirSync(trustedDir, { recursive: true });
     fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `
       const assert = require('assert');
@@ -1062,7 +1075,7 @@ async function executeSuite() {
       status: 'pending',
     });
 
-    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    const trustedDir = path.resolve(getAegisDataDir(), 'trusted_suites', taskId);
     fs.mkdirSync(trustedDir, { recursive: true });
     fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `
       const assert = require('assert');
@@ -1123,7 +1136,7 @@ async function executeSuite() {
       status: 'pending',
     });
 
-    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    const trustedDir = path.resolve(getAegisDataDir(), 'trusted_suites', taskId);
     fs.mkdirSync(trustedDir, { recursive: true });
     fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `process.exit(0);`);
 
@@ -1136,7 +1149,7 @@ async function executeSuite() {
     assert.strictEqual(acceptRes.allPassed, true);
     const originalHash = acceptRes.candidateHash;
 
-    const snapshotDir = path.resolve(process.cwd(), 'data/candidates', taskId, originalHash);
+    const snapshotDir = path.resolve(getAegisDataDir(), 'candidates', taskId, originalHash);
     assert.ok(fs.existsSync(snapshotDir), 'Snapshot directory must exist');
 
     // Tamper with file INSIDE snapshot directory without renaming directory or changing task.acceptedCandidateHash
@@ -1176,7 +1189,7 @@ async function executeSuite() {
     storage.insertCriterion({ id: `crit-st-1`, taskId, title: 'Crit 1', verificationMethod: 'trusted_test', status: 'pending' });
     storage.insertCriterion({ id: `crit-st-2`, taskId, title: 'Crit 2', verificationMethod: 'trusted_test', status: 'pending' });
 
-    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    const trustedDir = path.resolve(getAegisDataDir(), 'trusted_suites', taskId);
     fs.mkdirSync(trustedDir, { recursive: true });
     fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `process.exit(0);`);
 
@@ -1295,7 +1308,7 @@ async function executeSuite() {
     });
     storage.insertCriterion({ id: `crit-tr-1`, taskId, title: 'Crit 1', verificationMethod: 'trusted_test', status: 'pending' });
 
-    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    const trustedDir = path.resolve(getAegisDataDir(), 'trusted_suites', taskId);
     fs.mkdirSync(trustedDir, { recursive: true });
     fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `process.exit(0);`);
 
@@ -1353,7 +1366,7 @@ async function executeSuite() {
     });
     storage.insertCriterion({ id: `crit-df-1`, taskId, title: 'Crit 1', verificationMethod: 'trusted_test', status: 'pending' });
 
-    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    const trustedDir = path.resolve(getAegisDataDir(), 'trusted_suites', taskId);
     fs.mkdirSync(trustedDir, { recursive: true });
     fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `process.exit(0);`);
 
@@ -1410,7 +1423,7 @@ async function executeSuite() {
     });
     storage.insertCriterion({ id: `crit-pr-1`, taskId, title: 'Crit 1', verificationMethod: 'trusted_test', status: 'pending' });
 
-    const trustedDir = path.resolve(process.cwd(), 'data/trusted_suites', taskId);
+    const trustedDir = path.resolve(getAegisDataDir(), 'trusted_suites', taskId);
     fs.mkdirSync(trustedDir, { recursive: true });
     fs.writeFileSync(path.join(trustedDir, 'spec.test.cjs'), `process.exit(0);`);
 
@@ -1543,11 +1556,11 @@ async function executeSuite() {
     storage.insertCriterion({ id: `crit-rfc-1`, taskId, title: 'Crit 1', verificationMethod: 'trusted_test', status: 'pending' });
 
     // Create candidate snapshot directory
-    const snapDir = path.resolve(process.cwd(), 'data/candidates', taskId, hash);
+    const snapDir = path.resolve(getAegisDataDir(), 'candidates', taskId, hash);
     fs.mkdirSync(snapDir, { recursive: true });
     fs.writeFileSync(path.join(snapDir, 'index.js'), 'console.log("hello");\n');
     const computedHash = computeCanonicalCandidateDigest(snapDir);
-    const finalSnapDir = path.resolve(process.cwd(), 'data/candidates', taskId, computedHash);
+    const finalSnapDir = path.resolve(getAegisDataDir(), 'candidates', taskId, computedHash);
     fs.renameSync(snapDir, finalSnapDir);
 
     // Update task with real computed hash
@@ -1630,11 +1643,11 @@ async function executeSuite() {
     });
 
     // Create candidate snapshot directory
-    const snapDir = path.resolve(process.cwd(), 'data/candidates', taskId, hash);
+    const snapDir = path.resolve(getAegisDataDir(), 'candidates', taskId, hash);
     fs.mkdirSync(snapDir, { recursive: true });
     fs.writeFileSync(path.join(snapDir, 'file.js'), 'export const a = 1;\n');
     const realHash = computeCanonicalCandidateDigest(snapDir);
-    const finalSnapDir = path.resolve(process.cwd(), 'data/candidates', taskId, realHash);
+    const finalSnapDir = path.resolve(getAegisDataDir(), 'candidates', taskId, realHash);
     fs.renameSync(snapDir, finalSnapDir);
 
     const taskCurrent = storage.getTaskById(taskId);
@@ -1699,11 +1712,11 @@ async function executeSuite() {
     });
 
     // Candidate snapshot
-    const snapDir = path.resolve(process.cwd(), 'data/candidates', taskId, 'snap-hash-1234');
+    const snapDir = path.resolve(getAegisDataDir(), 'candidates', taskId, 'snap-hash-1234');
     fs.mkdirSync(snapDir, { recursive: true });
     fs.writeFileSync(path.join(snapDir, 'index.js'), 'module.exports = { answer: 42 };\n');
     const digest = computeCanonicalCandidateDigest(snapDir);
-    const finalSnapDir = path.resolve(process.cwd(), 'data/candidates', taskId, digest);
+    const finalSnapDir = path.resolve(getAegisDataDir(), 'candidates', taskId, digest);
     fs.renameSync(snapDir, finalSnapDir);
 
     const taskCurrent = storage.getTaskById(taskId);
@@ -1765,11 +1778,11 @@ async function executeSuite() {
       status: 'passed',
     });
 
-    const snapDir = path.resolve(process.cwd(), 'data/candidates', taskId, 'temp-snap');
+    const snapDir = path.resolve(getAegisDataDir(), 'candidates', taskId, 'temp-snap');
     fs.mkdirSync(snapDir, { recursive: true });
     fs.writeFileSync(path.join(snapDir, 'index.js'), 'module.exports = { answer: 100 };\n');
     const digest = computeCanonicalCandidateDigest(snapDir);
-    const finalSnapDir = path.resolve(process.cwd(), 'data/candidates', taskId, digest);
+    const finalSnapDir = path.resolve(getAegisDataDir(), 'candidates', taskId, digest);
     fs.renameSync(snapDir, finalSnapDir);
 
     const taskCurrent = storage.getTaskById(taskId);
@@ -1862,7 +1875,7 @@ async function executeSuite() {
     fs.writeFileSync(path.join(dummySrcDir, 'index.js'), 'export const ready = true;\n', 'utf-8');
 
     const expectedHash = computeCanonicalCandidateDigest(dummySrcDir);
-    const candidateStoreDir = path.resolve(process.cwd(), 'data/candidates', taskId, expectedHash);
+    const candidateStoreDir = path.resolve(getAegisDataDir(), 'candidates', taskId, expectedHash);
     fs.mkdirSync(candidateStoreDir, { recursive: true });
     fs.writeFileSync(path.join(candidateStoreDir, 'index.js'), 'export const ready = true;\n', 'utf-8');
 
@@ -1955,22 +1968,17 @@ async function executeSuite() {
     }
   });
 
-  // Cleanup
+  // Cleanup: Strictly restricted to the temporary directory fixture created for this run
   try {
+    delete process.env.AEGIS_DATA_DIR;
+    delete process.env.AEGIS_DB_PATH;
+    delete process.env.AEGIS_STATE_PATH;
+    StorageEngine.resetInstance();
+    coordinator.resetState();
     fs.rmSync(testTempDir, { recursive: true, force: true });
-    for (const dir of ['data/candidates', 'data/trusted_suites']) {
-      const fullDir = path.resolve(process.cwd(), dir);
-      if (fs.existsSync(fullDir)) {
-        for (const item of fs.readdirSync(fullDir)) {
-          if (item.startsWith('task-')) {
-            fs.rmSync(path.join(fullDir, item), { recursive: true, force: true });
-          }
-        }
-      }
-    }
   } catch {}
 
-  console.log(`\n=== ALL 38 CRITICAL PIPELINE TESTS PASSED CLEANLY: ${passedTests}/${totalTests} ===\n`);
+  console.log(`\n=== ALL 39 CRITICAL PIPELINE TESTS PASSED CLEANLY: ${passedTests}/${totalTests} ===\n`);
 }
 
 executeSuite().catch((err) => {

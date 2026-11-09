@@ -337,7 +337,7 @@ class CoordinatorEngine {
         };
       }
 
-      const candidateSnapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, task.acceptedCandidateHash);
+      const candidateSnapshotDir = path.resolve(getAegisDataDir(), 'candidates', task.id, task.acceptedCandidateHash);
       if (!fs.existsSync(candidateSnapshotDir)) {
         return {
           success: false,
@@ -536,7 +536,7 @@ class CoordinatorEngine {
     if (!candidateHash) {
       artifactDetail = `Quality Gate blocked: No accepted candidate digest recorded for ${task.key}.`;
     } else {
-      const candidateSnapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, candidateHash);
+      const candidateSnapshotDir = path.resolve(getAegisDataDir(), 'candidates', task.id, candidateHash);
       if (!fs.existsSync(candidateSnapshotDir)) {
         artifactDetail = `Candidate snapshot directory missing at data/candidates/${task.id}/${candidateHash.slice(0, 12)}...`;
       } else {
@@ -971,12 +971,17 @@ class CoordinatorEngine {
           reviewTask.lastAgentComment = `Quality Gate BLOCKED: ${failureReason}`;
 
           const rollbackRes = this.transitionTaskStatus(reviewTask.id, 'in_progress');
-          const updatedTask = rollbackRes.task || {
-            ...reviewTask,
-            status: 'in_progress',
-            lastAgentComment: `Quality Gate BLOCKED: ${failureReason}`,
-            lastUpdated: 'Just now',
-          };
+          if (!rollbackRes.success) {
+            console.error(`[Aegis Daemon] Failed to rollback ${reviewTask.key} to in_progress: ${rollbackRes.error}`);
+            this.saveStateToDisk();
+            return {
+              advanced: false,
+              targetTask: reviewTask,
+              action: `rollback_failed: ${rollbackRes.error || 'unknown error'}`,
+            };
+          }
+
+          const updatedTask = rollbackRes.task!;
 
           this.addCommunication({
             senderId: 'agent-orch',
@@ -1010,12 +1015,17 @@ class CoordinatorEngine {
         todoTask.lastUpdated = 'Just now';
 
         const claimRes = this.transitionTaskStatus(todoTask.id, 'in_progress');
-        const updatedTask = claimRes.task || {
-          ...todoTask,
-          status: 'in_progress',
-          lastAgentComment: todoTask.lastAgentComment,
-          lastUpdated: 'Just now',
-        };
+        if (!claimRes.success) {
+          console.error(`[Aegis Daemon] Failed to claim ${todoTask.key}: ${claimRes.error}`);
+          this.saveStateToDisk();
+          return {
+            advanced: false,
+            targetTask: todoTask,
+            action: `claim_failed: ${claimRes.error || 'unknown error'}`,
+          };
+        }
+
+        const updatedTask = claimRes.task!;
 
         this.addCommunication({
           senderId: agent.id,

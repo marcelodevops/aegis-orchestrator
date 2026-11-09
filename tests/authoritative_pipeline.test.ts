@@ -1851,6 +1851,110 @@ async function executeSuite() {
     assert.strictEqual(doneAttempt.success, false, 'Transition to done must be rejected');
   });
 
+  // --- TEST 39: Status transitions persist transactionally to SQLite and survive coordinator restart ---
+  await runTest('39. Status transitions persist transactionally to SQLite and remain consistent across reads and restarts', () => {
+    const taskId = `task-persist-test-${Date.now()}`;
+    const taskKey = `PRST-${Date.now().toString().slice(-4)}`;
+
+    // Create a valid candidate snapshot on disk
+    const dummySrcDir = path.join(testTempDir, `candidate_persist_${Date.now()}`);
+    fs.mkdirSync(dummySrcDir, { recursive: true });
+    fs.writeFileSync(path.join(dummySrcDir, 'index.js'), 'export const ready = true;\n', 'utf-8');
+
+    const expectedHash = computeCanonicalCandidateDigest(dummySrcDir);
+    const candidateStoreDir = path.resolve(process.cwd(), 'data/candidates', taskId, expectedHash);
+    fs.mkdirSync(candidateStoreDir, { recursive: true });
+    fs.writeFileSync(path.join(candidateStoreDir, 'index.js'), 'export const ready = true;\n', 'utf-8');
+
+    try {
+      // 1. Insert task into SQLite
+      storage.insertTask({
+        id: taskId,
+        key: taskKey,
+        title: 'Authoritative Persistence Task',
+        status: 'in_progress',
+        priority: 'high',
+        assignedAgentId: 'agent-dev',
+        estimatedHours: 4,
+        spentHours: 0,
+        dependencies: [],
+        subtasks: [],
+        acceptedCandidateHash: expectedHash,
+        requirementsVersion: 1,
+      });
+
+      const critId = `crit-persist-${Date.now()}`;
+      storage.insertCriterion({
+        id: critId,
+        taskId,
+        title: 'Persistence Acceptance Criteria',
+        verificationMethod: 'trusted_test',
+        verificationSpec: { expectedVerifierVersion: '1.0.0' },
+        status: 'passed',
+      });
+
+      // Insert passing evidence
+      const evId = `ev-persist-${Date.now()}`;
+      (storage as any).db.prepare(`
+        INSERT INTO evidence (
+          id, run_id, task_id, criterion_id, base_commit, candidate_hash,
+          verifier_name, verifier_version, requirements_version, exit_code, outcome, recorded_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        evId,
+        null,
+        taskId,
+        critId,
+        null,
+        expectedHash,
+        'trusted_test',
+        '1.0.0',
+        1,
+        0,
+        'passed',
+        new Date().toISOString()
+      );
+
+      // Reload coordinator tasks from SQLite
+      coordinator.getState(); // triggers reload from SQLite
+
+      // 2. Transition from in_progress to review
+      const reviewTransition = coordinator.transitionTaskStatus(taskId, 'review');
+      assert.strictEqual(reviewTransition.success, true, `Review transition should succeed: ${reviewTransition.error}`);
+      assert.strictEqual(reviewTransition.task?.status, 'review');
+
+      // Verify SQLite state immediately
+      let dbTask = storage.getTaskById(taskId);
+      assert.strictEqual(dbTask?.status, 'review', 'SQLite must immediately reflect review status');
+
+      // Verify coordinator in-memory read
+      let coordTask = coordinator.getState().tasks.find((t) => t.id === taskId);
+      assert.strictEqual(coordTask?.status, 'review', 'Coordinator read must reflect review status');
+
+      // 3. Transition from review to done
+      const doneTransition = coordinator.transitionTaskStatus(taskId, 'done');
+      assert.strictEqual(doneTransition.success, true, `Done transition should succeed: ${doneTransition.error}`);
+      assert.strictEqual(doneTransition.task?.status, 'done');
+
+      // Verify SQLite state immediately
+      dbTask = storage.getTaskById(taskId);
+      assert.strictEqual(dbTask?.status, 'done', 'SQLite must immediately reflect done status');
+
+      // Verify coordinator in-memory read
+      coordTask = coordinator.getState().tasks.find((t) => t.id === taskId);
+      assert.strictEqual(coordTask?.status, 'done', 'Coordinator read must reflect done status');
+
+      // 4. Simulate application restart by reloading coordinator state
+      coordinator.resetState();
+      const restartedTasks = coordinator.getState().tasks;
+      const restartedTask = restartedTasks.find((t) => t.id === taskId);
+      assert.ok(restartedTask, 'Task must exist after coordinator restart');
+      assert.strictEqual(restartedTask?.status, 'done', 'Status must remain done after application restart');
+    } finally {
+      if (fs.existsSync(candidateStoreDir)) fs.rmSync(path.dirname(candidateStoreDir), { recursive: true, force: true });
+    }
+  });
+
   // Cleanup
   try {
     fs.rmSync(testTempDir, { recursive: true, force: true });

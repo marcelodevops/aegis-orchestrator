@@ -95,9 +95,7 @@ class CoordinatorEngine {
   }
 
   public resetState(customStateFile?: string): void {
-    if (customStateFile) {
-      this.customStateFile = customStateFile;
-    }
+    this.customStateFile = customStateFile;
     this.ensureDirectories();
     try {
       storage.seedIfEmpty(DEFAULT_TASKS, DEFAULT_AGENTS, DEFAULT_EPICS);
@@ -137,11 +135,12 @@ class CoordinatorEngine {
 
   private loadStateFromDisk(): ServerState {
     const stateFile = this.getStateFile();
+    let loadedState: ServerState | null = null;
     try {
       if (fs.existsSync(stateFile)) {
         const raw = fs.readFileSync(stateFile, 'utf-8');
         const parsed = JSON.parse(raw);
-        return {
+        loadedState = {
           tasks: this.deduplicateTasks(parsed.tasks || DEFAULT_TASKS),
           agents: parsed.agents || DEFAULT_AGENTS,
           epics: parsed.epics || DEFAULT_EPICS,
@@ -157,19 +156,36 @@ class CoordinatorEngine {
       console.warn('Failed to load aegis_state.json, initializing defaults:', err);
     }
 
-    const initialState: ServerState = {
-      tasks: this.deduplicateTasks(DEFAULT_TASKS),
-      agents: DEFAULT_AGENTS,
-      epics: DEFAULT_EPICS,
-      orchestratorConfig: DEFAULT_ORCHESTRATOR_CONFIG,
-      integrationConfig: DEFAULT_INTEGRATION_CONFIG,
-      communications: DEFAULT_COMMUNICATIONS,
-      cycleCount: 5,
-      daemonRunning: false,
-      lastUpdated: new Date().toISOString(),
-    };
-    this.saveStateToDisk(initialState);
-    return initialState;
+    if (!loadedState) {
+      loadedState = {
+        tasks: this.deduplicateTasks(DEFAULT_TASKS),
+        agents: DEFAULT_AGENTS,
+        epics: DEFAULT_EPICS,
+        orchestratorConfig: DEFAULT_ORCHESTRATOR_CONFIG,
+        integrationConfig: DEFAULT_INTEGRATION_CONFIG,
+        communications: DEFAULT_COMMUNICATIONS,
+        cycleCount: 5,
+        daemonRunning: false,
+        lastUpdated: new Date().toISOString(),
+      };
+    }
+
+    // Authoritative Sync with SQLite tasks
+    try {
+      const dbTasks = storage.getAllTasks();
+      if (dbTasks && dbTasks.length > 0) {
+        const dbMap = new Map(dbTasks.map((t: any) => [t.id, t]));
+        loadedState.tasks = loadedState.tasks.map((t) => dbMap.get(t.id) || t);
+        for (const dbTask of dbTasks) {
+          if (!loadedState.tasks.some((t) => t.id === dbTask.id)) {
+            loadedState.tasks.push(dbTask);
+          }
+        }
+      }
+    } catch {}
+
+    this.saveStateToDisk(loadedState);
+    return loadedState;
   }
 
   public saveStateToDisk(stateToSave?: ServerState): void {
@@ -184,6 +200,18 @@ class CoordinatorEngine {
   }
 
   public getState(): ServerState {
+    try {
+      const dbTasks = storage.getAllTasks();
+      if (dbTasks && dbTasks.length > 0) {
+        const dbMap = new Map(dbTasks.map((t: any) => [t.id, t]));
+        this.state.tasks = this.state.tasks.map((t) => dbMap.get(t.id) || t);
+        for (const dbTask of dbTasks) {
+          if (!this.state.tasks.some((t) => t.id === dbTask.id)) {
+            this.state.tasks.push(dbTask);
+          }
+        }
+      }
+    } catch {}
     this.state.tasks = this.deduplicateTasks(this.state.tasks || []);
     return this.state;
   }
@@ -285,9 +313,9 @@ class CoordinatorEngine {
       return { success: false, error: `Task ${taskId} not found` };
     }
 
-    // Guard 1: Cannot move to in_progress if upstream dependencies are incomplete
-    if (targetStatus === 'in_progress') {
-      const allTasks = this.state.tasks;
+    // Guard 1: Cannot move to in_progress or review or done if upstream dependencies are incomplete
+    if (['in_progress', 'review', 'done'].includes(targetStatus)) {
+      const allTasks = this.getState().tasks;
       const uncompletedDeps = (task.dependencies || []).filter((depId: string) => {
         const depTask = allTasks.find((t) => t.id === depId || t.key === depId);
         return !depTask || depTask.status !== 'done';
@@ -295,31 +323,73 @@ class CoordinatorEngine {
       if (uncompletedDeps.length > 0) {
         return {
           success: false,
-          error: `Cannot transition ${task.key} to In Progress: Blocked by unfinished upstream dependencies (${uncompletedDeps.join(', ')}).`,
+          error: `Cannot transition ${task.key} to ${targetStatus === 'in_progress' ? 'In Progress' : targetStatus === 'review' ? 'Review' : 'Done'}: Blocked by unfinished upstream dependencies (${uncompletedDeps.join(', ')}).`,
         };
       }
     }
 
-    // Guard 2: Cannot move to review without real code artifact produced by worker in workspace or candidate snapshot
+    // Guard 2: Cannot move to review without real code artifact produced by worker in candidate snapshot AND verified evidence ledger
     if (targetStatus === 'review') {
-      const safeKey = task.key.replace(/[^a-zA-Z0-9_-]/g, '_');
-      const workspaceImpl = path.resolve(process.cwd(), 'workspace', safeKey, 'implementation.js');
-      const workspaceCjs = path.resolve(process.cwd(), 'workspace', safeKey, 'implementation.cjs');
-      const taskArtifactDir = path.resolve(getAegisArtifactsDir(), task.key);
-      const codeFilePath = path.resolve(taskArtifactDir, 'implementation.js');
-      const legacyPath = path.resolve(getAegisArtifactsDir(), `${task.key}_deliverable.md`);
-      const candidateSnapshotDir = task.acceptedCandidateHash
-        ? path.resolve(process.cwd(), 'data/candidates', task.id, task.acceptedCandidateHash)
-        : null;
-      const hasArtifact = (candidateSnapshotDir !== null && fs.existsSync(candidateSnapshotDir)) ||
-                          (fs.existsSync(workspaceImpl) && fs.statSync(workspaceImpl).size > 0) ||
-                          (fs.existsSync(workspaceCjs) && fs.statSync(workspaceCjs).size > 0) ||
-                          (fs.existsSync(codeFilePath) && fs.statSync(codeFilePath).size > 0) ||
-                          (fs.existsSync(legacyPath) && fs.statSync(legacyPath).size > 0);
-      if (!hasArtifact) {
+      if (!task.acceptedCandidateHash) {
         return {
           success: false,
-          error: `Cannot transition ${task.key} to Review: No physical code artifact produced by worker in workspace or candidate snapshot.`,
+          error: `Cannot transition ${task.key} to Review: No physical code artifact produced by worker. Transition to Review strictly requires an accepted candidate snapshot and certified evidence ledger.`,
+        };
+      }
+
+      const candidateSnapshotDir = path.resolve(process.cwd(), 'data/candidates', task.id, task.acceptedCandidateHash);
+      if (!fs.existsSync(candidateSnapshotDir)) {
+        return {
+          success: false,
+          error: `Cannot transition ${task.key} to Review: No physical code artifact produced by worker. Candidate snapshot directory missing on disk for candidate ${task.acceptedCandidateHash.slice(0, 10)}.`,
+        };
+      }
+
+      const snapshotDigest = computeCanonicalCandidateDigest(candidateSnapshotDir);
+      if (snapshotDigest !== task.acceptedCandidateHash) {
+        return {
+          success: false,
+          error: `Cannot transition ${task.key} to Review: Snapshot integrity mismatch (${snapshotDigest.slice(0, 10)} != ${task.acceptedCandidateHash.slice(0, 10)}).`,
+        };
+      }
+
+      const dbCriteria = storage.getCriteriaForTask(task.id);
+      if (dbCriteria.length === 0) {
+        return {
+          success: false,
+          error: `Cannot transition ${task.key} to Review: No acceptance criteria defined in database ledger for ${task.key}.`,
+        };
+      }
+
+      const candidateEvidence = storage.getEvidenceForCandidate(task.id, task.acceptedCandidateHash).filter((e: any) => e.outcome === 'passed');
+      const failingCriteria: string[] = [];
+      const taskRequirementsVersion = task.requirementsVersion || 1;
+
+      for (const crit of dbCriteria) {
+        const critEv = candidateEvidence.find((ev: any) => ev.criterion_id === crit.id);
+        if (!critEv) {
+          failingCriteria.push(`"${crit.title}" (missing passing evidence)`);
+          continue;
+        }
+        if (critEv.requirements_version !== taskRequirementsVersion) {
+          failingCriteria.push(`"${crit.title}" (stale requirements version: ${critEv.requirements_version} != ${taskRequirementsVersion})`);
+          continue;
+        }
+        if (task.acceptedBaseCommit && critEv.base_commit && critEv.base_commit !== task.acceptedBaseCommit) {
+          failingCriteria.push(`"${crit.title}" (base commit mismatch: ${critEv.base_commit} != ${task.acceptedBaseCommit})`);
+          continue;
+        }
+        const expectedVerifierVersion = crit.verificationSpec?.expectedVerifierVersion || crit.verificationSpec?.verifierVersion || '1.0.0';
+        if (!critEv.verifier_version || critEv.verifier_version !== expectedVerifierVersion) {
+          failingCriteria.push(`"${crit.title}" (verifier version mismatch: ${critEv.verifier_version || 'absent'} != ${expectedVerifierVersion})`);
+          continue;
+        }
+      }
+
+      if (failingCriteria.length > 0) {
+        return {
+          success: false,
+          error: `Cannot transition ${task.key} to Review: Acceptance verification incomplete in evidence ledger for candidate ${task.acceptedCandidateHash.slice(0, 10)}: ${failingCriteria.join('; ')}`,
         };
       }
     }
@@ -336,18 +406,35 @@ class CoordinatorEngine {
       }
     }
 
-    const updatedTask: Task = {
-      ...task,
-      status: targetStatus,
-      lastUpdated: 'Just now',
-    };
+    // Persist transition through SQLite storage transactional service
+    const currentDbTask = storage.getTaskById(task.id) || storage.getTaskByKey(task.key);
+    let persistedTask: Task;
 
-    this.state.tasks = this.state.tasks.map((t) => (t.id === task.id ? updatedTask : t));
+    if (currentDbTask) {
+      const updateRes = storage.updateTaskWithRevision(currentDbTask.id, currentDbTask.version, {
+        status: targetStatus,
+        lastAgentComment: task.lastAgentComment || currentDbTask.lastAgentComment,
+      });
+      if (!updateRes.success) {
+        return {
+          success: false,
+          error: `Failed to persist status transition to SQLite: ${updateRes.error}`,
+        };
+      }
+      persistedTask = updateRes.task;
+    } else {
+      persistedTask = storage.insertTask({
+        ...task,
+        status: targetStatus,
+      });
+    }
+
+    this.state.tasks = this.state.tasks.map((t) => (t.id === task.id ? persistedTask : t));
     this.saveStateToDisk();
 
     return {
       success: true,
-      task: updatedTask,
+      task: persistedTask,
     };
   }
 
@@ -722,9 +809,10 @@ class CoordinatorEngine {
       task.requirementsVersion = dbTaskAfterCorrected.requirementsVersion;
     }
 
-    task.status = 'review';
-    this.state.tasks = this.state.tasks.map((t) => (t.id === task!.id ? task! : t));
-    this.saveStateToDisk();
+    const reviewRes = this.transitionTaskStatus(task.id, 'review');
+    if (!reviewRes.success) {
+      throw new Error(`Trial review transition failed: ${reviewRes.error}`);
+    }
 
     // Step 7: Run independent quality gate verification
     const verification = this.verifyTaskQualityGates(task);
@@ -807,17 +895,34 @@ class CoordinatorEngine {
         }));
         const updatedDeliverables = [...(inProgressTask.deliverables || []), workerResult.deliverableContent];
 
-        const updatedTask: Task = {
-          ...inProgressTask,
-          status: 'review',
-          subtasks: updatedSubtasks,
-          deliverables: updatedDeliverables,
-          spentHours: (inProgressTask.spentHours || 0) + 4,
-          lastAgentComment: `${agent.name}: Generated real code & tests (${workerResult.fileSize}B, SHA: ${workerResult.sha256.slice(0, 8)}). Ready for Quality Gate.`,
-          lastUpdated: 'Just now',
-        };
+        // Synchronize accepted candidate data from SQLite if worker updated it
+        const dbTaskAfterWorker = storage.getTaskById(inProgressTask.id) || storage.getTaskByKey(inProgressTask.key);
+        if (dbTaskAfterWorker) {
+          inProgressTask.acceptedCandidateHash = dbTaskAfterWorker.acceptedCandidateHash;
+          inProgressTask.acceptedBaseCommit = dbTaskAfterWorker.acceptedBaseCommit;
+          inProgressTask.requirementsVersion = dbTaskAfterWorker.requirementsVersion;
+        }
 
-        this.state.tasks = tasks.map((t) => (t.id === inProgressTask.id ? updatedTask : t));
+        inProgressTask.subtasks = updatedSubtasks;
+        inProgressTask.deliverables = updatedDeliverables;
+        inProgressTask.spentHours = (inProgressTask.spentHours || 0) + 4;
+        inProgressTask.lastAgentComment = `${agent.name}: Generated real code & tests (${workerResult.fileSize}B, SHA: ${workerResult.sha256.slice(0, 8)}). Ready for Quality Gate.`;
+        inProgressTask.lastUpdated = 'Just now';
+
+        const transitionRes = this.transitionTaskStatus(inProgressTask.id, 'review');
+        if (!transitionRes.success) {
+          // If review transition failed (e.g. evidence not yet certified or criteria missing), persist comment and stay in progress
+          const currentDbTask = storage.getTaskById(inProgressTask.id) || storage.getTaskByKey(inProgressTask.key);
+          if (currentDbTask) {
+            storage.updateTaskWithRevision(currentDbTask.id, currentDbTask.version, {
+              lastAgentComment: inProgressTask.lastAgentComment,
+            });
+          }
+          this.saveStateToDisk();
+          return { advanced: false, targetTask: inProgressTask, action: 'review_transition_blocked' };
+        }
+
+        const updatedTask = transitionRes.task!;
 
         this.addCommunication({
           senderId: agent.id,
@@ -834,20 +939,14 @@ class CoordinatorEngine {
         return { advanced: true, targetTask: updatedTask, action: 'advanced_to_review' };
       }
 
-      // 2. Check tasks in 'review' -> run STRICT verification gates
+      // 2. Check tasks in 'review' -> run STRICT verification gates & transition
       const reviewTask = tasks.find((t) => t.status === 'review');
       if (reviewTask) {
-        const verification = this.verifyTaskQualityGates(reviewTask);
+        reviewTask.lastAgentComment = `Running quality gate verification.`;
+        const transitionRes = this.transitionTaskStatus(reviewTask.id, 'done');
 
-        if (verification.passed) {
-          const updatedTask: Task = {
-            ...reviewTask,
-            status: 'done',
-            lastAgentComment: `Quality Gate PASSED: Verified dependencies, compiler syntax, tests, and disk artifact (SHA-256: ${verification.sha256?.slice(0, 8) || 'verified'}).`,
-            lastUpdated: 'Just now',
-          };
-          this.state.tasks = tasks.map((t) => (t.id === reviewTask.id ? updatedTask : t));
-
+        if (transitionRes.success) {
+          const updatedTask = transitionRes.task!;
           const agentId = reviewTask.assignedAgentId;
           this.state.agents = agents.map((a) =>
             a.id === agentId ? { ...a, completedTasksCount: a.completedTasksCount + 1 } : a
@@ -867,17 +966,17 @@ class CoordinatorEngine {
           this.saveStateToDisk();
           return { advanced: true, targetTask: updatedTask, action: 'marked_done' };
         } else {
-          // Verification failed - clamp back to in_progress with exact blocker reason
-          const failedCheck = verification.checks.find((c) => !c.passed);
-          const failureReason = failedCheck ? `${failedCheck.rule}: ${failedCheck.detail}` : 'Incomplete criteria';
+          // Verification failed - route back to in_progress via transitionTaskStatus
+          const failureReason = transitionRes.error || 'Incomplete criteria';
+          reviewTask.lastAgentComment = `Quality Gate BLOCKED: ${failureReason}`;
 
-          const updatedTask: Task = {
+          const rollbackRes = this.transitionTaskStatus(reviewTask.id, 'in_progress');
+          const updatedTask = rollbackRes.task || {
             ...reviewTask,
             status: 'in_progress',
             lastAgentComment: `Quality Gate BLOCKED: ${failureReason}`,
             lastUpdated: 'Just now',
           };
-          this.state.tasks = tasks.map((t) => (t.id === reviewTask.id ? updatedTask : t));
 
           this.addCommunication({
             senderId: 'agent-orch',
@@ -907,13 +1006,16 @@ class CoordinatorEngine {
 
       if (todoTask) {
         const agent = agents.find((a) => a.id === todoTask.assignedAgentId) || agents[1];
-        const updatedTask: Task = {
+        todoTask.lastAgentComment = `${agent.name}: Dependencies verified clear. Claimed task for execution.`;
+        todoTask.lastUpdated = 'Just now';
+
+        const claimRes = this.transitionTaskStatus(todoTask.id, 'in_progress');
+        const updatedTask = claimRes.task || {
           ...todoTask,
           status: 'in_progress',
-          lastAgentComment: `${agent.name}: Dependencies verified clear. Claimed task for execution.`,
+          lastAgentComment: todoTask.lastAgentComment,
           lastUpdated: 'Just now',
         };
-        this.state.tasks = tasks.map((t) => (t.id === todoTask.id ? updatedTask : t));
 
         this.addCommunication({
           senderId: agent.id,
